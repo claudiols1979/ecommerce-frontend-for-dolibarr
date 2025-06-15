@@ -258,7 +258,7 @@ const CartPage = () => {
                 </Box>
                 <Button
                   variant="contained"
-                  color="primary"
+                  color="secondary"
                   fullWidth
                   sx={{ mt: 3, p: 1.5, borderRadius: 2 }}
                   onClick={() => navigate('/checkout')}
