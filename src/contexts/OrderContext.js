@@ -1,28 +1,26 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { useAuth } from './AuthContext'; // Assuming AuthContext provides 'api' and 'user'
+import { useAuth } from './AuthContext'; 
 
 const OrderContext = createContext();
 
 export const useOrders = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children }) => {
-  const { api, user } = useAuth(); // Assuming api and user are available from AuthContext
+  const { api, user } = useAuth(); 
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Esta función ahora llama a la NUEVA ruta dedicada para obtener el carrito pendiente
   const fetchCart = useCallback(async () => {
     if (!user || !user.token) {
       setCartItems([]);
-      setLoading(false);
+      setLoading(false); 
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      // **IMPORTANTE:** Ahora llama a la nueva ruta /api/orders/cart que creamos en backend/routes/cartRoutes.js
       const response = await api.get('/api/orders/cart'); 
       const fetchedCartItems = response.data.cartItems || [];
 
@@ -30,7 +28,7 @@ export const OrderProvider = ({ children }) => {
         ...item,
         image: item.product?.imageUrls && item.product.imageUrls.length > 0 
                ? item.product.imageUrls[0].secure_url 
-               : 'https://placehold.co/100x100/E0E0E0/FFFFFF?text=No+Image'
+               : 'https://placehold.co/100x100/1E88E5/FFFFFF?text=No+Image'
       }));
 
       setCartItems(formattedCartItems);
@@ -38,7 +36,7 @@ export const OrderProvider = ({ children }) => {
       console.error('Error al obtener el carrito:', err.response?.data || err);
       setError({ message: err.response?.data?.message || 'Error al cargar el carrito.' });
       toast.error(err.response?.data?.message || 'Error al cargar el carrito.');
-      setCartItems([]);
+      setCartItems([]); 
     } finally {
       setLoading(false);
     }
@@ -47,11 +45,6 @@ export const OrderProvider = ({ children }) => {
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
-
-  // Las siguientes funciones (updateCartItemQuantity, removeCartItem, placeOrder, addItemToCart)
-  // DEBEN seguir usando tus rutas ORIGINALES en backend/routes/orderRoutes.js
-  // (e.g., /api/orders/add-item, /api/orders/update-item-quantity, /api/orders/remove-item/:productId, /api/orders/place-order)
-  // ya que esas son las que te restauré y están en tu orderController.
 
   const updateCartItemQuantity = useCallback(async (productId, quantity) => {
     if (!user || !user.token) {
@@ -101,7 +94,28 @@ export const OrderProvider = ({ children }) => {
     }
   }, [api, user, fetchCart]);
 
-  const placeOrder = useCallback(async (whatsappAgentNumber) => {
+  const clearCart = useCallback(async () => {
+    if (!user || !user.token) {
+        toast.info('Por favor, inicia sesión para vaciar el carrito.');
+        return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+        const response = await api.delete('/api/orders/clear-cart'); 
+        toast.success(response.data.message || 'Carrito vaciado con éxito.');
+        setCartItems([]); 
+    } catch (err) {
+        console.error('Error al vaciar el carrito:', err.response?.data || err);
+        setError({ message: err.response?.data?.message || 'Error al vaciar el carrito.' });
+        toast.error(err.response?.data?.message || 'Error al vaciar el carrito.');
+    } finally {
+        setLoading(false);
+    }
+  }, [api, user]);
+
+
+  const placeOrder = useCallback(async (whatsappAgentNumber) => { // Parámetro correcto
     if (!user || !user.token) {
       toast.info('Por favor, inicia sesión para finalizar el pedido.');
       return null;
@@ -128,12 +142,12 @@ export const OrderProvider = ({ children }) => {
 
       const response = await api.post('/api/orders/place-order', { 
         items: orderItemsToSend,
-        whatsappAgentPhoneNumber,
+        whatsappAgentPhoneNumber: whatsappAgentNumber, // *** CORRECCIÓN AQUÍ ***
       });
 
       toast.success(response.data.message || 'Pedido realizado con éxito.');
       setCartItems([]); 
-      return null; 
+      return response.data; 
     } catch (err) {
       console.error('Error al finalizar el pedido:', err.response?.data || err);
       setError({ message: err.response?.data?.message || 'Error al realizar el pedido.' });
@@ -149,8 +163,9 @@ export const OrderProvider = ({ children }) => {
         toast.info('Por favor, inicia sesión para añadir productos al carrito.');
         return;
     }
-    if (!productId || quantity <= 0 || !priceAtSale) {
-        toast.error('Datos de producto inválidos para añadir al carrito.');
+    if (!productId || quantity <= 0 || priceAtSale === undefined || priceAtSale === null || isNaN(priceAtSale) || priceAtSale <= 0) { 
+        toast.error('Datos de producto inválidos para añadir al carrito: Precio no válido.');
+        console.error("DEBUG: addItemToCart recibió datos inválidos:", {productId, quantity, priceAtSale});
         return;
     }
     setLoading(true);
@@ -178,6 +193,7 @@ export const OrderProvider = ({ children }) => {
     removeCartItem,
     placeOrder,
     addItemToCart,
+    clearCart, 
   };
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;

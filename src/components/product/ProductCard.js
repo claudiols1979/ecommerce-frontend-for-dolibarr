@@ -13,6 +13,45 @@ const ProductCard = ({ product }) => {
   const { user } = useAuth();
   const theme = useTheme();
 
+  // --- Lógica mejorada para determinar el precio de venta ---
+  // Esta función calcula el precio basado en la categoría del revendedor o un fallback.
+  // Es similar a tu lógica original, pero más robusta para asegurar un valor numérico.
+  const getPriceForCart = () => {
+    let calculatedPrice = null; // Inicializamos a null para indicar que no se ha encontrado aún
+
+    // 1. Intenta obtener el precio según la categoría de revendedor del usuario
+    if (user && user.role === 'Revendedor' && user.resellerCategory && product.resellerPrices) {
+      const resellerCategory = user.resellerCategory;
+      const priceForCategory = product.resellerPrices[resellerCategory];
+      if (typeof priceForCategory === 'number' && priceForCategory > 0) {
+        calculatedPrice = priceForCategory;
+      }
+    } 
+    
+    // 2. Si no se pudo determinar un precio específico para el revendedor,
+    // o el usuario no es revendedor, intenta usar el precio de la 'cat1' como fallback general.
+    // Usamos 'cat1' porque tus logs mostraron que 'price' no existe a nivel raíz.
+    if (calculatedPrice === null && product.resellerPrices && typeof product.resellerPrices.cat1 === 'number' && product.resellerPrices.cat1 > 0) {
+      calculatedPrice = product.resellerPrices.cat1;
+    }
+
+    // Validación final: si aún no se ha encontrado un precio válido, retorna 0 para deshabilitar.
+    if (calculatedPrice === null || isNaN(calculatedPrice) || calculatedPrice <= 0) {
+      console.error(`ProductCard: No se pudo determinar un precio válido y positivo para el producto "${product.name}". Verifique 'resellerPrices' en la base de datos y la categoría del usuario.`, { product, user });
+      return 0; // Retorna 0 para indicar un precio inválido, lo que deshabilitará el botón.
+    }
+    return calculatedPrice;
+  };
+
+  // El precio que se mostrará en la tarjeta (tu lógica existente, solo re-ordenada)
+  let displayPrice = null;
+  if (user && user.role === 'Revendedor' && product.resellerPrices && product.resellerPrices[user.resellerCategory]) {
+    displayPrice = product.resellerPrices[user.resellerCategory];
+  } else if (product.resellerPrices && product.resellerPrices.cat1) {
+    displayPrice = product.resellerPrices.cat1;
+  }
+  // --- Fin de lógica mejorada para precio ---
+
   const handleAddToCart = async () => {
     if (!user || !user.token) {
       toast.info("Por favor, inicia sesión para añadir al carrito.");
@@ -22,17 +61,18 @@ const ProductCard = ({ product }) => {
       toast.error('Este producto está agotado.');
       return;
     }
-    const success = await addItemToCart(product._id, 1);
-  };
 
-  let displayPrice;
-  if (user && user.role === 'Revendedor' && product.resellerPrices && product.resellerPrices[user.resellerCategory]) {
-    displayPrice = product.resellerPrices[user.resellerCategory];
-  } else if (product.resellerPrices && product.resellerPrices.cat1) {
-    displayPrice = product.resellerPrices.cat1;
-  } else {
-    displayPrice = null;
-  }
+    const priceToPass = getPriceForCart(); // Obtén el precio validado para el carrito
+    if (priceToPass <= 0) {
+        toast.error('No se puede añadir al carrito: Precio de venta no disponible o inválido.');
+        return;
+    }
+
+    const success = await addItemToCart(product._id, 1, priceToPass); // Pasa el precio
+    // La función addItemToCart en OrderContext ya maneja los toasts de éxito/error.
+    // Solo si necesitas una acción adicional en caso de éxito aquí:
+    // if (success) { /* hacer algo */ } 
+  };
 
   const isOutOfStock = product.countInStock <= 0;
 
@@ -48,8 +88,8 @@ const ProductCard = ({ product }) => {
         transform: 'translateY(-8px)', 
         boxShadow: theme.shadows[8], 
       },
-      bgcolor: 'background.default', // Usa el color de fondo general de la página
-      border: `1px solid ${theme.palette.grey[200]}`, // Borde sutil para definirla
+      bgcolor: 'background.default', 
+      border: `1px solid ${theme.palette.grey[200]}`, 
     }}>
       <CardMedia
         component="img"
@@ -59,7 +99,7 @@ const ProductCard = ({ product }) => {
         sx={{ 
           objectFit: 'contain', 
           p: 1, 
-          bgcolor: 'background.default', // También el fondo de la imagen
+          bgcolor: 'background.default', 
           borderRadius: '12px 12px 0 0', 
           boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
         }}
@@ -149,7 +189,7 @@ const ProductCard = ({ product }) => {
               color="primary" 
               onClick={handleAddToCart}
               startIcon={cartLoading ? <CircularProgress size={18} color="inherit" /> : <ShoppingCartIcon sx={{ fontSize: '1rem' }} />}
-              disabled={cartLoading || isOutOfStock}
+              disabled={cartLoading || isOutOfStock || getPriceForCart() <= 0} // Deshabilitar si el precio no es válido
               sx={{ 
                 ml: 1, 
                 borderRadius: 2, 

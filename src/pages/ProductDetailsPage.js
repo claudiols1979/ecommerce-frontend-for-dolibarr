@@ -1,236 +1,395 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Container, Box, Typography, Button, Grid, CircularProgress, Alert,
+  TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip
+} from '@mui/material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'; 
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, CircularProgress, Grid, Paper, IconButton, TextField, useTheme } from '@mui/material';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import RemoveIcon from '@mui/icons-material/Remove';
-import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useAuth } from '../contexts/AuthContext'; // Asegúrate de que la ruta sea correcta
-import { useOrders } from '../contexts/OrderContext'; // Asegúrate de que la ruta sea correcta
+import { useProducts } from '../contexts/ProductContext'; // Importa useProducts del contexto
+import { useOrders } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import ProductImageCarousel from '../components/product/ProductImageCarousel';
+import ProductCard from '../components/product/ProductCard';
 
-const ProductDetails = () => {
-  const { productId } = useParams();
+
+const ProductDetailsPage = () => {
+  const { id } = useParams(); 
   const navigate = useNavigate();
   const theme = useTheme();
-  const { api, user } = useAuth(); // Obtener usuario y API de AuthContext
-  const { addItemToCart } = useOrders(); // Obtener addItemToCart de OrderContext
 
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { fetchProducts, products: allProductsFromContext, loading: productsLoading, error: productsError } = useProducts(); 
+  const { addItemToCart, loading: cartLoading } = useOrders();
+  const { user } = useAuth();
+
+  const [product, setProduct] = useState(null); 
+  const [loadingSpecificProduct, setLoadingSpecificProduct] = useState(true); 
+  const [errorSpecificProduct, setErrorSpecificProduct] = useState(null); 
   const [quantity, setQuantity] = useState(1);
-  const [addingToCart, setAddingToCart] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
-  // Función para determinar el `priceAtSale`
-  const getPriceAtSale = useCallback(() => {
-    if (!product) return 0; // Si los datos del producto no están cargados, devuelve 0
+  /**
+   * Determina el precio de venta del producto para el usuario actual.
+   * Prioriza la categoría de revendedor del usuario, luego cat1 como fallback.
+   * Retorna 0 si no se puede determinar un precio válido y positivo.
+   */
+  const getPriceAtSale = useCallback((productData) => {
+    if (!productData) return 0;
 
-    let finalPrice = product.price; // Precio público por defecto
+    let calculatedPrice = 0;
 
-    // Lógica para usuarios con rol 'Revendedor'
-    if (user && user.role === 'Revendedor' && user.resellerCategory && product.resellerPrices) {
+    if (user && user.role === 'Revendedor' && user.resellerCategory && productData.resellerPrices) {
       const resellerCategory = user.resellerCategory;
-      // Verifica si existe un precio para la categoría específica del revendedor y es un número válido
-      if (typeof product.resellerPrices[resellerCategory] === 'number' && product.resellerPrices[resellerCategory] > 0) {
-        finalPrice = product.resellerPrices[resellerCategory];
+      const priceForCategory = productData.resellerPrices[resellerCategory];
+      if (typeof priceForCategory === 'number' && priceForCategory > 0) {
+        calculatedPrice = priceForCategory;
       } else {
-        // Advertencia si la categoría de revendedor no tiene un precio válido asignado en el producto
-        console.warn(`ProductDetails: El producto '${product.name}' no tiene un precio válido para la categoría de revendedor '${resellerCategory}'. Usando el precio público.`, { resellerCategory, productResellerPrices: product.resellerPrices });
+        console.warn(`ProductDetails: Precio para categoría '${resellerCategory}' no válido o no positivo en el producto '${productData.name}'. Intentando otras opciones.`);
       }
-    } else if (user && (user.role === 'Administrador' || user.role === 'Editor') && product.resellerPrices && typeof product.resellerPrices.cat1 === 'number' && product.resellerPrices.cat1 > 0) {
-        // Para administradores/editores, usar cat1 si está disponible y es válido, si no, usa el precio público.
-        finalPrice = product.resellerPrices.cat1;
+    } 
+    
+    if (calculatedPrice <= 0 && productData.resellerPrices && typeof productData.resellerPrices.cat1 === 'number' && productData.resellerPrices.cat1 > 0) {
+      calculatedPrice = productData.resellerPrices.cat1;
     }
 
-    // Asegura que el precio final sea un número válido y positivo.
-    // Si no lo es, devuelve 0 para deshabilitar la acción de añadir al carrito.
-    if (isNaN(finalPrice) || finalPrice <= 0) {
-      console.error(`ProductDetails: Precio final inválido o ausente para el producto "${product.name}". Calculado: ${finalPrice}.`, { product, user });
+    if (isNaN(calculatedPrice) || calculatedPrice <= 0) {
+      console.error(`ProductDetails: No se pudo determinar un precio válido y positivo para el producto "${productData.name}". Verifique 'resellerPrices' en la base de datos y la categoría del usuario. Producto:`, productData, 'Usuario:', user);
       return 0; 
     }
-    return finalPrice;
-  }, [product, user]); // Dependencias para useCallback: product y user
+    return calculatedPrice;
+  }, [user]); 
 
-  const currentPriceAtSale = getPriceAtSale(); // Obtener el precio actual de venta
+  // Función para obtener y establecer productos relacionados aleatorios (excluyendo el actual)
+  const fetchAndSetRelatedProducts = useCallback(async () => {
+    let productsToFilter = allProductsFromContext;
+    if (!productsToFilter || productsToFilter.length === 0) {
+        const response = await fetchProducts(1, 20); 
+        productsToFilter = response?.products || [];
+    }
+    
+    if (productsToFilter.length > 0) {
+      const filteredProducts = productsToFilter.filter(p => p._id !== id);
+      
+      if (filteredProducts.length > 0) {
+        const shuffled = [...filteredProducts].sort(() => 0.5 - Math.random()); 
+        setRelatedProducts(shuffled.slice(0, 2)); 
+        console.log("Productos relacionados cargados:", shuffled.slice(0, 2)); 
+      } else {
+        setRelatedProducts([]);
+        console.log("No se encontraron productos relacionados después de filtrar el actual."); 
+      }
+    } else {
+      setRelatedProducts([]);
+      console.log("No se pudieron cargar productos o no hay suficientes para relacionados."); 
+    }
+  }, [allProductsFromContext, fetchProducts, id]);
 
-  // Efecto para cargar los detalles del producto cuando cambia el `productId` o la instancia `api`
+
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        // Asume que tienes una ruta /api/products/:productId para obtener un solo producto
-        const response = await api.get(`/api/products/${productId}`); 
-        setProduct(response.data);
-      } catch (err) {
-        console.error('Error al obtener los detalles del producto:', err);
-        setError('No se pudo cargar los detalles del producto.');
-        toast.error('Error al cargar los detalles del producto.');
-      } finally {
-        setLoading(false);
+    const findProductInContext = () => {
+      if (id && allProductsFromContext && allProductsFromContext.length > 0) {
+        const foundProduct = allProductsFromContext.find(p => p._id === id);
+        if (foundProduct) {
+          setProduct(foundProduct);
+          setLoadingSpecificProduct(false);
+          setErrorSpecificProduct(null);
+          fetchAndSetRelatedProducts(); 
+        } else {
+          setErrorSpecificProduct('Producto no encontrado en la lista principal. Refresca la página o busca directamente.');
+          setLoadingSpecificProduct(false);
+        }
+      } else if (!id) {
+          setErrorSpecificProduct('ID de producto no encontrado en la URL. Por favor, vuelva a la página de productos.');
+          setLoadingSpecificProduct(false);
       }
     };
-    fetchProduct();
-  }, [productId, api]);
 
-  // Manejador para añadir el producto al carrito
+    if (allProductsFromContext.length > 0 || !productsLoading) {
+        findProductInContext();
+    } else {
+        setLoadingSpecificProduct(true);
+    }
+    
+    setQuantity(1); 
+  }, [id, allProductsFromContext, productsLoading, fetchAndSetRelatedProducts]); 
+
+  // Calcula el displayPrice usando la misma lógica que getPriceAtSale, pero para mostrarlo
+  const displayPrice = getPriceAtSale(product);
+
+  // *** DEFINICIÓN DE handleAddToCart ***
+  // Asegúrate de que esta función esté DENTRO del componente ProductDetailsPage
+  // y ANTES de que se use en el JSX.
   const handleAddToCart = async () => {
+    if (!user) {
+      toast.info("Por favor, inicia sesión para añadir al carrito.");
+      return;
+    }
+    if (!product) { 
+        toast.error('Producto no cargado aún.');
+        return;
+    }
     if (quantity <= 0) {
       toast.error('La cantidad debe ser al menos 1.');
       return;
     }
-    if (currentPriceAtSale <= 0) {
-      toast.error('No se puede añadir al carrito: Precio de venta inválido.');
-      console.error('ProductDetails: Intento de añadir producto con precio de venta no válido (0 o menos).', { product, currentPriceAtSale, quantity });
-      return;
+    if (quantity > product.countInStock) { 
+        toast.error(`No hay suficiente stock. Disponible: ${product.countInStock}.`);
+        return;
     }
 
-    setAddingToCart(true); // Activa el indicador de carga
-    try {
-      // Llama a la función addItemToCart del OrderContext
-      await addItemToCart(product._id, quantity, currentPriceAtSale);
-    } catch (error) {
-      console.error('Error al añadir al carrito desde ProductDetails:', error);
-      toast.error('Error al añadir el producto al carrito.');
-    } finally {
-      setAddingToCart(false); // Desactiva el indicador de carga
+    const priceToPass = getPriceAtSale(product);
+    if (priceToPass <= 0) {
+        toast.error('No se puede añadir al carrito: Precio de venta no disponible o inválido.');
+        console.error('ProductDetails: Intento de añadir producto con precio de venta no válido (0 o menos).', { product, priceToPass, quantity });
+        return;
     }
+
+    await addItemToCart(product._id, quantity, priceToPass); 
+    toast.success(`"${product.name}" añadido al carrito.`);
   };
+  // *** FIN DEFINICIÓN DE handleAddToCart ***
 
-  if (loading) {
+
+  // Renderizado condicional basado en el estado de carga y error del producto
+  if (loadingSpecificProduct || productsLoading) { 
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="lg" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
+        <CircularProgress color="primary" />
+        <Typography sx={{ mt: 2 }}>Cargando producto...</Typography>
+      </Container>
     );
   }
 
-  if (error) {
+  if (errorSpecificProduct || productsError) { 
+    const errorMessage = errorSpecificProduct?.message || productsError?.message || 'Error desconocido al cargar el producto.';
     return (
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
-        <Typography variant="h6" color="error">{error}</Typography>
-        <Button variant="contained" onClick={() => navigate('/products')} sx={{ mt: 2 }}>
-          Volver a Productos
-        </Button>
-      </Box>
+      <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
+        <Alert severity="error">{errorMessage}</Alert>
+        <Button onClick={() => navigate('/products')} sx={{ mt: 2 }}>Volver a Productos</Button>
+      </Container>
     );
   }
 
   if (!product) {
     return (
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
-        <Typography variant="h6">Producto no encontrado.</Typography>
-        <Button variant="contained" onClick={() => navigate('/products')} sx={{ mt: 2 }}>
-          Volver a Productos
-        </Button>
-      </Box>
+      <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
+        <Alert severity="warning">Producto no encontrado.</Alert>
+        <Button onClick={() => navigate('/products')} sx={{ mt: 2}}>Volver a Productos</Button>
+      </Container>
     );
   }
 
-  return (
-    <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate(-1)} // Volver a la página anterior
-        sx={{ mb: 3 }}
-      >
-        Volver
-      </Button>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-        <Grid container spacing={4}>
-          {/* Columna de la Imagen del Producto */}
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                width: '100%',
-                height: 400,
-                backgroundColor: theme.palette.grey[50],
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <img
-                src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0].secure_url : 'https://placehold.co/400x400/E0E0E0/FFFFFF?text=No+Image'}
-                alt={product.name}
-                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/E0E0E0/FFFFFF?text=No+Image'; }}
-              />
-            </Box>
-          </Grid>
+  const isOutOfStock = product.countInStock <= 0;
 
-          {/* Columna de Detalles del Producto */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+  // Estilo común para las secciones de contenido (desde tu código)
+  const contentSectionStyle = { 
+    my: 5, 
+    p: { xs: 2.5, sm: 3.5 }, 
+    bgcolor: 'background.paper', 
+    borderRadius: 3, 
+    boxShadow: theme.shadows[2], 
+    border: `1px solid ${theme.palette.grey[100]}`, 
+    transition: 'box-shadow 0.3s ease-in-out',
+    '&:hover': {
+      boxShadow: theme.shadows[4], 
+    }
+  };
+
+  const sectionTitleStyle = { 
+    fontWeight: 700, 
+    color: 'primary.main', 
+    mb: 3, 
+    textAlign: 'left' 
+  };
+
+  // Mapeo para traducir el género
+  const genderMap = {
+    'men': 'Hombre',
+    'women': 'Mujer',
+    'unisex': 'Unisex',
+    'children': 'Niños',
+    'elderly': 'Ancianos',
+    'other': 'Otro',
+  };
+
+  // Función para obtener el género traducido
+  const getTranslatedGender = (gender) => {
+    return genderMap[gender.toLowerCase()] || gender; 
+  };
+
+
+  return (
+    <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
+      {/* Botón Volver a Productos */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/products')}
+          sx={{ borderRadius: 8, textTransform: 'none' }}
+        >
+          Volver a Productos
+        </Button>
+      </Box>
+
+      <Grid container spacing={5}> 
+        {/* Columna de Galería de Imágenes */}
+        <Grid item xs={12} md={6}>
+          {/* Se pasa imageUrls desde el producto cargado */}
+          <ProductImageCarousel imageUrls={product.imageUrls} productName={product.name} />
+        </Grid>
+
+        {/* Columna de Detalles del Producto */}
+        <Grid item xs={12} md={6}>
+          <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: theme.shadows[1] }}>
+            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '2rem', md: '2.5rem' } }}>
               {product.name}
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-              Código: {product.code}
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Descripción: {product.description || 'No hay descripción disponible.'}
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              Volumen: {product.volume || 'N/A'}
-            </Typography>
-            <Typography variant="h5" color="primary" sx={{ fontWeight: 700, mb: 3 }}>
-              Precio: ₡{currentPriceAtSale.toFixed(2)} {/* Muestra el precio calculado */}
+            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+              {product.brand || 'Sin descripción disponible.'}
             </Typography>
 
-            {/* Controles de Cantidad */}
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <IconButton
-                onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                size="large"
-                sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%', mr: 1 }}
-              >
-                <RemoveIcon />
-              </IconButton>
+            <Divider sx={{ my: 2 }} />
+
+            {/* Muestra el precio calculado por getPriceAtSale */}
+            <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
+              {displayPrice !== null ? `₡${displayPrice.toFixed(2)}` : 'Precio no disponible'}
+            </Typography>
+
+            <Typography variant="body1" color={isOutOfStock ? 'error.main' : 'text.primary'} sx={{ mb: 2, fontWeight: 600 }}>
+              Stock Disponible: {product.countInStock} {isOutOfStock && '(Agotado)'}
+            </Typography>
+
+            {/* Selector de Cantidad y Botón Añadir al Carrito */}
+            <Box display="flex" alignItems="center" mb={3}>
               <TextField
-                value={quantity}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  setQuantity(isNaN(val) || val < 1 ? 1 : val);
-                }}
                 type="number"
-                inputProps={{ min: 1, style: { textAlign: 'center', fontSize: '1.2rem' } }}
-                sx={{ width: 80 }}
+                label="Cantidad"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, Math.min(product.countInStock, parseInt(e.target.value) || 1)))}
+                inputProps={{ min: 1, max: product.countInStock }}
                 size="medium"
+                sx={{ width: 120, mr: 2 }}
               />
-              <IconButton
-                onClick={() => setQuantity(prev => prev + 1)}
-                size="large"
-                sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%', ml: 1 }}
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
+                onClick={handleAddToCart} // Aquí se utiliza handleAddToCart
+                disabled={cartLoading || isOutOfStock || quantity > product.countInStock || displayPrice <= 0}
+                sx={{
+                  borderRadius: 8,
+                  textTransform: 'none',
+                  px: 4,
+                  py: 1.5,
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+                  boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`,
+                  color: 'white',
+                  '&:hover': {
+                    background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, ${theme.palette.primary.main} 90%)`,
+                    boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
+                    transform: 'translateY(-2px)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                }}
               >
-                <AddIcon />
-              </IconButton>
+                {isOutOfStock ? 'Sin Stock' : 'Añadir al Carrito'}
+              </Button>
             </Box>
-
-            {/* Botón Añadir al Carrito */}
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={addingToCart ? <CircularProgress size={20} color="inherit" /> : <AddShoppingCartIcon />}
-              sx={{
-                py: 1.5,
-                backgroundColor: theme.palette.primary.main,
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: theme.palette.primary.dark,
-                },
-              }}
-              onClick={handleAddToCart}
-              disabled={addingToCart || currentPriceAtSale <= 0} // Deshabilita si está cargando o si el precio es inválido
-            >
-              {addingToCart ? 'Añadiendo...' : 'Añadir al Carrito'}
-            </Button>
-          </Grid>
+          </Box>
         </Grid>
-      </Paper>
-    </Box>
+      </Grid>
+
+      {/* Sección de Descripción Detallada - Estilo Mejorado */}
+      <Box sx={contentSectionStyle}>
+        <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
+          Descripción del Producto
+        </Typography>
+        <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.7 }}>
+          {product.description || 'No hay descripción detallada disponible para este producto.'}
+        </Typography>
+      </Box>
+
+      {/* Sección de Especificaciones - Estilo Mejorado */}
+      <Box sx={contentSectionStyle}>
+        <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
+          Especificaciones
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Categoría:</Typography> {product.category || 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Marca:</Typography> {product.brand || 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Código SKU:</Typography> {product.productCode || product.code || 'N/A'}
+            </Typography>
+          </Grid>
+          {product.gender && (
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body1">
+                <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Género:</Typography> {getTranslatedGender(product.gender)}
+              </Typography>
+            </Grid>
+          )}
+          {product.volume && (
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body1">
+                <Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Volumen:</Typography> {product.volume}
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
+      </Box>
+
+      {/* Sección de Notas Aromáticas / Etiquetas - Estilo Mejorado */}
+      {product.tags && product.tags.length > 0 && (
+        <Box sx={contentSectionStyle}>
+          <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
+            Notas Aromáticas
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {product.tags.map((tag, index) => (
+              <Chip key={index} label={tag} variant="outlined" color="primary" sx={{ borderRadius: 1, fontWeight: 600 }} />
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* Sección de Productos Relacionados */}
+      {relatedProducts.length > 0 && (
+        <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
+          <Typography variant="h5" component="h2" gutterBottom sx={{ ...sectionTitleStyle, textAlign: 'center' }}>
+            Productos Relacionados
+          </Typography>
+          <Grid container spacing={4} justifyContent="center">
+            {relatedProducts.map((p) => (
+              <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
+                <ProductCard product={p} />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+      {relatedProducts.length === 0 && !loadingSpecificProduct && (
+        <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            No se encontraron productos relacionados.
+          </Typography>
+        </Box>
+      )}
+    </Container>
   );
 };
 
-export default ProductDetails;
+export default ProductDetailsPage;
