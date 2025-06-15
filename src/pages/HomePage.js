@@ -39,7 +39,7 @@ const HomePage = () => {
     { title: 'Atención Personalizada', description: 'Un equipo dedicado a tus necesidades y consultas.', icon: <SupportAgentIcon sx={{ fontSize: 40, color: 'primary.main' }} /> },
     { 
       title: 'Únete a Nuestra Red', 
-      description: 'Forma parte de nuestra comunidad!.', 
+      description: 'Forma parte de nuestro selecto grupo de WhatsApp.', 
       icon: <GroupAddIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
       // CAMBIO CLAVE AQUÍ: Añadimos un enlace de WhatsApp
       link: 'https://chat.whatsapp.com/KJtYhoXgz2N6LqO3ehSaSh', 
