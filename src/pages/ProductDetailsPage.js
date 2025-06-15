@@ -359,8 +359,31 @@ const ProductDetailsPage = () => {
             Notas Aromáticas
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {product.tags.map((tag, index) => (
-              <Chip key={index} label={tag} variant="outlined" color="primary" sx={{ borderRadius: 1, fontWeight: 600 }} />
+            {product.tags.map((tagItem, tagIndex) => (
+             <Button // <--- REEMPLAZADO POR BUTTON
+                key={tagIndex} 
+                variant="contained" // <--- VARIANT CONTAINED
+                color="secondary" // Usa el color primario de tu tema
+                // Puedes ajustar estos estilos para que coincidan con la apariencia deseada
+                sx={{ 
+                  borderRadius: 1, 
+                  fontWeight: 600, 
+                  cursor: 'default', // Mantén el cursor predeterminado
+                  textTransform: 'none', // Evita que el texto sea todo mayúsculas por defecto en Button
+                  pointerEvents: 'none', // Esto inhabilita *completamente* los eventos de puntero, haciéndolo no clicable
+                  boxShadow: 'none', // Elimina la sombra por defecto del botón si no la quieres
+                  '&:hover': {
+                    boxShadow: 'none', // También al pasar el ratón
+                    bgcolor: theme.palette.primary.main, // Evita cambio de color al hover
+                  },
+                  '&:active': {
+                    boxShadow: 'none', // También al hacer clic
+                    bgcolor: theme.palette.primary.main, // Evita cambio de color al activar
+                  }
+                }} 
+              >
+                {tagItem}
+              </Button>
             ))}
           </Box>
         </Box>

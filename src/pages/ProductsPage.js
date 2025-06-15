@@ -23,6 +23,8 @@ const ProductsPage = () => {
 
   const [page, setPage] = useState(1); // Estado para la paginación
 
+  console.log("products page: ", products)
+
   // Opciones de género disponibles
   const availableGenders = [
     { value: 'men', label: 'Hombre' },
