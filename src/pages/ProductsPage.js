@@ -9,23 +9,26 @@ import SortIcon from '@mui/icons-material/Sort';
 import ProductCard from '../components/product/ProductCard';
 import { useProducts } from '../contexts/ProductContext';
 import { useTheme } from '@mui/material/styles';
+// --- Import contexts needed for local logic ---
+import { useOrders } from '../contexts/OrderContext'; 
+import { useAuth } from '../contexts/AuthContext'; // We need the user for price calculation
+import { toast } from 'react-toastify';
 
 const ProductsPage = () => {
   const theme = useTheme();
-  // Destructuramos `products`, `loading`, `error`, `fetchProducts`, `currentPage`, `totalPages`, `totalProducts` de `useProducts()`.
-  // `fetchProducts` ahora es la función modificada en ProductContext que acepta los parámetros de filtro.
   const { products, loading, error, fetchProducts, currentPage, totalPages, totalProducts } = useProducts();
+  const { addItemToCart } = useOrders();
+  const { user } = useAuth(); // Get user for price logic
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGender, setSelectedGender] = useState(''); 
   const [priceRange, setPriceRange] = useState([0, 300000]); 
   const [sortOrder, setSortOrder] = useState('createdAt_desc'); 
+  const [page, setPage] = useState(1);
+  
+  // Local state to track loading for a SINGLE product
+  const [addingProductId, setAddingProductId] = useState(null);
 
-  const [page, setPage] = useState(1); // Estado para la paginación
-
-  console.log("products page: ", products)
-
-  // Opciones de género disponibles
   const availableGenders = [
     { value: 'men', label: 'Hombre' },
     { value: 'women', label: 'Mujer' },
@@ -35,23 +38,10 @@ const ProductsPage = () => {
     { value: 'other', label: 'Otro' },
   ];
 
-  // Efecto que se dispara cada vez que cambian los filtros o la página
+  // This useEffect remains unchanged
   useEffect(() => {
     const fetchProductsWithFilters = async () => {
-      const limit = 18; // Definimos el límite de productos por página
-      
-      // Log para depuración: muestra los parámetros que se enviarán
-      console.log('Frontend: Parámetros enviados a fetchProducts:', {
-        page,
-        limit,
-        sortOrder,
-        searchTerm,
-        selectedGender,
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
-      });
-
-      // Llamada a la función `fetchProducts` del contexto con todos los parámetros de filtro
+      const limit = 18; 
       await fetchProducts(
         page, 
         limit, 
@@ -60,46 +50,85 @@ const ProductsPage = () => {
         selectedGender, 
         priceRange[0], 
         priceRange[1]
-        // Ya no se pasa 'false' para `isActive` aquí, ya que esa lógica
-        // (filtrar por `active: true`) se maneja directamente en el nuevo controlador backend.
       );
     };
 
     fetchProductsWithFilters();
-    // Dependencias del useEffect: se vuelve a ejecutar si cualquiera de estos valores cambia
   }, [page, searchTerm, selectedGender, priceRange, sortOrder, fetchProducts]); 
 
 
-  // Manejadores de cambios para los filtros
+  // --- CORRECTED: Local handler now calculates price before adding ---
+  const handleAddToCart = useCallback(async (product) => {
+    if (typeof addItemToCart !== 'function') {
+      toast.error("La funcionalidad para añadir al carrito no está disponible.");
+      return;
+    }
+    
+    setAddingProductId(product._id); // Start loading for this card only
+
+    // --- Price Calculation Logic (replicated from original ProductCard) ---
+    const getPriceForCart = () => {
+        let calculatedPrice = null;
+        if (user && user.role === 'Revendedor' && user.resellerCategory && product.resellerPrices) {
+            const priceForCategory = product.resellerPrices[user.resellerCategory];
+            if (typeof priceForCategory === 'number' && priceForCategory > 0) {
+                calculatedPrice = priceForCategory;
+            }
+        }
+        if (calculatedPrice === null && product.resellerPrices && typeof product.resellerPrices.cat1 === 'number' && product.resellerPrices.cat1 > 0) {
+            calculatedPrice = product.resellerPrices.cat1;
+        }
+        return calculatedPrice || 0;
+    };
+
+    const priceToPass = getPriceForCart();
+    if (priceToPass <= 0) {
+        toast.error("No se puede añadir al carrito: precio no disponible o inválido.");
+        setAddingProductId(null); // Stop loading if price is invalid
+        return;
+    }
+    // --- End of Price Logic ---
+
+    try {
+      // Your original logic passed 3 arguments. We now do the same.
+      await addItemToCart(product._id, 1, priceToPass); 
+      
+    } catch (err) {
+      toast.error(err.message || "No se pudo añadir el producto.");
+    } finally {
+      setAddingProductId(null); // Reset loading state
+    }
+  }, [addItemToCart, user]);
+
+
+  // All other handlers remain unchanged
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
-    setPage(1); // Resetear a la primera página al cambiar el término de búsqueda
+    setPage(1); 
   };
 
   const handleGenderChange = (event) => {
     setSelectedGender(event.target.value);
-    setPage(1); // Resetear a la primera página al cambiar el género
+    setPage(1); 
   };
 
   const handlePriceRangeChange = (event, newValue) => {
     setPriceRange(newValue);
-    setPage(1); // Resetear a la primera página al cambiar el rango de precios
+    setPage(1); 
   };
 
   const handleSortChange = (event) => {
     setSortOrder(event.target.value);
-    setPage(1); // Resetear a la primera página al cambiar el orden de clasificación
+    setPage(1); 
   };
 
-  // Manejador de cambio de página de la paginación
   const handlePageChange = (event, value) => {
     setPage(value);
   };
 
-  // Función de formato para el valor del Slider de precios
   const valueLabelFormat = (value) => `₡${value}`;
 
-  const displayedProducts = products; // Los productos a mostrar ya vienen filtrados y paginados del contexto
+  const displayedProducts = products; 
 
 
   return (
@@ -108,87 +137,45 @@ const ProductsPage = () => {
         Todos Nuestros Productos
       </Typography>
 
-      {/* Contenedor de Filtros */}
+      {/* Filters section remains unchanged */}
       <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 3, bgcolor: 'background.paper', border: `1px solid ${theme.palette.grey[100]}` }}>
         <Grid container spacing={6} alignItems="center" justifyContent="center"> 
-          {/* Campo de búsqueda por nombre */}
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              label="Buscar por Nombre"
-              variant="outlined"
-              fullWidth
-              size="small"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          {/* Selector de Género */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
-              <InputLabel id="gender-select-label">Filtrar por Género</InputLabel>
-              <Select
-                labelId="gender-select-label"
-                value={selectedGender}
-                label="Filtrar por Género"
-                onChange={handleGenderChange}
-              >
-                <MenuItem value="">
-                  <em>Todos</em>
-                </MenuItem>
-                {availableGenders.map((gender) => (
-                  <MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Slider de Rango de Precios */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography gutterBottom sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 1 }}>
-              Rango de Precios: ₡{priceRange[0]} - ₡{priceRange[1]}
-            </Typography>
-            <Slider
-              value={priceRange}
-              onChange={handlePriceRangeChange}
-              valueLabelDisplay="auto"
-              getAriaValueText={valueLabelFormat}
-              min={0}
-              max={300000} 
-              step={1000} 
-              marks={[
-                { value: 0, label: '₡0' },
-                { value: 300000, label: '₡300K+' }, 
-              ]}
-              color="primary"
-            />
-          </Grid>
-
-          {/* Selector de Ordenar por */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
-              <InputLabel id="sort-select-label">Ordenar por</InputLabel>
-              <Select
-                labelId="sort-select-label"
-                value={sortOrder}
-                label="Ordenar por"
-                onChange={handleSortChange}
-              >
-                <MenuItem value="createdAt_desc">Más Recientes</MenuItem>
-                <MenuItem value="createdAt_asc">Más Antiguos</MenuItem>
-                <MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem>
-                <MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem>
-                <MenuItem value="name_asc">Nombre: A-Z</MenuItem>
-                <MenuItem value="name_desc">Nombre: Z-A</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+            {/* Search Field */}
+            <Grid item xs={12} sm={6} md={3}>
+                <TextField label="Buscar por Nombre" variant="outlined" fullWidth size="small" value={searchTerm} onChange={handleSearchChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+            </Grid>
+            {/* Gender Selector */}
+            <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
+                <InputLabel id="gender-select-label">Filtrar por Género</InputLabel>
+                <Select labelId="gender-select-label" value={selectedGender} label="Filtrar por Género" onChange={handleGenderChange}>
+                    <MenuItem value=""><em>Todos</em></MenuItem>
+                    {availableGenders.map((gender) => (<MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>))}
+                </Select>
+                </FormControl>
+            </Grid>
+            {/* Price Range Slider */}
+            <Grid item xs={12} sm={6} md={3}>
+                <Typography gutterBottom sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 1 }}>Rango de Precios: ₡{priceRange[0]} - ₡{priceRange[1]}</Typography>
+                <Slider value={priceRange} onChange={handlePriceRangeChange} valueLabelDisplay="auto" getAriaValueText={valueLabelFormat} min={0} max={300000} step={1000} marks={[{ value: 0, label: '₡0' }, { value: 300000, label: '₡300K+' }]} color="primary" />
+            </Grid>
+            {/* Sort Selector */}
+            <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
+                <InputLabel id="sort-select-label">Ordenar por</InputLabel>
+                <Select labelId="sort-select-label" value={sortOrder} label="Ordenar por" onChange={handleSortChange}>
+                    <MenuItem value="createdAt_desc">Más Recientes</MenuItem>
+                    <MenuItem value="createdAt_asc">Más Antiguos</MenuItem>
+                    <MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem>
+                    <MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem>
+                    <MenuItem value="name_asc">Nombre: A-Z</MenuItem>
+                    <MenuItem value="name_desc">Nombre: Z-A</MenuItem>
+                </Select>
+                </FormControl>
+            </Grid>
         </Grid>
       </Paper>
-      {/* Fin Contenedor de Filtros */}
 
-      {/* Sección de visualización de productos */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
           <CircularProgress color="primary" />
@@ -203,11 +190,17 @@ const ProductsPage = () => {
           <Grid container spacing={4} justifyContent="center">
             {displayedProducts.map((product) => (
               <Grid item key={product._id} xs={12} sm={6} md={4} lg={4}> 
-                <ProductCard product={product} />
+                {/* --- Pass the local handler and loading state to the card --- */}
+                <ProductCard 
+                  product={product} 
+                  onAddToCart={() => handleAddToCart(product)}
+                  isAdding={addingProductId === product._id}
+                />
               </Grid>
             ))}
           </Grid>
-          {/* Paginación */}
+          
+          {/* Pagination remains unchanged */}
           {totalPages >= 1 && ( 
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <Pagination 

@@ -61,7 +61,7 @@ export const ProductProvider = ({ children }) => {
       console.error('ProductContext: Error al obtener productos filtrados:', err.response?.data || err);
       // Ajustar el mensaje de error para que sea más informativo
       setError({ message: err.response?.data?.message || 'Error al cargar los productos filtrados. Verifica la conexión o el servidor.' });
-      toast.error(err.response?.data?.message || 'Error al cargar los productos filtrados.');
+      
     } finally {
       setLoading(false);
     }

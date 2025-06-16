@@ -28,12 +28,10 @@ const ProductDetailsPage = () => {
   const [errorSpecificProduct, setErrorSpecificProduct] = useState(null); 
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  
+  // --- NEW: Local loading state for related products ---
+  const [addingProductId, setAddingProductId] = useState(null);
 
-  /**
-   * Determina el precio de venta del producto para el usuario actual.
-   * Prioriza la categoría de revendedor del usuario, luego cat1 como fallback.
-   * Retorna 0 si no se puede determinar un precio válido y positivo.
-   */
   const getPriceAtSale = useCallback((productData) => {
     if (!productData) return 0;
 
@@ -60,7 +58,6 @@ const ProductDetailsPage = () => {
     return calculatedPrice;
   }, [user]); 
 
-  // Función para obtener y establecer productos relacionados aleatorios (excluyendo el actual)
   const fetchAndSetRelatedProducts = useCallback(async () => {
     let productsToFilter = allProductsFromContext;
     if (!productsToFilter || productsToFilter.length === 0) {
@@ -114,19 +111,13 @@ const ProductDetailsPage = () => {
     setQuantity(1); 
   }, [id, allProductsFromContext, productsLoading, fetchAndSetRelatedProducts]); 
 
-  // Calcula el displayPrice usando la misma lógica que getPriceAtSale, pero para mostrarlo
   const displayPrice = getPriceAtSale(product);
 
-  // *** DEFINICIÓN DE handleAddToCart ***
-  // Asegúrate de que esta función esté DENTRO del componente ProductDetailsPage
-  // y ANTES de que se use en el JSX.
   const handleAddToCart = async () => {
     if (!user) {
-      toast.info("Por favor, inicia sesión para añadir al carrito.");
       return;
     }
     if (!product) { 
-        toast.error('Producto no cargado aún.');
         return;
     }
     if (quantity <= 0) {
@@ -146,12 +137,34 @@ const ProductDetailsPage = () => {
     }
 
     await addItemToCart(product._id, quantity, priceToPass); 
-    toast.success(`"${product.name}" añadido al carrito.`);
   };
-  // *** FIN DEFINICIÓN DE handleAddToCart ***
+  
+  // --- NEW: Local handler for adding related products to the cart ---
+  const handleRelatedProductAddToCart = useCallback(async (relatedProduct) => {
+    if (typeof addItemToCart !== 'function') {
+      toast.error("La funcionalidad para añadir al carrito no está disponible.");
+      return;
+    }
+    setAddingProductId(relatedProduct._id); // Start loading for this card only
+
+    const priceToPass = getPriceAtSale(relatedProduct);
+    if (priceToPass <= 0) {
+        toast.error("No se puede añadir al carrito: precio no disponible o inválido.");
+        setAddingProductId(null); // Stop loading
+        return;
+    }
+
+    try {
+      await addItemToCart(relatedProduct._id, 1, priceToPass); 
+      
+    } catch (err) {
+      toast.error(err.message || "No se pudo añadir el producto.");
+    } finally {
+      setAddingProductId(null); // Reset loading state
+    }
+  }, [addItemToCart, getPriceAtSale]);
 
 
-  // Renderizado condicional basado en el estado de carga y error del producto
   if (loadingSpecificProduct || productsLoading) { 
     return (
       <Container maxWidth="lg" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
@@ -182,7 +195,6 @@ const ProductDetailsPage = () => {
 
   const isOutOfStock = product.countInStock <= 0;
 
-  // Estilo común para las secciones de contenido (desde tu código)
   const contentSectionStyle = { 
     my: 5, 
     p: { xs: 2.5, sm: 3.5 }, 
@@ -203,7 +215,6 @@ const ProductDetailsPage = () => {
     textAlign: 'left' 
   };
 
-  // Mapeo para traducir el género
   const genderMap = {
     'men': 'Hombre',
     'women': 'Mujer',
@@ -213,7 +224,6 @@ const ProductDetailsPage = () => {
     'other': 'Otro',
   };
 
-  // Función para obtener el género traducido
   const getTranslatedGender = (gender) => {
     return genderMap[gender.toLowerCase()] || gender; 
   };
@@ -221,7 +231,6 @@ const ProductDetailsPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
-      {/* Botón Volver a Productos */}
       <Box sx={{ mb: 3 }}>
         <Button
           variant="outlined"
@@ -235,13 +244,10 @@ const ProductDetailsPage = () => {
       </Box>
 
       <Grid container spacing={5}> 
-        {/* Columna de Galería de Imágenes */}
         <Grid item xs={12} md={6}>
-          {/* Se pasa imageUrls desde el producto cargado */}
           <ProductImageCarousel imageUrls={product.imageUrls} productName={product.name} />
         </Grid>
 
-        {/* Columna de Detalles del Producto */}
         <Grid item xs={12} md={6}>
           <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: theme.shadows[1] }}>
             <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '2rem', md: '2.5rem' } }}>
@@ -253,7 +259,6 @@ const ProductDetailsPage = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Muestra el precio calculado por getPriceAtSale */}
             <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
               {displayPrice !== null ? `₡${displayPrice.toFixed(2)}` : 'Precio no disponible'}
             </Typography>
@@ -262,7 +267,6 @@ const ProductDetailsPage = () => {
               Stock Disponible: {product.countInStock} {isOutOfStock && '(Agotado)'}
             </Typography>
 
-            {/* Selector de Cantidad y Botón Añadir al Carrito */}
             <Box display="flex" alignItems="center" mb={3}>
               <TextField
                 type="number"
@@ -277,7 +281,7 @@ const ProductDetailsPage = () => {
                 variant="contained"
                 color="primary"
                 startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
-                onClick={handleAddToCart} // Aquí se utiliza handleAddToCart
+                onClick={handleAddToCart}
                 disabled={cartLoading || isOutOfStock || quantity > product.countInStock || displayPrice <= 0}
                 sx={{
                   borderRadius: 8,
@@ -304,7 +308,6 @@ const ProductDetailsPage = () => {
         </Grid>
       </Grid>
 
-      {/* Sección de Descripción Detallada - Estilo Mejorado */}
       <Box sx={contentSectionStyle}>
         <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
           Descripción del Producto
@@ -314,7 +317,6 @@ const ProductDetailsPage = () => {
         </Typography>
       </Box>
 
-      {/* Sección de Especificaciones - Estilo Mejorado */}
       <Box sx={contentSectionStyle}>
         <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
           Especificaciones
@@ -352,7 +354,6 @@ const ProductDetailsPage = () => {
         </Grid>
       </Box>
 
-      {/* Sección de Notas Aromáticas / Etiquetas - Estilo Mejorado */}
       {product.tags && product.tags.length > 0 && (
         <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
@@ -360,25 +361,24 @@ const ProductDetailsPage = () => {
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {product.tags.map((tagItem, tagIndex) => (
-             <Button // <--- REEMPLAZADO POR BUTTON
+             <Button
                 key={tagIndex} 
-                variant="contained" // <--- VARIANT CONTAINED
-                color="secondary" // Usa el color primario de tu tema
-                // Puedes ajustar estos estilos para que coincidan con la apariencia deseada
+                variant="contained"
+                color="secondary"
                 sx={{ 
                   borderRadius: 1, 
                   fontWeight: 600, 
-                  cursor: 'default', // Mantén el cursor predeterminado
-                  textTransform: 'none', // Evita que el texto sea todo mayúsculas por defecto en Button
-                  pointerEvents: 'none', // Esto inhabilita *completamente* los eventos de puntero, haciéndolo no clicable
-                  boxShadow: 'none', // Elimina la sombra por defecto del botón si no la quieres
+                  cursor: 'default', 
+                  textTransform: 'none',
+                  pointerEvents: 'none', 
+                  boxShadow: 'none', 
                   '&:hover': {
-                    boxShadow: 'none', // También al pasar el ratón
-                    bgcolor: theme.palette.primary.main, // Evita cambio de color al hover
+                    boxShadow: 'none',
+                    bgcolor: theme.palette.primary.main, 
                   },
                   '&:active': {
-                    boxShadow: 'none', // También al hacer clic
-                    bgcolor: theme.palette.primary.main, // Evita cambio de color al activar
+                    boxShadow: 'none', 
+                    bgcolor: theme.palette.primary.main, 
                   }
                 }} 
               >
@@ -389,7 +389,6 @@ const ProductDetailsPage = () => {
         </Box>
       )}
 
-      {/* Sección de Productos Relacionados */}
       {relatedProducts.length > 0 && (
         <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
           <Typography variant="h5" component="h2" gutterBottom sx={{ ...sectionTitleStyle, textAlign: 'center' }}>
@@ -398,7 +397,12 @@ const ProductDetailsPage = () => {
           <Grid container spacing={4} justifyContent="center">
             {relatedProducts.map((p) => (
               <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
-                <ProductCard product={p} />
+                {/* --- Pass the local handler and loading state to the card --- */}
+                <ProductCard 
+                    product={p} 
+                    onAddToCart={() => handleRelatedProductAddToCart(p)}
+                    isAdding={addingProductId === p._id}
+                />
               </Grid>
             ))}
           </Grid>

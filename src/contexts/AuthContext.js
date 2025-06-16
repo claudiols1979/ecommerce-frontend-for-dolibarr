@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
       response => response,
       error => {
         const errorMessage = error.response?.data?.message;
-
+        
         // Si es 401 y el mensaje específico de expiración, o cualquier 401, forzar logout
         if (error.response && error.response.status === 401 && 
             (errorMessage === 'No autorizado, token fallido o expirado.' || errorMessage === 'jwt expired')) { // Agregamos 'jwt expired' para el error del backend

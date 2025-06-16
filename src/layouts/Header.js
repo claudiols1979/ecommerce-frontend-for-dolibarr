@@ -18,7 +18,7 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    toast.info('Sesión cerrada.');
+    
   };
 
   return (

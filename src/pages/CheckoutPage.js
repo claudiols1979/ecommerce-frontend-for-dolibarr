@@ -42,8 +42,7 @@ const CheckoutPage = () => {
 
   // Redirigir si el carrito está vacío
   useEffect(() => {
-    if (!loading && cartItems.length === 0 && !orderPlaced) {
-      toast.info('Tu carrito está vacío. ¡Redirigiendo a productos para añadir algo antes de checkout!');
+    if (!loading && cartItems.length === 0 && !orderPlaced) {      
       navigate('/products');
     }
   }, [cartItems, loading, navigate, orderPlaced]);
@@ -66,16 +65,13 @@ const CheckoutPage = () => {
 
   // Esta función ahora FINALIZA EL PEDIDO y ABRE WHATSAPP DIRECTAMENTE
   const handlePlaceOrder = async () => {
-    if (!user) {
-      toast.error('Por favor, inicia sesión para finalizar el pedido.');
+    if (!user) {      
       return;
     }
-    if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email) {
-      toast.error('Tu información de envío está incompleta en tu perfil. Por favor, actualízala.');
+    if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email) {     
       return;
     }
-    if (cartItems.length === 0) {
-      toast.error('Tu carrito está vacío. Añade productos antes de finalizar el pedido.');
+    if (cartItems.length === 0) {     
       return;
     }
 
@@ -117,14 +113,14 @@ const CheckoutPage = () => {
         
         window.open(whatsappLink, '_blank'); // Abre el enlace en una nueva pestaña inmediatamente
 
-        toast.success('Pedido realizado con éxito. Se abrió WhatsApp para finalizar la comunicación.');
+       
       } else {
         // placeOrder en OrderContext ya debería mostrar errores con toast, pero por si acaso.
         toast.error('Hubo un problema al procesar su pedido. Intente nuevamente.');
       }
     } catch (err) {
       console.error('Error al finalizar el pedido:', err);
-      toast.error('Error al finalizar el pedido.');
+      toast.error('Error al finalizar el pedido. Verifique que WhatsApp o WhatsAppWeb esten instalados en su dispositivo');
     }
   };
 
@@ -196,7 +192,7 @@ const CheckoutPage = () => {
           <Button
             variant="outlined"
             color="secondary"
-            onClick={() => navigate('/myorders')} // Asumiendo que tienes una ruta /myorders
+            onClick={() => navigate('/profile')} // Asumiendo que tienes una ruta /myorders
             sx={{ mt: 2, ml: { xs: 0, sm: 2 }, px: 4, py: 1.5, borderRadius: 2 }}
           >
             Ver Mis Pedidos

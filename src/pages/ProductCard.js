@@ -12,8 +12,7 @@ const ProductCard = ({ product }) => {
   const { user } = useAuth(); // Get user from AuthContext
 
   const handleAddToCart = async () => {
-    if (!user) {
-      toast.info("Por favor, inicia sesión para añadir al carrito.");
+    if (!user) {     
       return;
     }
     const success = await addItemToCart(product._id, 1);

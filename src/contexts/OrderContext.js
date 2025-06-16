@@ -36,7 +36,7 @@ export const OrderProvider = ({ children }) => {
     } catch (err) {
       console.error('Error al obtener el carrito:', err.response?.data || err);
       setError({ message: err.response?.data?.message || 'Error al cargar el carrito.' });
-      toast.error(err.response?.data?.message || 'Error al cargar el carrito.');
+      
       setCartItems([]); 
     } finally {
       setLoading(false);
@@ -49,7 +49,7 @@ export const OrderProvider = ({ children }) => {
 
   const updateCartItemQuantity = useCallback(async (productId, quantity) => {
     if (!user || !user.token) {
-      toast.info('Por favor, inicia sesión para actualizar el carrito.');
+     
       return;
     }
     if (!productId || quantity < 0) { 
@@ -60,12 +60,12 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await api.put('/api/orders/update-item-quantity', { productId, quantity });
-      toast.success(response.data.message || 'Cantidad actualizada.');
+      
       fetchCart(); 
     } catch (err) {
       console.error('Error al actualizar la cantidad del ítem en el carrito:', err.response?.data || err);
       setError({ message: err.response?.data?.message || 'Error al actualizar la cantidad.' });
-      toast.error(err.response?.data?.message || 'Error al actualizar la cantidad.');
+      
     } finally {
       setLoading(false);
     }
@@ -73,23 +73,23 @@ export const OrderProvider = ({ children }) => {
 
   const removeCartItem = useCallback(async (productId) => {
     if (!user || !user.token) {
-      toast.info('Por favor, inicia sesión para eliminar ítems del carrito.');
+      
       return;
     }
     if (!productId) {
-      toast.error('No se pudo eliminar el ítem: ID de producto no encontrado.');
+     
       return;
     }
     setLoading(true);
     setError(null);
     try {
       const response = await api.delete(`/api/orders/remove-item/${productId}`); 
-      toast.success(response.data.message || 'Ítem eliminado del carrito.');
+      
       fetchCart(); 
     } catch (err) {
       console.error('Error al eliminar el ítem del carrito:', err.response?.data || err);
       setError({ message: err.response?.data?.message || 'Error al eliminar el ítem del carrito.' });
-      toast.error(err.response?.data?.message || 'Error al eliminar el ítem del carrito.');
+      
     } finally {
       setLoading(false);
     }
@@ -97,19 +97,19 @@ export const OrderProvider = ({ children }) => {
 
   const clearCart = useCallback(async () => {
     if (!user || !user.token) {
-        toast.info('Por favor, inicia sesión para vaciar el carrito.');
+        
         return;
     }
     setLoading(true);
     setError(null);
     try {
         const response = await api.delete('/api/orders/clear-cart'); 
-        toast.success(response.data.message || 'Carrito vaciado con éxito.');
+        
         setCartItems([]); 
     } catch (err) {
         console.error('Error al vaciar el carrito:', err.response?.data || err);
         setError({ message: err.response?.data?.message || 'Error al vaciar el carrito.' });
-        toast.error(err.response?.data?.message || 'Error al vaciar el carrito.');
+        
     } finally {
         setLoading(false);
     }
@@ -118,15 +118,15 @@ export const OrderProvider = ({ children }) => {
 
   const placeOrder = useCallback(async (whatsappAgentNumber) => { // Parámetro correcto
     if (!user || !user.token) {
-      toast.info('Por favor, inicia sesión para finalizar el pedido.');
+      
       return null;
     }
     if (cartItems.length === 0) {
-      toast.error('No hay productos en el carrito para realizar un pedido.');
+      
       return null;
     }
     if (!whatsappAgentNumber) {
-      toast.error('El número de WhatsApp del agente es obligatorio.');
+      
       return null;
     }
 
@@ -146,13 +146,13 @@ export const OrderProvider = ({ children }) => {
         whatsappAgentPhoneNumber: whatsappAgentNumber, // *** CORRECCIÓN AQUÍ ***
       });
 
-      toast.success(response.data.message || 'Pedido realizado con éxito.');
+     
       setCartItems([]); 
       return response.data; 
     } catch (err) {
       console.error('Error al finalizar el pedido:', err.response?.data || err);
       setError({ message: err.response?.data?.message || 'Error al realizar el pedido.' });
-      toast.error(err.response?.data?.message || 'Error al realizar el pedido.');
+     
       return null;
     } finally {
       setLoading(false);
@@ -161,11 +161,11 @@ export const OrderProvider = ({ children }) => {
 
   const addItemToCart = useCallback(async (productId, quantity, priceAtSale) => {
     if (!user || !user.token) {
-        toast.info('Por favor, inicia sesión para añadir productos al carrito.');
+        
         return;
     }
     if (!productId || quantity <= 0 || priceAtSale === undefined || priceAtSale === null || isNaN(priceAtSale) || priceAtSale <= 0) { 
-        toast.error('Datos de producto inválidos para añadir al carrito: Precio no válido.');
+       
         console.error("DEBUG: addItemToCart recibió datos inválidos:", {productId, quantity, priceAtSale});
         return;
     }
@@ -173,12 +173,12 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
         const response = await api.post('/api/orders/add-item', { productId, quantity, priceAtSale });
-        toast.success(response.data.message || 'Producto añadido al carrito.');
+       
         fetchCart(); 
     } catch (err) {
         console.error('Error al añadir producto al carrito:', err.response?.data || err);
         setError({ message: err.response?.data?.message || 'Error al añadir producto al carrito.' });
-        toast.error(err.response?.data?.message || 'Error al añadir producto al carrito.');
+       
     } finally {
         setLoading(false);
     }

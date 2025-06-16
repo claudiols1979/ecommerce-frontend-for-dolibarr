@@ -13,6 +13,11 @@ const LoginPage = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
+  // --- WhatsApp Link Configuration ---
+  const WHATSAPP_AGENT_NUMBER = '50672317420';
+  const whatsappMessage = "Hola, Soy nuevo usuario y quisiera obtener un codigo para ingresar a la tienda en linea.";
+  const whatsappUrl = `https://wa.me/${WHATSAPP_AGENT_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+
   // Redirigir si ya ha iniciado sesión
   useEffect(() => {
     if (user) {
@@ -39,7 +44,7 @@ const LoginPage = () => {
       <Card sx={{ p: { xs: 2, sm: 4 }, width: '100%', borderRadius: 2, boxShadow: 3 }}>
         <CardContent>
           <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 600 }}>
-            Iniciar Sesión como Revendedor
+            Iniciar Sesión
           </Typography>
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
             <TextField
@@ -47,7 +52,7 @@ const LoginPage = () => {
               required
               fullWidth
               id="resellerCode"
-              label="Código de Revendedor"
+              label="Código de acceso"
               name="resellerCode"
               autoComplete="off" // No autocompletar códigos
               autoFocus
@@ -68,7 +73,15 @@ const LoginPage = () => {
             <Grid container justifyContent="center" sx={{ mt: 3 }}>
               <Grid item>
                 <Typography variant="body2">
-                  ¿Necesitas un código? Contacta a tu administrador.
+                  ¿Necesitas un código?{' '}
+                  <MuiLink
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="hover"
+                  >
+                    Contacta a tu administrador.
+                  </MuiLink>
                 </Typography>
               </Grid>
             </Grid>

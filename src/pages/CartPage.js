@@ -26,15 +26,14 @@ const CartPage = () => {
 
   useEffect(() => {
     if (!loading && cartItems.length === 0) {
-      toast.info('Tu carrito está vacío. ¡Añade algunos productos!');
+      console.log('Tu carrito está vacío. ¡Añade algunos productos!');
     }
   }, [cartItems, loading]);
 
   const handleQuantityChange = async (item, changeType) => { 
     const productId = item.product?._id; 
     if (!productId) {
-      console.error("CartPage: Product ID is missing for quantity change.", item);
-      toast.error("No se pudo actualizar la cantidad. ID de producto no encontrado.");
+      console.error("CartPage: Product ID is missing for quantity change.", item);      
       return;
     }
 
@@ -57,8 +56,7 @@ const CartPage = () => {
       console.log("CartPage: Removing item with product ID:", productId);
       await removeCartItem(productId);
     } else {
-      console.error("CartPage: Could not remove item, product ID is missing or invalid for item:", item);
-      toast.error("No se pudo eliminar el producto. ID no encontrado.");
+      console.error("CartPage: Could not remove item, product ID is missing or invalid for item:", item);      
     }
   };
 
