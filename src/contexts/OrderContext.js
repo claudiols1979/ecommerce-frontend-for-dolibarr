@@ -9,6 +9,7 @@ export const useOrders = () => useContext(OrderContext);
 export const OrderProvider = ({ children }) => {
   const { api, user } = useAuth(); 
   const [cartItems, setCartItems] = useState([]);
+  const [myOrders, setMyOrders] = useState([]); // new
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -183,6 +184,51 @@ export const OrderProvider = ({ children }) => {
     }
   }, [api, user, fetchCart]);
 
+  const fetchMyOrders = useCallback(async () => {
+    if (!user || !user.token) {
+      setMyOrders([]);
+      setLoading(false); // Podríamos tener un loading específico para myOrders
+      setError(null);
+      return;
+    }
+
+    setLoading(true); // O setMyOrdersLoading(true); si lo tuvieras separado
+    setError(null);
+    try {
+      // Usamos 'api.get'
+      const response = await api.get(`/api/orders/my-orders`);
+      if (response.data && Array.isArray(response.data.orders)) {
+        setMyOrders(response.data.orders);
+      } else {
+        console.warn(
+          "El formato de respuesta de la API para los pedidos del usuario fue inesperado. El array 'orders' falta o no es un array.",
+          response.data
+        );
+        setError({ message: "Formato de respuesta inesperado para tus pedidos." });
+        setMyOrders([]);
+      }
+    } catch (err) {
+      console.error("Error al obtener los pedidos del usuario:", err);
+      const errorMessage =
+        err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : err.message || "Error al cargar tus pedidos.";
+      setError({ message: errorMessage });
+      setMyOrders([]);
+    } finally {
+      setLoading(false); // O setMyOrdersLoading(false);
+    }
+  }, [api, user]);
+
+  useEffect(() => { 
+    if (user && user.token) {
+      fetchMyOrders(); 
+    } else { 
+      setMyOrders([]); 
+    } 
+  }, [user, fetchMyOrders]); 
+
+
 
   const value = {
     cartItems,
@@ -194,6 +240,9 @@ export const OrderProvider = ({ children }) => {
     placeOrder,
     addItemToCart,
     clearCart, 
+    myOrders,
+    fetchMyOrders
+    
   };
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;

@@ -13,6 +13,7 @@ import ProductDetailsPage from './pages/ProductDetailsPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 
 // NUEVA IMPORTACIÓN: PrivateRoute
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -51,12 +52,7 @@ function App() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             {/* Si tienes una página de perfil de usuario, también iría aquí */}
-            <Route path="/profile" element={
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="h5">Página de Perfil (Próximamente)</Typography>
-                <Typography variant="body1">Aquí se mostrarán los detalles de tu cuenta.</Typography>
-              </Box>
-            } />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
 
           {/* Rutas de Fallback o 404 (pueden ser protegidas o no, según la lógica) */}
