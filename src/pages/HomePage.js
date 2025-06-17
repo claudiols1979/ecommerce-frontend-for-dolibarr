@@ -96,7 +96,7 @@ const HomePage = () => {
       title: 'Únete a Nuestra Red', 
       description: 'Forma parte de nuestro selecto grupo de WhatsApp.', 
       icon: <GroupAddIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      link: 'https://chat.whatsapp.com/KJtYhoXgz2N6LqO3ehSaSh', 
+      link: 'https://chat.whatsapp.com/KDAzFEvMzpn8MnTBtmntaD', 
     },
   ];
 
