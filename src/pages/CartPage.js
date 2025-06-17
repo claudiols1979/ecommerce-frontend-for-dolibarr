@@ -73,14 +73,14 @@ const CartPage = () => {
     setConfirmClearCartOpen(false);
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-        <CircularProgress color="primary" />
-        <Typography sx={{ mt: 2 }}>Cargando carrito...</Typography>
-      </Container>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <Container maxWidth="lg" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
+  //       <CircularProgress color="primary" />
+  //       <Typography sx={{ mt: 2 }}>Cargando carrito...</Typography>
+  //     </Container>
+  //   );
+  // }
 
   if (error) {
     return (
