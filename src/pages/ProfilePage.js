@@ -29,6 +29,25 @@ const ProfilePage = () => {
 
   const [localLoading, setLocalLoading] = useState(true);
 
+useEffect(() => {
+  // 1. Fetch the user's orders as soon as the page loads.
+  if (fetchMyOrders) {
+    fetchMyOrders();
+  }
+
+  // 2. Set up an interval to call the function again every 30 seconds.
+  const intervalId = setInterval(() => {
+    if (fetchMyOrders) {
+      console.log("Auto-refreshing user's orders on HomePage...");
+      fetchMyOrders();
+    }
+  }, 30000); // 30000 milliseconds = 30 seconds
+
+  // 3. Clean up by stopping the interval when the user navigates away.
+  // This is very important to prevent memory leaks.
+  return () => clearInterval(intervalId);
+}, [fetchMyOrders]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/login');
@@ -78,14 +97,14 @@ const ProfilePage = () => {
     return translated ? translated : status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  if (localLoading || authLoading || ordersLoading) {
-    return (
-      <Container maxWidth="xl" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-        <CircularProgress color="primary" size={60} />
-        <Typography variant="h5" sx={{ mt: 3, color: 'text.primary' }}>Cargando perfil y pedidos...</Typography>
-      </Container>
-    );
-  }
+  // if (localLoading || authLoading || ordersLoading) {
+  //   return (
+  //     <Container maxWidth="xl" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
+  //       <CircularProgress color="primary" size={60} />
+  //       <Typography variant="h5" sx={{ mt: 3, color: 'text.primary' }}>Cargando perfil y pedidos...</Typography>
+  //     </Container>
+  //   );
+  // }
 
   if (authError || ordersError) {
     return (
