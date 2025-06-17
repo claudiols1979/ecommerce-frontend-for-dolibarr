@@ -9,9 +9,9 @@ import { useNavigate } from 'react-router-dom';
 // Si 'assets' está directamente dentro de 'src', la ruta sería './assets/heroX.jpg'
 // Si 'components/common' y 'assets' están al mismo nivel dentro de 'src', la ruta sería '../assets/heroX.jpg'
 // Asumo que están en `src/assets` y este componente está en `src/components/common`
-import hero1 from '../../assets/hero1.jpg'; 
-import hero2 from '../../assets/hero2.jpg';
-import hero3 from '../../assets/hero3.jpg';
+// import hero1 from '../../assets/hero1.jpg'; 
+// import hero2 from '../../assets/hero2.jpg';
+// import hero3 from '../../assets/hero3.jpg';
 
 // Componente estilizado para el contenedor del slide
 const CarouselSlideContent = styled(Box)(({ theme }) => ({
@@ -43,7 +43,7 @@ const HeroCarousel = () => {
 
   const slides = [
     {
-      image: hero1, // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172462/hero1_mnufmi.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Nueva Colección Primavera',
       title: 'Descubre las nuevas colecciones',
       description: 'Estilo y frescura para cada gusto. ¡Explora nuestros últimos productos!',
@@ -51,7 +51,7 @@ const HeroCarousel = () => {
       buttonLink: '/products',
     },
     {
-      image: hero2, // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172461/hero2_rtwpab.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Ofertas Exclusivas',
       title: 'Ofertas Exclusivas para Revendedores',
       description: 'Precios especiales que no querrás perder. ¡Impulsa tus ventas ahora!',
@@ -59,7 +59,7 @@ const HeroCarousel = () => {
       buttonLink: '/products', // O una ruta de ofertas real
     },
     {
-      image: hero3, // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172461/hero3_iy7hsi.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Calidad Garantizada',
       title: 'Calidad que Vende, Productos que Duran',
       description: 'Comprometidos con la excelencia en cada artículo. La satisfacción de tus clientes es nuestra prioridad.',
