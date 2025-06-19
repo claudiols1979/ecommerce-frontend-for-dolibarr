@@ -29,6 +29,8 @@ const ProfilePage = () => {
 
   const [localLoading, setLocalLoading] = useState(true);
 
+  console.log("user in profile: ", user)
+
 useEffect(() => {
   // 1. Fetch the user's orders as soon as the page loads.
   if (fetchMyOrders) {
@@ -208,7 +210,7 @@ useEffect(() => {
           {user.role === 'Revendedor' && (
             <Box sx={{ mt: 4, pt: 4, borderTop: `1px dashed ${theme.palette.grey[300]}` }}> 
               <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 600, color: theme.palette.primary.dark, mb: 2 }}>
-                Información de Revendedor
+                Información de Usuario
               </Typography>
               <List disablePadding>        
                 
@@ -217,7 +219,7 @@ useEffect(() => {
                   <ListItemText 
                     primary={
                       <Typography variant="body1" color="text.secondary">
-                        <CodeIcon sx={iconStyle} /> Código de Revendedor: <Typography component="span" fontWeight="medium" color="text.primary">{user.resellerCode || 'N/A'}</Typography>
+                        <CodeIcon sx={iconStyle} /> Código de Usuario: <Typography component="span" fontWeight="medium" color="text.primary">{user.resellerCode || 'N/A'}</Typography>
                       </Typography>
                     } 
                   />
