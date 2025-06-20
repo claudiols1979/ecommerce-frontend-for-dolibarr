@@ -1,6 +1,7 @@
 {
   "short_name": "Look & Smell",
-  "name": "Look & Smell - Perfumería CR",
+  "name": "Look & Smell: Perfumería Fina para toda Costa Rica",
+  "description": "Explora nuestro exclusivo catálogo de perfumería fina. Precios especiales para nuestros clientes. ¡Únete a nuestra red!",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,12 +9,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "favicon.ic",
+      "src": "favicon.ico",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "favicon.ic",
+      "src": "manifest-pic.png",
       "type": "image/png",
       "sizes": "512x512"
     }
