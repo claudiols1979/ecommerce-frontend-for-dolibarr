@@ -14,9 +14,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import ProductImageCarousel from '../components/product/ProductImageCarousel';
 import ProductCard from '../components/product/ProductCard';
-import axios from 'axios'; // Import axios for direct API calls if needed
-import API_URL from '../config'; // Import API_URL
-
+import axios from 'axios';
+import API_URL from '../config';
 
 const ProductDetailsPage = () => {
   const { id } = useParams(); 
@@ -32,7 +31,7 @@ const ProductDetailsPage = () => {
   const [loadingSpecificProduct, setLoadingSpecificProduct] = useState(true); 
   const [errorSpecificProduct, setErrorSpecificProduct] = useState(null); 
   const [quantity, setQuantity] = useState(1);
-  const [relatedProducts, setRelatedProducts] = useState([]); 
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [addingProductId, setAddingProductId] = useState(null);
 
   const getPriceAtSale = useCallback((productData) => {
@@ -51,39 +50,42 @@ const ProductDetailsPage = () => {
     return isNaN(calculatedPrice) || calculatedPrice <= 0 ? 0 : calculatedPrice;
   }, [user]); 
 
+  // --- LÓGICA DE CARGA DE DATOS CORREGIDA Y ROBUSTA ---
   useEffect(() => {
-    window.scrollTo(0, 0);
-    const findProduct = async () => {
+    window.scrollTo(0, 0); // Siempre lleva al usuario al inicio de la página
+
+    const fetchProductDetails = async () => {
         setLoadingSpecificProduct(true);
-        let foundProduct = allProductsFromContext.find(p => p._id === id);
+        setErrorSpecificProduct(null);
+        try {
+            // Hacemos una llamada directa y autorizada a la API para obtener los detalles del producto.
+            // Esto asegura que la página funcione siempre, sin importar cómo se llegó a ella.
+            const token = user?.token;
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+            
+            setProduct(data);
 
-        if (!foundProduct) {
-            try {
-                const { data } = await axios.get(`${API_URL}/api/products/${id}`);
-                foundProduct = data;
-            } catch (err) {
-                setErrorSpecificProduct('Producto no encontrado o error al cargar.');
-                setLoadingSpecificProduct(false);
-                return;
+            // Una vez que tenemos el producto, buscamos los relacionados en el contexto
+            if (allProductsFromContext.length > 1) {
+                const filtered = allProductsFromContext.filter(p => p._id !== id);
+                const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+                setRelatedProducts(shuffled.slice(0, 2));
             }
-        }
-        
-        setProduct(foundProduct);
 
-        if (allProductsFromContext.length > 1) {
-            const filtered = allProductsFromContext.filter(p => p._id !== id);
-            const shuffled = [...filtered].sort(() => 0.5 - Math.random());
-            setRelatedProducts(shuffled.slice(0, 2));
+        } catch (err) {
+            setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+            toast.error("Error al cargar los detalles del producto.");
+        } finally {
+            setLoadingSpecificProduct(false);
         }
-
-        setLoadingSpecificProduct(false);
     };
 
     if (id) {
-        findProduct();
+        fetchProductDetails();
     }
     setQuantity(1);
-  }, [id, allProductsFromContext]);
+  }, [id, user?.token]); // Depende del ID del producto y del token del usuario
 
 
   const displayPrice = getPriceAtSale(product);
@@ -92,15 +94,16 @@ const ProductDetailsPage = () => {
     if (!user) { return; }
     if (!product) { return; }
     if (quantity <= 0) {
-      
+      toast.error('La cantidad debe ser al menos 1.');
       return;
     }
     if (quantity > product.countInStock) { 
-        
+        toast.error(`No hay suficiente stock. Disponible: ${product.countInStock}.`);
         return;
     }
     const priceToPass = getPriceAtSale(product);
-    if (priceToPass <= 0) {        
+    if (priceToPass <= 0) {
+        toast.error('No se puede añadir al carrito: Precio de venta no disponible o inválido.');
         return;
     }
     await addItemToCart(product._id, quantity, priceToPass); 
@@ -108,18 +111,19 @@ const ProductDetailsPage = () => {
   
   const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
     if (typeof addItemToCart !== 'function') {
-      
+      toast.error("La funcionalidad para añadir al carrito no está disponible.");
       return;
     }
     setAddingProductId(relatedProduct._id);
     const priceToPass = getPriceAtSale(relatedProduct);
     if (priceToPass <= 0) {
-        
+        toast.error("No se puede añadir al carrito: precio no disponible o inválido.");
         setAddingProductId(null);
         return;
     }
     try {
-      await addItemToCart(relatedProduct._id, qty, priceToPass);       
+      await addItemToCart(relatedProduct._id, qty, priceToPass); 
+      toast.success(`${relatedProduct.name} (x${qty}) añadido al carrito.`);
     } catch (err) {
       toast.error(err.message || "No se pudo añadir el producto.");
     } finally {
@@ -168,8 +172,6 @@ const ProductDetailsPage = () => {
   const genderMap = { 'men': 'Hombre', 'women': 'Mujer', 'unisex': 'Unisex', 'children': 'Niños', 'elderly': 'Ancianos', 'other': 'Otro' };
   const getTranslatedGender = (gender) => genderMap[gender.toLowerCase()] || gender; 
 
-  console.log("relatedProducts: ", relatedProducts)
-
   return (
     <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
       <Box sx={{ mb: 3 }}>
@@ -186,7 +188,6 @@ const ProductDetailsPage = () => {
         <Grid item xs={12} md={6}>
           <ProductImageCarousel imageUrls={product.imageUrls} productName={product.name} />
         </Grid>
-
         <Grid item xs={12} md={6}>
           <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: theme.shadows[1] }}>
             <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '2rem', md: '2.5rem' } }}>{product.name}</Typography>
@@ -269,7 +270,7 @@ const ProductDetailsPage = () => {
               <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
                 <ProductCard 
                   product={p} 
-                  onAddToCart={(qty) => handleRelatedProductAddToCart(p, 1)}
+                  onAddToCart={(qty) => handleRelatedProductAddToCart(p, qty)}
                   isAdding={addingProductId === p._id}
                 />
               </Grid>
