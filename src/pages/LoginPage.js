@@ -78,32 +78,27 @@ const LoginPage = () => {
     },
   };
   
-  // --- ESTILO CORREGIDO PARA LOS CAMPOS DE TEXTO ---
   const textFieldStyle = {
-    // Estilo para el contenedor del campo de texto
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
-      // Estilo para el color del texto que se escribe
       '& .MuiInputBase-input': {
         color: 'white', 
       },
-      // Estilo para el borde del campo
       '& fieldset': {
         borderColor: 'rgba(255, 255, 255, 0.23)',
       },
       '&:hover fieldset': {
-        borderColor: '#FFD700', // Borde dorado al pasar el ratón
+        borderColor: '#FFD700',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#FFD700', // Borde dorado cuando está enfocado
+        borderColor: '#FFD700',
       },
     },
-    // Estilo para la etiqueta (label)
     '& .MuiInputLabel-root': {
-      color: 'rgba(255, 255, 255, 0.7)', // Color de la etiqueta por defecto
+      color: 'rgba(255, 255, 255, 0.7)',
     },
     '& .MuiInputLabel-root.Mui-focused': {
-      color: '#FFD700', // Color dorado de la etiqueta cuando está enfocada
+      color: '#FFD700',
     },
   };
 
@@ -111,7 +106,7 @@ const LoginPage = () => {
     <Box sx={{
       minHeight: '100vh',
       width: '100%',
-      background: 'linear-gradient(135deg, #121212 30%, #282828 90%)', // Gradiente de negro a gris oscuro
+      background: 'linear-gradient(135deg, #121212 30%, #282828 90%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -122,7 +117,7 @@ const LoginPage = () => {
           p: { xs: 2, sm: 3 }, 
           borderRadius: 4, 
           boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)', // Efecto de vidrio esmerilado
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
@@ -171,16 +166,13 @@ const LoginPage = () => {
                 <Button type="submit" fullWidth variant="contained" sx={primaryButtonStyle} disabled={loading || !resellerCode}>
                   {loading ? <CircularProgress size={24} sx={{ color: 'black' }} /> : 'Ingresar con Código'}
                 </Button>
-                <Grid container justifyContent="center" sx={{ mt: 3 }}>
-                  <Grid item>
-                    <Typography variant="body2" color="text.secondary">
-                      ¿Necesitas un código?{' '}
-                      <MuiLink href={whatsappUrl} target="_blank" rel="noopener noreferrer" underline="hover" sx={{ fontWeight: 'bold', color: '#FFD700' }}>
+                {/* --- MODIFIED: Replaced Grid with a single centered Typography component --- */}
+                <Typography variant="body2" align="center" sx={{ mt: 3, color: 'text.secondary' }}>
+                    ¿Necesitas un código?{' '}
+                    <MuiLink href={whatsappUrl} target="_blank" rel="noopener noreferrer" underline="hover" sx={{ fontWeight: 'bold', color: '#FFD700' }}>
                         Contacta a tu administrador.
-                      </MuiLink>
-                    </Typography>
-                  </Grid>
-                </Grid>
+                    </MuiLink>
+                </Typography>
               </Box>
             )}
           </CardContent>
