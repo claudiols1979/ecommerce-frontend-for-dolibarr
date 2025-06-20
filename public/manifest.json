@@ -14,7 +14,7 @@
       "sizes": "192x192"
     },
     {
-      "src": "manifest-pic.png",
+      "src": "favicon.ico",
       "type": "image/png",
       "sizes": "512x512"
     }
