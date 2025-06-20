@@ -32,8 +32,7 @@ const ProductDetailsPage = () => {
   const [loadingSpecificProduct, setLoadingSpecificProduct] = useState(true); 
   const [errorSpecificProduct, setErrorSpecificProduct] = useState(null); 
   const [quantity, setQuantity] = useState(1);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  
+  const [relatedProducts, setRelatedProducts] = useState([]); 
   const [addingProductId, setAddingProductId] = useState(null);
 
   const getPriceAtSale = useCallback((productData) => {
