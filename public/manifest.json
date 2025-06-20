@@ -9,7 +9,7 @@
       "type": "image/x-icon"
     },
     {
-      "src": "manifest-pic.png",
+      "src": "favicon.ico",
       "type": "image/png",
       "sizes": "192x192"
     },
