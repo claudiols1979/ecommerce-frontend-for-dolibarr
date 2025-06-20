@@ -75,7 +75,7 @@ const ProductDetailsPage = () => {
 
         } catch (err) {
             setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-            toast.error("Error al cargar los detalles del producto.");
+            
         } finally {
             setLoadingSpecificProduct(false);
         }
@@ -94,16 +94,16 @@ const ProductDetailsPage = () => {
     if (!user) { return; }
     if (!product) { return; }
     if (quantity <= 0) {
-      toast.error('La cantidad debe ser al menos 1.');
+      
       return;
     }
     if (quantity > product.countInStock) { 
-        toast.error(`No hay suficiente stock. Disponible: ${product.countInStock}.`);
+        
         return;
     }
     const priceToPass = getPriceAtSale(product);
     if (priceToPass <= 0) {
-        toast.error('No se puede añadir al carrito: Precio de venta no disponible o inválido.');
+        
         return;
     }
     await addItemToCart(product._id, quantity, priceToPass); 
@@ -111,21 +111,21 @@ const ProductDetailsPage = () => {
   
   const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
     if (typeof addItemToCart !== 'function') {
-      toast.error("La funcionalidad para añadir al carrito no está disponible.");
+      
       return;
     }
     setAddingProductId(relatedProduct._id);
     const priceToPass = getPriceAtSale(relatedProduct);
     if (priceToPass <= 0) {
-        toast.error("No se puede añadir al carrito: precio no disponible o inválido.");
+        
         setAddingProductId(null);
         return;
     }
     try {
       await addItemToCart(relatedProduct._id, qty, priceToPass); 
-      toast.success(`${relatedProduct.name} (x${qty}) añadido al carrito.`);
+      
     } catch (err) {
-      toast.error(err.message || "No se pudo añadir el producto.");
+      console.log(err.message);
     } finally {
       setAddingProductId(null);
     }
