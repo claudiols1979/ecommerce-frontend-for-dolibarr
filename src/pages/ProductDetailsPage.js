@@ -270,7 +270,7 @@ const ProductDetailsPage = () => {
               <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
                 <ProductCard 
                   product={p} 
-                  onAddToCart={(qty) => handleRelatedProductAddToCart(p, qty)}
+                  onAddToCart={(qty) => handleRelatedProductAddToCart(p, 1)}
                   isAdding={addingProductId === p._id}
                 />
               </Grid>
