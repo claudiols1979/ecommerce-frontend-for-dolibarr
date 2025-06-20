@@ -53,6 +53,7 @@ const ProductDetailsPage = () => {
   }, [user]); 
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const findProduct = async () => {
         setLoadingSpecificProduct(true);
         let foundProduct = allProductsFromContext.find(p => p._id === id);
@@ -92,16 +93,15 @@ const ProductDetailsPage = () => {
     if (!user) { return; }
     if (!product) { return; }
     if (quantity <= 0) {
-      toast.error('La cantidad debe ser al menos 1.');
+      
       return;
     }
     if (quantity > product.countInStock) { 
-        toast.error(`No hay suficiente stock. Disponible: ${product.countInStock}.`);
+        
         return;
     }
     const priceToPass = getPriceAtSale(product);
-    if (priceToPass <= 0) {
-        toast.error('No se puede añadir al carrito: Precio de venta no disponible o inválido.');
+    if (priceToPass <= 0) {        
         return;
     }
     await addItemToCart(product._id, quantity, priceToPass); 
@@ -109,19 +109,18 @@ const ProductDetailsPage = () => {
   
   const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
     if (typeof addItemToCart !== 'function') {
-      toast.error("La funcionalidad para añadir al carrito no está disponible.");
+      
       return;
     }
     setAddingProductId(relatedProduct._id);
     const priceToPass = getPriceAtSale(relatedProduct);
     if (priceToPass <= 0) {
-        toast.error("No se puede añadir al carrito: precio no disponible o inválido.");
+        
         setAddingProductId(null);
         return;
     }
     try {
-      await addItemToCart(relatedProduct._id, qty, priceToPass); 
-      toast.success(`${relatedProduct.name} (x${qty}) añadido al carrito.`);
+      await addItemToCart(relatedProduct._id, qty, priceToPass);       
     } catch (err) {
       toast.error(err.message || "No se pudo añadir el producto.");
     } finally {
@@ -170,6 +169,7 @@ const ProductDetailsPage = () => {
   const genderMap = { 'men': 'Hombre', 'women': 'Mujer', 'unisex': 'Unisex', 'children': 'Niños', 'elderly': 'Ancianos', 'other': 'Otro' };
   const getTranslatedGender = (gender) => genderMap[gender.toLowerCase()] || gender; 
 
+  console.log("relatedProducts: ", relatedProducts)
 
   return (
     <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
@@ -270,7 +270,7 @@ const ProductDetailsPage = () => {
               <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
                 <ProductCard 
                   product={p} 
-                  onAddToCart={(qty) => handleRelatedProductAddToCart(p, qty)}
+                  onAddToCart={(qty) => handleRelatedProductAddToCart(p, 1)}
                   isAdding={addingProductId === p._id}
                 />
               </Grid>
