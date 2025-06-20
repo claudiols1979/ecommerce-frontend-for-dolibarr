@@ -33,21 +33,36 @@ const CartPage = () => {
   const handleQuantityChange = async (item, changeType) => { 
     const productId = item.product?._id; 
     if (!productId) {
-      console.error("CartPage: Product ID is missing for quantity change.", item);      
+      console.error("CartPage: Product ID is missing for quantity change.", item);       
       return;
+    }
+
+    const stockAvailable = item.product?.countInStock;
+    if (stockAvailable === undefined) {
+        toast.error("No se pudo verificar el stock del producto.");
+        return;
     }
 
     let newQuantity;
     if (changeType === 'increment') {
       newQuantity = item.quantity + 1;
+      if (newQuantity > stockAvailable) {
+          toast.warn(`No puedes agregar más. Stock máximo: ${stockAvailable} unidades.`);
+          return;
+      }
     } else if (changeType === 'decrement') {
       newQuantity = item.quantity - 1;
       if (newQuantity < 1) newQuantity = 1; 
     } else {
-      newQuantity = parseInt(changeType, 10);
-      if (isNaN(newQuantity) || newQuantity < 1) newQuantity = 1;
+        // Esta sección ya no se usará, pero se mantiene como referencia
+        newQuantity = parseInt(changeType, 10);
+        if (isNaN(newQuantity) || newQuantity < 1) newQuantity = 1;
+        if (newQuantity > stockAvailable) newQuantity = stockAvailable;
     }
-    await updateCartItemQuantity(productId, newQuantity);
+
+    if(newQuantity !== item.quantity) {
+        await updateCartItemQuantity(productId, newQuantity);
+    }
   };
 
   const handleRemoveItem = async (item) => { 
@@ -56,7 +71,7 @@ const CartPage = () => {
       console.log("CartPage: Removing item with product ID:", productId);
       await removeCartItem(productId);
     } else {
-      console.error("CartPage: Could not remove item, product ID is missing or invalid for item:", item);      
+      console.error("CartPage: Could not remove item, product ID is missing or invalid for item:", item);       
     }
   };
 
@@ -72,15 +87,6 @@ const CartPage = () => {
   const cancelClearCart = () => {
     setConfirmClearCartOpen(false);
   };
-
-  // if (loading) {
-  //   return (
-  //     <Container maxWidth="lg" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-  //       <CircularProgress color="primary" />
-  //       <Typography sx={{ mt: 2 }}>Cargando carrito...</Typography>
-  //     </Container>
-  //   );
-  // }
 
   if (error) {
     return (
@@ -100,13 +106,9 @@ const CartPage = () => {
         <Alert 
           severity="info" 
           sx={{ 
-            p: 3, 
-            display: 'flex', 
-            flexDirection: { xs: 'column', sm: 'row' }, 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            borderRadius: 3, 
-            boxShadow: 2 
+            p: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, 
+            alignItems: 'center', justifyContent: 'space-between', 
+            borderRadius: 3, boxShadow: 2 
           }}
         >
           <Typography variant="h6" sx={{ mb: { xs: 2, sm: 0 } }}>Tu carrito está vacío. ¡Añade algunos productos!</Typography>
@@ -128,11 +130,7 @@ const CartPage = () => {
       ) : (
         <Grid container spacing={4}> 
           <Grid item xs={12} md={8}>
-            <Card sx={{ 
-              borderRadius: 3, 
-              boxShadow: 5, 
-              p: { xs: 2, sm: 3 } 
-            }}>
+            <Card sx={{ borderRadius: 3, boxShadow: 5, p: { xs: 2, sm: 3 } }}>
               <CardContent>
                 {cartItems.map((item) => (
                   <Box
@@ -141,8 +139,7 @@ const CartPage = () => {
                       display: 'flex',
                       flexDirection: { xs: 'column', sm: 'row' }, 
                       alignItems: 'center',
-                      mb: 3, 
-                      pb: 3, 
+                      mb: 3, pb: 3, 
                       borderBottom: `1px solid ${theme.palette.divider}`, 
                       '&:last-child': { borderBottom: 'none', mb: 0, pb: 0 },
                       gap: { xs: 2, sm: 3 }, 
@@ -153,11 +150,8 @@ const CartPage = () => {
                       src={item.image || 'https://placehold.co/100x100/E0E0E0/FFFFFF?text=No+Image'}
                       alt={item.name}
                       sx={{ 
-                        width: 100, 
-                        height: 100, 
-                        objectFit: 'contain', 
-                        mr: { xs: 0, sm: 2 }, 
-                        borderRadius: 2, 
+                        width: 100, height: 100, objectFit: 'contain', 
+                        mr: { xs: 0, sm: 2 }, borderRadius: 2, 
                         border: `1px solid ${theme.palette.grey[300]}` 
                       }}
                     />
@@ -182,18 +176,15 @@ const CartPage = () => {
                       >
                         <RemoveIcon fontSize="small" />
                       </IconButton>
-                      <TextField
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item, e.target.value)}
-                        inputProps={{ min: 1 }}
-                        size="small"
-                        sx={{ width: 60, mx: 0.5, '& input': { textAlign: 'center' } }}
-                      />
+                      {/* --- CAMBIO CLAVE: Reemplazamos TextField por Typography --- */}
+                      <Typography sx={{ width: '2ch', textAlign: 'center', fontWeight: 600, fontSize: '1.1rem' }}>
+                        {item.quantity}
+                      </Typography>
                       <IconButton 
                         onClick={() => handleQuantityChange(item, 'increment')} 
                         color="primary" 
                         size="small"
+                        disabled={item.quantity >= item.product?.countInStock}
                         sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%' }}
                       >
                         <AddIcon fontSize="small" />
