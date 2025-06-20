@@ -204,13 +204,18 @@ const ProductDetailsPage = () => {
                       <IconButton onClick={() => setQuantity(q => Math.min(product.countInStock, q + 1))} disabled={quantity >= product.countInStock || cartLoading || isOutOfStock}><AddCircleOutlineIcon /></IconButton>
                   </Box>
               ) : (
-                <TextField
-                  type="number" label="Cantidad" value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Math.min(product.countInStock, parseInt(e.target.value) || 1)))}
-                  inputProps={{ min: 1, max: product.countInStock }}
-                  size="medium" sx={{ width: 120, mr: 2 }}
-                  disabled={cartLoading || isOutOfStock}
-                />
+                // <TextField
+                //   type="number" label="Cantidad" value={quantity}
+                //   onChange={(e) => setQuantity(Math.max(1, Math.min(product.countInStock, parseInt(e.target.value) || 1)))}
+                //   inputProps={{ min: 1, max: product.countInStock }}
+                //   size="medium" sx={{ width: 120, mr: 2 }}
+                //   disabled={cartLoading || isOutOfStock}
+                // />
+                <Box display="flex" alignItems="center" gap={1}>
+                      <IconButton onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1 || cartLoading || isOutOfStock}><RemoveCircleOutlineIcon /></IconButton>
+                      <Typography sx={{ width: '2ch', textAlign: 'center' }}>{quantity}</Typography>
+                      <IconButton onClick={() => setQuantity(q => Math.min(product.countInStock, q + 1))} disabled={quantity >= product.countInStock || cartLoading || isOutOfStock}><AddCircleOutlineIcon /></IconButton>
+                  </Box>
               )}
               <Button
                 variant="contained" color="primary" startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
