@@ -16,6 +16,7 @@ import ProductImageCarousel from '../components/product/ProductImageCarousel';
 import ProductCard from '../components/product/ProductCard';
 import axios from 'axios';
 import API_URL from '../config';
+import { formatPrice } from '../utils/formatters';
 
 const ProductDetailsPage = () => {
   const { id } = useParams(); 
@@ -193,7 +194,7 @@ const ProductDetailsPage = () => {
             <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 700, color: 'primary.main', fontSize: { xs: '2rem', md: '2.5rem' } }}>{product.name}</Typography>
             <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>{product.brand || 'Sin descripción disponible.'}</Typography>
             <Divider sx={{ my: 2 }} />
-            <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>{displayPrice !== null ? `₡${displayPrice.toFixed(2)}` : 'Precio no disponible'}</Typography>
+            <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>{displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}</Typography>
             <Typography variant="body1" color={isOutOfStock ? 'error.main' : 'text.primary'} sx={{ mb: 2, fontWeight: 600 }}>Stock Disponible: {product.countInStock} {isOutOfStock && '(Agotado)'}</Typography>
             
             <Box display="flex" alignItems="center" mb={3}>

@@ -12,6 +12,7 @@ import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { formatPrice } from '../utils/formatters';
 
 
 const CartPage = () => {
@@ -162,7 +163,7 @@ const CartPage = () => {
                         Volumen: {item.product?.volume || 'N/A'} 
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Precio Unitario: <Typography component="span" sx={{ fontWeight: 600 }}>₡{item.priceAtSale.toFixed(2)}</Typography>
+                        Precio Unitario: <Typography component="span" sx={{ fontWeight: 600 }}>{formatPrice(item.priceAtSale)}</Typography>
                       </Typography>
                     </Box>
                     
@@ -200,7 +201,7 @@ const CartPage = () => {
                         mt: { xs: 2, sm: 0 } 
                       }}
                     >
-                      ₡{(item.quantity * item.priceAtSale).toFixed(2)}
+                      {formatPrice(item.quantity * (item.priceAtSale))}
                     </Typography>
                     <IconButton 
                       onClick={() => handleRemoveItem(item)} 
@@ -243,7 +244,7 @@ const CartPage = () => {
                 </Box>
                 <Box display="flex" justifyContent="space-between" sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 2, mt: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>Total:</Typography>
-                  <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>₡{totalCartPrice.toFixed(2)}</Typography>
+                  <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>{(formatPrice(totalCartPrice))}</Typography>
                 </Box>
                 <Button
                   variant="contained"

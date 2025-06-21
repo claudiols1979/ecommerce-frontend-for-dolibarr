@@ -5,6 +5,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext'; // Only used for getting the user's category for pricing
 import { toast } from 'react-toastify';
+import { formatPrice } from '../../utils/formatters';
 
 // --- IMPORTANT MODIFICATION ---
 // The component now accepts `onAddToCart` and `isAdding` props from its parent (ProductsPage.js).
@@ -129,7 +130,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         </Typography>
         <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <Typography variant="h6" color="primary" sx={{ fontWeight: 800 }}> 
-            {displayPrice !== null ? `₡${displayPrice.toFixed(2)}` : 'Precio no disponible'}
+            {displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}
           </Typography>
           {isOutOfStock && (
             <Typography variant="body2" color="error" sx={{ fontWeight: 700, ml: 1 }}>

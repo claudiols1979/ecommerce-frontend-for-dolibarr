@@ -67,7 +67,7 @@ const ProductCard = ({ product }) => {
           {product.shortDescription || (product.description ? product.description.substring(0, 70) + '...' : 'No description available.')}
         </Typography>
         <Typography variant="h6" color="primary" sx={{ mt: 2, fontWeight: 700 }}>
-          {displayPrice !== null ? `₡${displayPrice.toFixed(2)}` : 'Precio no disponible'}
+          {displayPrice !== null ? `{formatPrice(displayPrice)}` : 'Precio no disponible'}
         </Typography>
         {isOutOfStock && (
           <Typography variant="body2" color="error" sx={{ mt: 1, fontWeight: 600 }}>
