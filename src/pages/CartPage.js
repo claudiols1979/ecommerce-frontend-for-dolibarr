@@ -38,8 +38,10 @@ const CartPage = () => {
       return;
     }
 
-    const stockAvailable = item.product?.countInStock;
-    if (stockAvailable === undefined) {
+    // --- CORRECCIÓN CLAVE: Calcular el stock total disponible ---
+    // El stock total es lo que queda en la DB (countInStock) más lo que el usuario ya tiene en el carrito.
+    const totalAvailableStock = (item.product?.countInStock || 0) + item.quantity;
+    if (totalAvailableStock === undefined) {
         toast.error("No se pudo verificar el stock del producto.");
         return;
     }
@@ -47,18 +49,22 @@ const CartPage = () => {
     let newQuantity;
     if (changeType === 'increment') {
       newQuantity = item.quantity + 1;
-      if (newQuantity > stockAvailable) {
-          toast.warn(`No puedes agregar más. Stock máximo: ${stockAvailable} unidades.`);
+      // Validar contra el stock total, no contra el stock restante
+      if (newQuantity > totalAvailableStock) {
+          toast.warn(`No puedes agregar más. Stock máximo: ${totalAvailableStock} unidades.`);
           return;
       }
     } else if (changeType === 'decrement') {
       newQuantity = item.quantity - 1;
       if (newQuantity < 1) newQuantity = 1; 
     } else {
-        // Esta sección ya no se usará, pero se mantiene como referencia
         newQuantity = parseInt(changeType, 10);
         if (isNaN(newQuantity) || newQuantity < 1) newQuantity = 1;
-        if (newQuantity > stockAvailable) newQuantity = stockAvailable;
+        // Validar contra el stock total
+        if (newQuantity > totalAvailableStock) {
+            toast.warn(`El stock máximo es ${totalAvailableStock}. Se ajustó la cantidad.`);
+            newQuantity = totalAvailableStock;
+        }
     }
 
     if(newQuantity !== item.quantity) {
@@ -69,7 +75,6 @@ const CartPage = () => {
   const handleRemoveItem = async (item) => { 
     const productId = item.product?._id; 
     if (productId) {
-      console.log("CartPage: Removing item with product ID:", productId);
       await removeCartItem(productId);
     } else {
       console.error("CartPage: Could not remove item, product ID is missing or invalid for item:", item);       
@@ -106,24 +111,12 @@ const CartPage = () => {
       {cartItems.length === 0 ? (
         <Alert 
           severity="info" 
-          sx={{ 
-            p: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, 
-            alignItems: 'center', justifyContent: 'space-between', 
-            borderRadius: 3, boxShadow: 2 
-          }}
+          sx={{ p: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: 'space-between', borderRadius: 3, boxShadow: 2 }}
         >
           <Typography variant="h6" sx={{ mb: { xs: 2, sm: 0 } }}>Tu carrito está vacío. ¡Añade algunos productos!</Typography>
           <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={() => navigate('/products')}
-            sx={{
-              backgroundColor: theme.palette.primary.main,
-              color: 'white',
-              '&:hover': {
-                backgroundColor: theme.palette.primary.dark,
-              },
-            }}
+            variant="contained" color="primary" onClick={() => navigate('/products')}
+            sx={{ backgroundColor: theme.palette.primary.main, color: 'white', '&:hover': { backgroundColor: theme.palette.primary.dark } }}
           >
             Ir a Productos
           </Button>
@@ -133,95 +126,61 @@ const CartPage = () => {
           <Grid item xs={12} md={8}>
             <Card sx={{ borderRadius: 3, boxShadow: 5, p: { xs: 2, sm: 3 } }}>
               <CardContent>
-                {cartItems.map((item) => (
-                  <Box
-                    key={item.product?._id || item._id} 
-                    sx={{ 
-                      display: 'flex',
-                      flexDirection: { xs: 'column', sm: 'row' }, 
-                      alignItems: 'center',
-                      mb: 3, pb: 3, 
-                      borderBottom: `1px solid ${theme.palette.divider}`, 
-                      '&:last-child': { borderBottom: 'none', mb: 0, pb: 0 },
-                      gap: { xs: 2, sm: 3 }, 
-                    }}
-                  >
+                {cartItems.map((item) => {
+                  // --- CORRECCIÓN CLAVE: Calcular el stock total disponible por ítem ---
+                  const totalAvailableStock = (item.product?.countInStock || 0) + item.quantity;
+                  return (
                     <Box
-                      component="img"
-                      src={item.image || 'https://placehold.co/100x100/E0E0E0/FFFFFF?text=No+Image'}
-                      alt={item.name}
+                      key={item.product?._id || item._id} 
                       sx={{ 
-                        width: 100, height: 100, objectFit: 'contain', 
-                        mr: { xs: 0, sm: 2 }, borderRadius: 2, 
-                        border: `1px solid ${theme.palette.grey[300]}` 
+                        display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center',
+                        mb: 3, pb: 3, borderBottom: `1px solid ${theme.palette.divider}`, 
+                        '&:last-child': { borderBottom: 'none', mb: 0, pb: 0 },
+                        gap: { xs: 2, sm: 3 }, 
                       }}
-                    />
-                    <Box sx={{ flexGrow: 1, textAlign: { xs: 'center', sm: 'left' } }}>
-                      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{item.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">Código: {item.code}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Volumen: {item.product?.volume || 'N/A'} 
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Precio Unitario: <Typography component="span" sx={{ fontWeight: 600 }}>{formatPrice(item.priceAtSale)}</Typography>
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 2, sm: 0 } }}>
-                      <IconButton 
-                        onClick={() => handleQuantityChange(item, 'decrement')} 
-                        color="primary" 
-                        size="small"
-                        disabled={item.quantity <= 1} 
-                        sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%' }}
-                      >
-                        <RemoveIcon fontSize="small" />
-                      </IconButton>
-                      {/* --- CAMBIO CLAVE: Reemplazamos TextField por Typography --- */}
-                      <Typography sx={{ width: '2ch', textAlign: 'center', fontWeight: 600, fontSize: '1.1rem' }}>
-                        {item.quantity}
-                      </Typography>
-                      <IconButton 
-                        onClick={() => handleQuantityChange(item, 'increment')} 
-                        color="primary" 
-                        size="small"
-                        disabled={item.quantity >= item.product?.countInStock}
-                        sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%' }}
-                      >
-                        <AddIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
+                    >
+                      <Box
+                        component="img" src={item.image || 'https://placehold.co/100x100/E0E0E0/FFFFFF?text=No+Image'} alt={item.name}
+                        sx={{ width: 100, height: 100, objectFit: 'contain', mr: { xs: 0, sm: 2 }, borderRadius: 2, border: `1px solid ${theme.palette.grey[300]}` }}
+                      />
+                      <Box sx={{ flexGrow: 1, textAlign: { xs: 'center', sm: 'left' } }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{item.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">Código: {item.code}</Typography>
+                        <Typography variant="body2" color="text.secondary">Volumen: {item.product?.volume || 'N/A'}</Typography>
+                        <Typography variant="body2" color="text.secondary">Precio Unitario: <Typography component="span" sx={{ fontWeight: 600 }}>{formatPrice(item.priceAtSale)}</Typography></Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 2, sm: 0 } }}>
+                        <IconButton onClick={() => handleQuantityChange(item, 'decrement')} color="primary" size="small" disabled={item.quantity <= 1} sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%' }}>
+                          <RemoveIcon fontSize="small" />
+                        </IconButton>
+                        <Typography sx={{ width: '2ch', textAlign: 'center', fontWeight: 600, fontSize: '1.1rem' }}>
+                          {item.quantity}
+                        </Typography>
+                        <IconButton 
+                          onClick={() => handleQuantityChange(item, 'increment')} 
+                          color="primary" 
+                          size="small"
+                          // --- LÓGICA DE DESHABILITACIÓN CORREGIDA ---
+                          disabled={item.quantity >= totalAvailableStock}
+                          sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%' }}
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
 
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        minWidth: { xs: 'auto', sm: 100 }, 
-                        textAlign: { xs: 'center', sm: 'right' }, 
-                        fontWeight: 700, 
-                        mt: { xs: 2, sm: 0 } 
-                      }}
-                    >
-                      {formatPrice(item.quantity * (item.priceAtSale))}
-                    </Typography>
-                    <IconButton 
-                      onClick={() => handleRemoveItem(item)} 
-                      color="error" 
-                      aria-label="remove item"
-                      sx={{ mt: { xs: 2, sm: 0 }, ml: { xs: 0, sm: 2 } }} 
-                    >
-                      <DeleteIcon /> 
-                    </IconButton>
-                  </Box>
-                ))}
+                      <Typography variant="body1" sx={{ minWidth: { xs: 'auto', sm: 100 }, textAlign: { xs: 'center', sm: 'right' }, fontWeight: 700, mt: { xs: 2, sm: 0 } }}>
+                        {formatPrice(item.quantity * (item.priceAtSale))}
+                      </Typography>
+                      <IconButton onClick={() => handleRemoveItem(item)} color="error" aria-label="remove item" sx={{ mt: { xs: 2, sm: 0 }, ml: { xs: 0, sm: 2 } }}>
+                        <DeleteIcon /> 
+                      </IconButton>
+                    </Box>
+                  )
+                })}
                 {cartItems.length > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<DeleteIcon />}
-                      onClick={handleClearCart}
-                      disabled={loading}
-                    >
+                    <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleClearCart} disabled={loading}>
                       Vaciar Carrito
                     </Button>
                   </Box>
@@ -236,7 +195,7 @@ const CartPage = () => {
                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>Resumen del Pedido</Typography>
                 <Box display="flex" justifyContent="space-between" mb={1}>
                   <Typography variant="body1">Subtotal ({cartItems.length} artículos):</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>₡{totalCartPrice.toFixed(2)}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{formatPrice(totalCartPrice)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" mb={2}>
                   <Typography variant="body1">Envío:</Typography>
@@ -244,12 +203,10 @@ const CartPage = () => {
                 </Box>
                 <Box display="flex" justifyContent="space-between" sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 2, mt: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>Total:</Typography>
-                  <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>{(formatPrice(totalCartPrice))}</Typography>
+                  <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>{formatPrice(totalCartPrice)}</Typography>
                 </Box>
                 <Button
-                  variant="contained"
-                  color="secondary"
-                  fullWidth
+                  variant="contained" color="secondary" fullWidth
                   sx={{ mt: 3, p: 1.5, borderRadius: 2 }}
                   onClick={() => navigate('/checkout')}
                   disabled={cartItems.length === 0 || loading}
