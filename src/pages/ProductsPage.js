@@ -57,31 +57,31 @@ const ProductsPage = () => {
   }, [page, searchTerm, selectedGender, priceRange, sortOrder, fetchProducts]); 
 
 
-    // --- COPIA Y PEGA ESTE BLOQUE ---
-  useEffect(() => {
-    // 1. Definimos el intervalo de tiempo en milisegundos (30 segundos)
-    const thirtySeconds = 30000;
+  //   // --- COPIA Y PEGA ESTE BLOQUE ---
+  // useEffect(() => {
+  //   // 1. Definimos el intervalo de tiempo en milisegundos (30 segundos)
+  //   const thirtySeconds = 30000;
 
-    // 2. Creamos un intervalo que se ejecutará cada 30 segundos
-    const intervalId = setInterval(() => {
-      console.log('Actualizando productos automáticamente...');
+  //   // 2. Creamos un intervalo que se ejecutará cada 30 segundos
+  //   const intervalId = setInterval(() => {
+  //     console.log('Actualizando productos automáticamente...');
       
-      // 3. Condición de seguridad: No iniciar una nueva carga si ya hay una en curso.
-      // Esto previene peticiones duplicadas y posibles race conditions.
-      if (!loading) {
-        fetchProducts();
-      }
-    }, thirtySeconds);
+  //     // 3. Condición de seguridad: No iniciar una nueva carga si ya hay una en curso.
+  //     // Esto previene peticiones duplicadas y posibles race conditions.
+  //     if (!loading) {
+  //       fetchProducts();
+  //     }
+  //   }, thirtySeconds);
 
-    // 4. Función de limpieza: Esto es CRÍTICO.
-    // Se ejecuta cuando el componente se "desmonta" (ej. el usuario navega a otra página).
-    // Limpia el intervalo para que no siga ejecutándose en segundo plano.
-    return () => {
-      clearInterval(intervalId);
-      console.log('Intervalo de actualización de productos detenido.');
-    };
-  }, [loading, fetchProducts]); // 5. Array de dependencias
-  // --- FIN DEL BLOQUE ---
+  //   // 4. Función de limpieza: Esto es CRÍTICO.
+  //   // Se ejecuta cuando el componente se "desmonta" (ej. el usuario navega a otra página).
+  //   // Limpia el intervalo para que no siga ejecutándose en segundo plano.
+  //   return () => {
+  //     clearInterval(intervalId);
+  //     console.log('Intervalo de actualización de productos detenido.');
+  //   };
+  // }, [loading, fetchProducts]); // 5. Array de dependencias
+  // // --- FIN DEL BLOQUE ---
   
   // --- CORRECTED: Local handler now calculates price before adding ---
   const handleAddToCart = useCallback(async (product) => {
