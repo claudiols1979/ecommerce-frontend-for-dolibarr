@@ -9,6 +9,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom'; // Import us
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 
 const Header = () => {
@@ -130,19 +131,19 @@ const Header = () => {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button color="inherit" component={RouterLink} to="/" sx={{ mx: 1 }}>
+            <Button color="inherit" component={RouterLink} to="/" sx={{ mx: 1, fontWeight: 700 }}>
               Inicio
             </Button>
-            <Button color="inherit" component={RouterLink} to="/products" sx={{ mx: 1 }}>
-              Productos
+            <Button color="inherit" component={RouterLink} to="/products" sx={{ mx: 1, fontWeight: 700  }}>
+              Fragancias
             </Button>
             {user ? (
               <>
-                <Button color="inherit" component={RouterLink} to="/profile" sx={{ mx: 1 }}>
-                  Hola, {user.firstName || 'Usuario'} 
+                <Button color="inherit" component={RouterLink} to="/profile" sx={{ mx: 1, fontWeight: 700 }}>
+                  Mi cuenta 
                 </Button>
-                <Button color="inherit" onClick={handleLogout} sx={{ mx: 1 }}>
-                  Cerrar Sesión
+                <Button color="inherit" onClick={handleLogout} sx={{ mx: 1, fontWeight: 700 }}>
+                  <ExitToAppIcon />
                 </Button>
               </>
             ) : (
