@@ -1,11 +1,8 @@
-import React, { useState } from 'react'; // Import useState
-import { 
-  AppBar, Toolbar, Typography, Button, IconButton, Badge, Box, 
-  useMediaQuery, useTheme, Drawer, List, ListItem, ListItemText, Divider 
-} from '@mui/material'; // Import Drawer and List components
+import React, { useState } from 'react';
+import { AppBar, Toolbar, Typography, Button, IconButton, Badge, Box, useMediaQuery, useTheme, Drawer, List, ListItem, ListItemText, Divider } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Link as RouterLink, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom'; // Import useLocation
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
@@ -17,9 +14,9 @@ const Header = () => {
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const navigate = useNavigate(); // Use navigate for mobile menu actions
+  const navigate = useNavigate();
+  const location = useLocation(); // Hook para obtener la ruta actual
 
-  // --- NEW: State to manage the mobile menu drawer ---
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -28,7 +25,6 @@ const Header = () => {
     logout();
   };
 
-  // --- NEW: Handlers to open and close the mobile menu ---
   const handleMobileMenuToggle = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
@@ -37,16 +33,44 @@ const Header = () => {
     setMobileMenuOpen(false);
   };
 
-  // --- NEW: Function to handle navigation from the mobile menu ---
   const handleMenuNavigate = (path) => {
     navigate(path);
-    handleMobileMenuClose(); // Close menu after navigation
+    handleMobileMenuClose();
   }
+  
+  // --- FUNCIÓN DE ESTILO PARA LOS BOTONES DEL MENÚ ---
+  const getNavButtonStyle = (path) => {
+    const isActive = location.pathname === path;
+    return {
+      mx: 1,
+      fontWeight: isActive ? 800 : 600,
+      color: 'inherit',
+      borderBottom: isActive ? `3px solid ${theme.palette.secondary.main}` : '3px solid transparent',
+      borderRadius: 0, // Para que el borde sea una línea recta
+      paddingBottom: '4px',
+      transition: 'border-bottom 0.2s ease-in-out',
+      '&:hover': {
+        borderBottom: `3px solid ${theme.palette.secondary.light}`,
+      }
+    };
+  };
+  
+    // --- FUNCIÓN DE ESTILO PARA LOS ITEMS DEL MENÚ MÓVIL ---
+  const getMobileNavStyle = (path) => {
+    const isActive = location.pathname === path;
+    return {
+        fontWeight: 700,
+        backgroundColor: isActive ? theme.palette.action.selected : 'transparent',
+        borderRadius: '8px',
+        '& .MuiListItemText-primary': {
+            fontWeight: isActive ? 'bold' : 'normal',
+        }
+    };
+  };
 
-  // --- NEW: JSX for the content of the slide-out mobile menu ---
   const drawerContent = (
     <Box
-      sx={{ width: 250, p: 2 }}
+      sx={{ width: 225, p: 2 }}
       role="presentation"
       onClick={handleMobileMenuClose}
       onKeyDown={handleMobileMenuClose}
@@ -54,24 +78,25 @@ const Header = () => {
       <Typography variant="h6" sx={{ mb: 2 }}>Menú</Typography>
       <Divider />
       <List>
-        <ListItem button onClick={() => handleMenuNavigate('/')} sx={{ mx: 1, fontWeight: 700 }}>
+        <ListItem button onClick={() => handleMenuNavigate('/')} sx={getMobileNavStyle('/')}>
           <ListItemText primary="Inicio" />
         </ListItem>
-        <ListItem button onClick={() => handleMenuNavigate('/products')} sx={{ mx: 1, fontWeight: 700 }}>
+        <ListItem button onClick={() => handleMenuNavigate('/products')} sx={getMobileNavStyle('/products')}>
           <ListItemText primary="Fragancias" />
         </ListItem>
         
         {user ? (
           <>
-            <ListItem button onClick={() => handleMenuNavigate('/profile')} sx={{ mx: 1, fontWeight: 700 }}>
+            <ListItem button onClick={() => handleMenuNavigate('/profile')} sx={getMobileNavStyle('/profile')}>
               <ListItemText primary="Mi cuenta" />
             </ListItem>
-            <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }} sx={{ mx: 1, fontWeight: 700 }}>
-              <ExitToAppIcon />
+            <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }}>
+              <ExitToAppIcon sx={{mr: 1}}/>
+              <ListItemText primary="Cerrar Sesión" />
             </ListItem>
           </>
         ) : (
-          <ListItem button onClick={() => handleMenuNavigate('/login')}>
+          <ListItem button onClick={() => handleMenuNavigate('/login')} sx={getMobileNavStyle('/login')}>
             <ListItemText primary="Iniciar Sesión" />
           </ListItem>
         )}
@@ -87,11 +112,8 @@ const Header = () => {
           component={RouterLink}
           to="/"
           sx={{
-            flexGrow: 1,
-            textDecoration: 'none',
-            color: 'inherit',
-            fontWeight: 700,
-            letterSpacing: '0.05em',
+            flexGrow: 1, textDecoration: 'none', color: 'inherit',
+            fontWeight: 700, letterSpacing: '0.05em',
             fontSize: { xs: '1.2rem', sm: '1.5rem' }
           }}
         >
@@ -101,62 +123,50 @@ const Header = () => {
         {isMobile ? (
           <Box>
             <IconButton
-              component={RouterLink}
-              to="/cart"
-              color="inherit"
-              sx={{ mr: 1 }}
+              component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1 }}
               aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="secondary">
                 <ShoppingCartIcon />
               </Badge>
             </IconButton>
-            {/* --- MODIFIED: The hamburger icon now opens the drawer --- */}
             <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="end"
+              color="inherit" aria-label="open drawer" edge="end"
               onClick={handleMobileMenuToggle}
             >
               <MenuIcon />
             </IconButton>
-            {/* --- NEW: The Drawer component for the mobile menu --- */}
             <Drawer
-              anchor="right"
-              open={mobileMenuOpen}
-              onClose={handleMobileMenuClose}
+              anchor="right" open={mobileMenuOpen} onClose={handleMobileMenuClose}
             >
               {drawerContent}
             </Drawer>
           </Box>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button color="inherit" component={RouterLink} to="/" sx={{ mx: 1, fontWeight: 700 }}>
+            <Button color="inherit" component={RouterLink} to="/" sx={getNavButtonStyle('/')}>
               Inicio
             </Button>
-            <Button color="inherit" component={RouterLink} to="/products" sx={{ mx: 1, fontWeight: 700  }}>
+            <Button color="inherit" component={RouterLink} to="/products" sx={getNavButtonStyle('/products')}>
               Fragancias
             </Button>
             {user ? (
               <>
-                <Button color="inherit" component={RouterLink} to="/profile" sx={{ mx: 1, fontWeight: 700 }}>
+                <Button color="inherit" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
                   Mi cuenta 
                 </Button>
-                <Button color="inherit" onClick={handleLogout} sx={{ mx: 1, fontWeight: 700 }}>
+                <Button color="inherit" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
                   <ExitToAppIcon />
                 </Button>
               </>
             ) : (
-              <Button color="inherit" component={RouterLink} to="/login" sx={{ mx: 1 }}>
+              <Button color="inherit" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
                 Iniciar Sesión
               </Button>
             )}
             <IconButton
-              component={RouterLink}
-              to="/cart"
-              color="inherit"
-              sx={{ ml: 2 }}
-              aria-label={`cart with ${cartItemCount} items`}
+              component={RouterLink} to="/cart" color="inherit"
+              sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="secondary">
                 <ShoppingCartIcon />
