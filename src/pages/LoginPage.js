@@ -12,6 +12,13 @@ import AuthBranding from '../components/common/AuthBranding'; // Importa tu comp
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
+// --- NUEVOS ICONOS PARA LA VISIBILIDAD DE LA CONTRASEÑA ---
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+
 
 const LoginPage = () => {
   const [resellerCode, setResellerCode] = useState('');
@@ -19,6 +26,8 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState(0); 
+   // --- NUEVO ESTADO PARA LA VISIBILIDAD DE LA CONTRASEÑA ---
+  const [showPassword, setShowPassword] = useState(false);
   
   const { login, loginWithEmail, user } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +62,12 @@ const LoginPage = () => {
     setLoading(true);
     await loginWithEmail(email, password);
     setLoading(false);
+  };
+
+    // --- NUEVOS HANDLERS PARA EL ICONO DE VISIBILIDAD ---
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
   };
 
   if (user) {
@@ -144,7 +159,30 @@ const LoginPage = () => {
             {tab === 0 && (
               <Box component="form" onSubmit={handleEmailSubmit} noValidate>
                 <TextField margin="normal" required fullWidth id="email" label="Correo Electrónico" name="email" autoComplete="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <EmailOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
-                <TextField margin="normal" required fullWidth name="password" label="Contraseña" type="password" id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                {/* <TextField margin="normal" required fullWidth name="password" label="Contraseña" type="password" id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} /> */}
+                <TextField
+                  margin="normal" required fullWidth name="password" label="Contraseña"
+                  type={showPassword ? 'text' : 'password'} // Dinámico
+                  id="password" autoComplete="current-password"
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined" sx={textFieldStyle}
+                  InputProps={{
+                    startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} />,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
+                          edge="end"
+                          sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
                 <MuiLink component={RouterLink} to="/forgot-password" variant="body2" sx={{ display: 'block', textAlign: 'right', mt: 1, mb: 2, color: 'text.secondary', '&:hover': { color: '#FFD700' } }}>
                   ¿Olvidaste tu contraseña?
                 </MuiLink>
