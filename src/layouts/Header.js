@@ -54,19 +54,19 @@ const Header = () => {
       <Typography variant="h6" sx={{ mb: 2 }}>Menú</Typography>
       <Divider />
       <List>
-        <ListItem button onClick={() => handleMenuNavigate('/')}>
+        <ListItem button onClick={() => handleMenuNavigate('/')} sx={{ mx: 1, fontWeight: 700 }}>
           <ListItemText primary="Inicio" />
         </ListItem>
-        <ListItem button onClick={() => handleMenuNavigate('/products')}>
+        <ListItem button onClick={() => handleMenuNavigate('/products')} sx={{ mx: 1, fontWeight: 700 }}>
           <ListItemText primary="Fragancias" />
         </ListItem>
         
         {user ? (
           <>
-            <ListItem button onClick={() => handleMenuNavigate('/profile')}>
+            <ListItem button onClick={() => handleMenuNavigate('/profile')} sx={{ mx: 1, fontWeight: 700 }}>
               <ListItemText primary="Mi cuenta" />
             </ListItem>
-            <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }}>
+            <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }} sx={{ mx: 1, fontWeight: 700 }}>
               <ExitToAppIcon />
             </ListItem>
           </>
