@@ -58,16 +58,16 @@ const Header = () => {
           <ListItemText primary="Inicio" />
         </ListItem>
         <ListItem button onClick={() => handleMenuNavigate('/products')}>
-          <ListItemText primary="Productos" />
+          <ListItemText primary="Fragancias" />
         </ListItem>
         
         {user ? (
           <>
             <ListItem button onClick={() => handleMenuNavigate('/profile')}>
-              <ListItemText primary={`Hola, ${user.firstName}`} />
+              <ListItemText primary="Mi cuenta" />
             </ListItem>
             <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }}>
-              <ListItemText primary="Cerrar Sesión" />
+              <ExitToAppIcon />
             </ListItem>
           </>
         ) : (
