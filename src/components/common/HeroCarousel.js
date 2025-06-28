@@ -53,16 +53,16 @@ const HeroCarousel = () => {
     {
       image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172461/hero2_rtwpab.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Ofertas Exclusivas',
-      title: 'Ofertas Exclusivas para Revendedores',
-      description: 'Precios especiales que no querrás perder. ¡Impulsa tus ventas ahora!',
+      title: 'Ofertas Exclusivas',
+      description: 'Precios especiales que no querrás perder!',
       buttonText: 'Ver Ofertas',
       buttonLink: '/products', // O una ruta de ofertas real
     },
     {
       image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172461/hero3_iy7hsi.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Calidad Garantizada',
-      title: 'Calidad que Vende, Productos que Duran',
-      description: 'Comprometidos con la excelencia en cada artículo. La satisfacción de tus clientes es nuestra prioridad.',
+      title: 'Productos 100% originales',
+      description: 'Comprometidos con la excelencia en cada artículo.',
       buttonText: 'Conocer Más',
       buttonLink: '/products', // Puedes crear una página "acerca de"
     },
