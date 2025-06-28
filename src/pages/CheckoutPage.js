@@ -26,7 +26,7 @@ const CheckoutPage = () => {
     email: user?.email || '',
     phone: user?.phoneNumber || '',
     address: user?.address || '',
-  });
+  });  
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null);
@@ -255,7 +255,11 @@ const CheckoutPage = () => {
               sx={{ mt: 3, p: 1.5, bgcolor: '#25D366', color: 'white', '&:hover': { bgcolor: '#1EBE57' } }}
               fullWidth
               onClick={handlePlaceOrder}
-              disabled={cartItems.length === 0 || loading || !selectedProvince}
+              disabled={
+                cartItems.length === 0 || 
+                loading || 
+                (user?.resellerCategory === 'cat1' && !selectedProvince)
+              }
             >
               Finalizar Pedido y Coordinar por WhatsApp
             </Button>
