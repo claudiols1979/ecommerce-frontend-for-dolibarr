@@ -111,7 +111,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           )}
         </Box>
       </CardContent>
-      <CardActions sx={{ p: 1.5, pt: 0, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.grey[100]}` }}>
+      <CardActions sx={{ p: 1.5, pt: 1, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.grey[100]}` }}>
         <Button
           size="small"
           onClick={() => navigate(`/products/${product._id}`)} // Esta navegación siempre funciona
