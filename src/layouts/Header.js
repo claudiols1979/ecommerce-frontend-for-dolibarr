@@ -7,7 +7,8 @@ import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-
+import AuthBranding from '../components/common/AuthBranding'
+import NavBranding from '../components/common/NavBranding';
 
 const Header = () => {
   const { cartItems } = useOrders();
@@ -107,7 +108,7 @@ const Header = () => {
   return (
     <AppBar position="sticky" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}> 
       <Toolbar sx={{ justifyContent: 'space-between', flexWrap: 'wrap', py: { xs: 1, sm: 0 } }}>
-        <Typography
+        {/* <Typography
           variant="h6"
           component={RouterLink}
           to="/"
@@ -117,8 +118,9 @@ const Header = () => {
             fontSize: { xs: '1.2rem', sm: '1.5rem' }
           }}
         >
-          Look & Smell
-        </Typography>
+          <AuthBranding />
+        </Typography> */}
+        <NavBranding />
 
         {isMobile ? (
           <Box>
