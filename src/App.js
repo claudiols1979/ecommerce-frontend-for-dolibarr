@@ -21,7 +21,7 @@ import NewPasswordPage from './pages/NewPasswordPage';
 // PrivateRoute component
 import PrivateRoute from './components/auth/PrivateRoute';
 
-// Styled component for overall layout
+// Styled components
 const AppContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
@@ -36,47 +36,51 @@ const MainContent = styled('main')(({ theme }) => ({
   },
 }));
 
-// --- NUEVO COMPONENTE DE LAYOUT PARA RUTAS PROTEGIDAS ---
-// Este componente simple envuelve las páginas que SÍ deben tener Header y Footer.
-const ProtectedPagesLayout = () => {
-  return (
+// Layout para páginas que siempre tienen Header/Footer
+const MainLayout = ({ children }) => (
     <AppContainer>
         <Header />
         <MainContent>
-            {/* Outlet renderizará la página protegida correspondiente (HomePage, ProductsPage, etc.) */}
-            <Outlet /> 
+            {children}
         </MainContent>
         <Footer />
     </AppContainer>
-  )
-}
+);
 
 function App() {
   return (
     <Routes>
-      {/* --- GRUPO 1: RUTAS PÚBLICAS --- */}
-      {/* Estas rutas se renderizan por sí mismas, sin el layout principal (Header/Footer). */}
+      {/* --- GRUPO 1: RUTAS PÚBLICAS SIN LAYOUT PRINCIPAL --- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<NewPasswordPage />} />
 
-      {/* --- GRUPO 2: RUTAS PROTEGIDAS --- */}
-      {/* Todas las demás rutas son verificadas por PrivateRoute primero. */}
-      <Route element={<PrivateRoute />}>
-        {/* Si la autenticación es exitosa, se renderizará el layout con las páginas anidadas. */}
-        <Route element={<ProtectedPagesLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/products/:id" element={<ProductDetailsPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          {/* La ruta "catch-all" ahora está DENTRO de la sección protegida. */}
-          {/* Cualquier ruta desconocida para un usuario logueado lo llevará al inicio. */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Route>
+      {/* --- GRUPO 2: RUTAS CON LAYOUT PRINCIPAL --- */}
+      {/* Todas las rutas aquí tendrán Header y Footer */}
+      <Route
+        path="/*"
+        element={
+          <MainLayout>
+            <Routes>
+              {/* Rutas públicas dentro del layout principal */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/products/:id" element={<ProductDetailsPage />} />
+              <Route path="/cart" element={<CartPage />} />
+
+              {/* Rutas que requieren autenticación */}
+              <Route element={<PrivateRoute />}>
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+              </Route>
+              
+              {/* Fallback para cualquier ruta desconocida dentro de este layout */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </MainLayout>
+        }
+      />
     </Routes>
   );
 }

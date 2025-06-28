@@ -2,59 +2,52 @@ import React from 'react';
 import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress, Tooltip, useTheme } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import LoginIcon from '@mui/icons-material/Login'; // Se añade un icono para la acción de login
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext'; // Only used for getting the user's category for pricing
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../../utils/formatters';
 
-// --- IMPORTANT MODIFICATION ---
-// The component now accepts `onAddToCart` and `isAdding` props from its parent (ProductsPage.js).
-// It no longer uses the global cartLoading state.
+// El componente recibe 'onAddToCart' y 'isAdding' del componente padre.
 const ProductCard = ({ product, onAddToCart, isAdding }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  // --- CORRECCIÓN CLAVE: Usamos 'isAuthenticated' para una comprobación clara ---
+  const { user, isAuthenticated } = useAuth();
   const theme = useTheme();
 
-  // Price logic remains unchanged.
-  const getPriceForCart = () => {
-    let calculatedPrice = null;
-    if (user && user.role === 'Revendedor' && user.resellerCategory && product.resellerPrices) {
-      const resellerCategory = user.resellerCategory;
-      const priceForCategory = product.resellerPrices[resellerCategory];
-      if (typeof priceForCategory === 'number' && priceForCategory > 0) {
-        calculatedPrice = priceForCategory;
-      }
-    } 
-    if (calculatedPrice === null && product.resellerPrices && typeof product.resellerPrices.cat1 === 'number' && product.resellerPrices.cat1 > 0) {
-      calculatedPrice = product.resellerPrices.cat1;
+  // La lógica de precios se mantiene, pero ahora es más robusta.
+  const displayPrice = React.useMemo(() => {
+    if (!product || !product.resellerPrices) return null;
+    // Si el usuario está autenticado y es un revendedor, muestra su precio específico.
+    if (isAuthenticated && user?.role === 'Revendedor') {
+      return product.resellerPrices[user.resellerCategory] || product.resellerPrices.cat1;
     }
-    if (calculatedPrice === null || isNaN(calculatedPrice) || calculatedPrice <= 0) {
-      console.error(`ProductCard: No se pudo determinar un precio válido para el producto "${product.name}".`);
-      return 0;
-    }
-    return calculatedPrice;
-  };
+    // Para todos los demás (visitantes, admin, etc.), siempre muestra el precio cat1.
+    return product.resellerPrices.cat1;
+  }, [product, user, isAuthenticated]);
 
-  let displayPrice = null;
-  if (user && user.role === 'Revendedor' && product.resellerPrices && product.resellerPrices[user.resellerCategory]) {
-    displayPrice = product.resellerPrices[user.resellerCategory];
-  } else if (product.resellerPrices && product.resellerPrices.cat1) {
-    displayPrice = product.resellerPrices.cat1;
-  }
-  
-  // --- MODIFIED: The component's own handleAddToCart is simplified ---
-  // It now just calls the function passed down from the parent.
-  const handleAddToCart = () => {
+  const handleAddToCartClick = () => {
+    // Si no hay un usuario autenticado, redirige a la página de login.
+    if (!isAuthenticated) {
+      toast.info("Por favor, inicia sesión para añadir productos al carrito.");
+      navigate('/login');
+      return;
+    }
+
+    // Si el usuario está autenticado, procede con la lógica existente.
     if (product.countInStock <= 0) {
       toast.error('Este producto está agotado.');
       return;
     }
-    if (getPriceForCart() <= 0) {
+    if (!displayPrice || displayPrice <= 0) {
       toast.error('No se puede añadir al carrito: Precio no disponible.');
       return;
     }
-    // Call the function passed in via props
-    onAddToCart();
+    
+    // Llama a la función que viene del padre (HomePage o ProductsPage).
+    if (onAddToCart) {
+      onAddToCart(product, 1); // Asumimos que se añade 1 unidad desde la tarjeta
+    }
   };
 
   const isOutOfStock = product.countInStock <= 0;
@@ -80,50 +73,29 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         image={product.imageUrls?.[0]?.secure_url || 'https://placehold.co/600x400/E0E0E0/FFFFFF?text=No+Image'}
         alt={product.name}
         sx={{ 
-          objectFit: 'contain', 
-          p: 1, 
-          bgcolor: 'background.default', 
-          borderRadius: '12px 12px 0 0', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+          objectFit: 'contain', p: 1, bgcolor: 'background.default', 
+          borderRadius: '12px 12px 0 0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+          cursor: 'pointer'
         }}
+        onClick={() => navigate(`/products/${product._id}`)} // Esta navegación siempre funciona
       />
-      <CardContent sx={{ 
-        flexGrow: 1, 
-        p: 1.5, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'space-between', 
-      }}>
+      <CardContent sx={{ flexGrow: 1, p: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <Typography 
-          gutterBottom 
-          variant="h6" 
-          component="div" 
+          gutterBottom variant="h6" component="div" 
           sx={{ 
-            fontWeight: 700, 
-            minHeight: 40, 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            display: '-webkit-box',
-            WebkitLineClamp: 2, 
-            WebkitBoxOrient: 'vertical',
-            fontSize: '0.95rem', 
-            color: theme.palette.primary.main, 
+            fontWeight: 700, minHeight: 40, overflow: 'hidden', textOverflow: 'ellipsis', 
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            fontSize: '0.95rem', color: 'primary.main', 
           }}
         >
           {product.name}
         </Typography>
         <Typography 
-          variant="body2" 
-          color="text.secondary" 
+          variant="body2" color="text.secondary" 
           sx={{ 
-            minHeight: 30, 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            display: '-webkit-box',
-            WebkitLineClamp: 2, 
-            WebkitBoxOrient: 'vertical',
-            mb: 1, 
-            fontSize: '0.8rem', 
+            minHeight: 30, overflow: 'hidden', textOverflow: 'ellipsis', 
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            mb: 1, fontSize: '0.8rem', 
           }}
         >
           {product.shortDescription || (product.description ? product.description.substring(0, 60) + '...' : 'No description available.')}
@@ -139,28 +111,14 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           )}
         </Box>
       </CardContent>
-      <CardActions sx={{ 
-        p: 1.5, 
-        pt: 0, 
-        justifyContent: 'space-between', 
-        borderTop: `1px solid ${theme.palette.grey[100]}`, 
-      }}>
+      <CardActions sx={{ p: 1.5, pt: 0, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.grey[100]}` }}>
         <Button
           size="small"
-          onClick={() => navigate(`/products/${product._id}`)}
+          onClick={() => navigate(`/products/${product._id}`)} // Esta navegación siempre funciona
           variant="outlined"
           color="secondary" 
           startIcon={<VisibilityIcon />}
-          sx={{ 
-            borderRadius: 2, 
-            textTransform: 'none',
-            fontSize: '0.75rem', 
-            py: 0.5, 
-            '&:hover': {
-              backgroundColor: theme.palette.secondary.light, 
-              color: theme.palette.secondary.contrastText, 
-            }
-          }}
+          sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.75rem', py: 0.5 }}
         >
           Ver
         </Button>
@@ -170,16 +128,12 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
               size="small"
               variant="contained"
               color="primary" 
-              onClick={handleAddToCart}
-              // --- MODIFIED: The button's state is now controlled by the `isAdding` prop ---
+              onClick={handleAddToCartClick} // Se usa el nuevo handler inteligente
               startIcon={isAdding ? <CircularProgress size={18} color="inherit" /> : <ShoppingCartIcon sx={{ fontSize: '1rem' }} />}
-              disabled={isAdding || isOutOfStock || getPriceForCart() <= 0}
+              disabled={isAdding || isOutOfStock || !displayPrice || displayPrice <= 0}
               sx={{ 
-                ml: 1, 
-                borderRadius: 2, 
-                textTransform: 'none',
-                fontSize: '0.75rem', 
-                py: 0.5, 
+                ml: 1, borderRadius: 2, textTransform: 'none',
+                fontSize: '0.75rem', py: 0.5, 
                 background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
                 boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, 
                 color: 'white', 

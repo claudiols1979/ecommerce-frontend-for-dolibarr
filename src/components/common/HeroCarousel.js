@@ -43,7 +43,7 @@ const HeroCarousel = () => {
 
   const slides = [
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172462/hero1_mnufmi.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1751088623/Gemini_Generated_Image_oscuvxoscuvxoscu_rck3fh.png', // USANDO LA IMAGEN IMPORTADA
       alt: 'Nueva Colección Primavera',
       title: 'Descubre las nuevas colecciones',
       description: 'Estilo y frescura para cada gusto. ¡Explora nuestros últimos productos!',

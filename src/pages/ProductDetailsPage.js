@@ -92,7 +92,11 @@ const ProductDetailsPage = () => {
   const displayPrice = getPriceAtSale(product);
 
   const handleAddToCart = async () => {
-    if (!user) { return; }
+    if (!user) { 
+      navigate('/login');  
+      return; 
+    
+    }
     if (!product) { return; }
     if (quantity <= 0) {
       
