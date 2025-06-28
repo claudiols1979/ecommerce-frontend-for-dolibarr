@@ -211,7 +211,7 @@ const CartPage = () => {
                   onClick={() => navigate('/checkout')}
                   disabled={cartItems.length === 0 || loading}
                 >
-                  Proceder al Pago
+                  Proceder al checkout
                 </Button>
               </CardContent>
             </Card>
