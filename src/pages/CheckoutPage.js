@@ -210,8 +210,8 @@ const CheckoutPage = () => {
           </Card>
 
           <Card sx={{ p: { xs: 2, sm: 3 }, mt: 4, borderRadius: 2, boxShadow: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Método de Pago</Typography>
-            <Typography variant="body1" color="text.secondary">Los detalles de pago y envio se coordinarán a través de WhatsApp. SINPE ó Transferencia</Typography>
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Método de Pago (SINPE Móvil ó Transferencia)</Typography>
+            <Typography variant="h6" color="text.secondary">Los detalles de pago y envio se coordinarán a través de WhatsApp.</Typography>
             <Typography variant="body1" color="text.secondary">Precio de envio dentro de la GAM ₡3000 Colones, fuera la de la GAM pago contra entrega en Correos de Costa Rica.</Typography>
             <Typography variant="body1" color="text.secondary">***Seleccionar una provincia para calculo del envio.***</Typography>
           </Card>
