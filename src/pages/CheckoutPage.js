@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container, Box, Typography, Button, Grid, Card, CardContent,
-  TextField, CircularProgress, Alert, // Eliminadas referencias a Dialog, DialogTitle, etc.
-  Link as MuiLink, Divider, List, ListItem, ListItemText, Paper
+  Container, Box, Typography, Button, Grid, Card, CardContent, IconButton,
+  TextField, CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions,
+  Link as MuiLink, Divider, List, ListItem, ListItemText, Paper, FormControl, InputLabel, Select, MenuItem, useTheme
 } from '@mui/material';
-// Añadidas las importaciones para los iconos que se usarán en la pantalla de éxito
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
@@ -12,42 +11,60 @@ import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { formatPrice } from '../utils/formatters'; // Importamos el formateador de precios
 
-// Número de WhatsApp del agente hardcodeado
 const WHATSAPP_AGENT_NUMBER = '50672317420'; 
 
 const CheckoutPage = () => {
-  // Ahora usamos 'error' directamente de useOrders, no 'orderError'
   const { cartItems, loading, error, placeOrder } = useOrders();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const [shippingDetails, setShippingDetails] = useState({
     name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '',
     email: user?.email || '',
     phone: user?.phoneNumber || '',
     address: user?.address || '',
-    city: user?.city || '',
-    postalCode: user?.postalCode || '',
-    country: user?.country || 'Costa Rica',
   });
 
-  // Estados para la pantalla de éxito después de colocar la orden
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null);
 
-  const totalCartPrice = cartItems.reduce((acc, item) => acc + (item.quantity * item.priceAtSale), 0);
-  const shippingCost = 0; 
-  const finalTotalPrice = totalCartPrice + shippingCost;
+  // --- NUEVOS ESTADOS PARA EL CÁLCULO DE ENVÍO ---
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [shippingCost, setShippingCost] = useState(0);
+  const [shippingMessage, setShippingMessage] = useState('');
 
-  // Redirigir si el carrito está vacío
+  const totalCartPrice = cartItems.reduce((acc, item) => acc + (item.quantity * item.priceAtSale), 0);
+  
+  // --- El total final ahora es dinámico ---
+  const finalTotalPrice = totalCartPrice + shippingCost;
+  
+  const provinces = ["Alajuela", "Cartago", "Guanacaste", "Heredia", "Limón", "Puntarenas", "San José"];
+  const gamProvinces = ["San José", "Alajuela", "Cartago", "Heredia"];
+
+  // --- useEffect para calcular el costo de envío cuando la provincia cambia ---
+  useEffect(() => {
+    if (gamProvinces.includes(selectedProvince)) {
+      setShippingCost(3000);
+      setShippingMessage(''); // No hay mensaje si el costo aplica
+    } else if (selectedProvince && !gamProvinces.includes(selectedProvince)) {
+      setShippingCost(0);
+      setShippingMessage("Pago contra entrega");
+    } else {
+      setShippingCost(0);
+      setShippingMessage(''); // Limpia el mensaje si no hay provincia seleccionada
+    }
+  }, [selectedProvince]);
+
+
   useEffect(() => {
     if (!loading && cartItems.length === 0 && !orderPlaced) {      
       navigate('/products');
     }
   }, [cartItems, loading, navigate, orderPlaced]);
 
-  // Pre-fill shipping details if user object is available
   useEffect(() => {
     if (user) {
       setShippingDetails(prev => ({
@@ -56,66 +73,53 @@ const CheckoutPage = () => {
         email: user.email || prev.email,
         phone: user.phoneNumber || prev.phone,
         address: user.address || prev.address,
-        city: user.city || prev.city,
-        postalCode: user.postalCode || prev.postalCode,
-        country: user.country || prev.country,
       }));
     }
   }, [user]);
 
-  // Esta función ahora FINALIZA EL PEDIDO y ABRE WHATSAPP DIRECTAMENTE
   const handlePlaceOrder = async () => {
     if (!user) {      
+      toast.error("Debes iniciar sesión para finalizar el pedido.");
       return;
     }
-    if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email) {     
-      return;
+    if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email || !selectedProvince) {      
+        toast.error("Por favor, completa toda la información de envío, incluyendo la provincia.");
+        return;
     }
-    if (cartItems.length === 0) {     
+    if (cartItems.length === 0) {      
       return;
     }
 
-    // El loading del OrderContext se activará con placeOrder
     try {
-      // Llama a la función placeOrder de tu OrderContext, pasando el número hardcodeado
       const result = await placeOrder(WHATSAPP_AGENT_NUMBER); 
       
-      if (result && result.order) { // Si placeOrder fue exitoso y devolvió la orden creada
+      if (result && result.order) { 
         setOrderPlaced(true);
-        setPlacedOrderDetails(result.order); // Guarda los detalles de la orden para el mensaje de WhatsApp
+        setPlacedOrderDetails(result.order);
 
-        // --- Generación del mensaje de WhatsApp y apertura del enlace (AHORA EN EL FRONTEND) ---
         let message = `¡Hola! Soy *${user.firstName || ''} ${user.lastName || ''}* (${user.email || ''}), tu cliente.\n\n`;
-        message += `Me gustaría confirmar mi pedido (#${result.order._id}).\n\n`; // Usa el ID de la orden creada
+        message += `Me gustaría confirmar mi pedido (#${result.order._id}).\n\n`;
         message += 'Detalles del Cliente:\n';
         message += `  Nombre: ${result.order.customerDetails?.name || 'N/A'}\n`;
         message += `  Teléfono: ${result.order.customerDetails?.phoneNumber || 'N/A'}\n`;
-        message += `  Dirección: ${result.order.customerDetails?.address || 'N/A'}\n`;
-        if (result.order.customerDetails?.city && result.order.customerDetails.city !== 'N/A') message += `  Ciudad: ${result.order.customerDetails.city}\n`;
-        if (result.order.customerDetails?.postalCode && result.order.customerDetails.postalCode !== 'N/A') message += `  Código Postal: ${result.order.customerDetails.postalCode}\n`;
-        if (result.order.customerDetails?.country && result.order.customerDetails.country !== 'N/A') message += `  País: ${result.order.customerDetails.country}\n`;
+        message += `  Dirección: ${result.order.customerDetails?.address}, ${selectedProvince}\n`;
         message += `\n`;
-
         message += `Productos en el Pedido:\n`;
         result.order.items.forEach((item, index) => {
           message += `  ${index + 1}. ${item.name} (Código: ${item.code})\n`;
-          message += `    Cantidad: ${item.quantity}\n`;
-          message += `    Precio Unitario: ₡${item.priceAtSale.toFixed(2)}\n`;
-          message += `    Subtotal: ₡${(item.quantity * item.priceAtSale).toFixed(2)}\n`;
+          message += `     Cantidad: ${item.quantity}\n`;
+          message += `     Precio Unitario: ${formatPrice(item.priceAtSale)}\n`;
         });
-
-        message += `\nPrecio Total del Pedido: ₡${result.order.totalPrice.toFixed(2)}\n`;
-        message += `ID del Pedido: ${result.order._id}\n\n`;
+        message += `\nSubtotal: ${formatPrice(totalCartPrice)}\n`;
+        message += `Costo de Envío: ${shippingMessage || formatPrice(shippingCost)}\n`;
+        message += `Precio Total Final: ${formatPrice(finalTotalPrice)}\n\n`;
         message += `*Por favor, procesar este pedido y coordinar la entrega. ¡Gracias!*`;
 
         const encodedMessage = encodeURIComponent(message);
         const whatsappLink = `https://wa.me/${WHATSAPP_AGENT_NUMBER}?text=${encodedMessage}`;
         
-        window.open(whatsappLink, '_blank'); // Abre el enlace en una nueva pestaña inmediatamente
-
-       
+        window.open(whatsappLink, '_blank');
       } else {
-        // placeOrder en OrderContext ya debería mostrar errores con toast, pero por si acaso.
         toast.error('Hubo un problema al procesar su pedido. Intente nuevamente.');
       }
     } catch (err) {
@@ -123,93 +127,42 @@ const CheckoutPage = () => {
       toast.error('Error al finalizar el pedido. Verifique que WhatsApp o WhatsAppWeb esten instalados en su dispositivo');
     }
   };
-
-  // Renderizado condicional basado en el estado de carga y error del contexto
-  if (loading) { // Usamos el 'loading' del contexto directamente
-    return (
-      <Container maxWidth="lg" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-        <CircularProgress color="primary" />
-        <Typography sx={{ mt: 2 }}>Preparando checkout...</Typography>
-      </Container>
-    );
-  }
-
-  if (error) { // Usamos el 'error' del contexto directamente
-    return (
-      <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
-        <Alert severity="error">{error.message}</Alert>
-      </Container>
-    );
-  }
-
-  // Redirigir si el carrito está vacío después de la carga inicial
-  if (cartItems.length === 0 && !loading && !orderPlaced) {
-    // Ya se maneja con el useEffect, esto es un fallback visual si el redirect tarda un poco
-      return (
-          <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
-              <Alert severity="info">Tu carrito está vacío. ¡Redirigiendo a productos!</Alert>
-          </Container>
-      );
-  }
-
-  // Si la orden ya fue colocada, muestra la pantalla de confirmación (estos son tus estilos)
+  
   if (orderPlaced) {
     return (
-      <Container maxWidth="md" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-          <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
-            ¡Pedido Realizado con Éxito!
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Su pedido ha sido procesado. Se ha abierto una ventana de WhatsApp para que finalice la comunicación con nuestro agente.
-          </Typography>
-          {placedOrderDetails && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>ID de Pedido: {placedOrderDetails._id}</Typography>
-              <Typography variant="body1">Total: ₡{placedOrderDetails.totalPrice.toFixed(2)}</Typography>
-            </Box>
-          )}
-          {/* Botón para reabrir el chat de WhatsApp si se cierra accidentalmente */}
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<WhatsAppIcon />}
-            onClick={() => {
-                if (placedOrderDetails) {
-                    // Re-generar el enlace de WhatsApp con un mensaje más conciso para reabrir
-                    let message = `¡Hola! Soy *${user.firstName || ''} ${user.lastName || ''}* (${user.email || ''}). Estoy siguiendo mi pedido (#${placedOrderDetails._id}) y necesito contactarte.`;
-                    const encodedMessage = encodeURIComponent(message);
-                    const whatsappLink = `https://wa.me/${WHATSAPP_AGENT_NUMBER}?text=${encodedMessage}`;
-                    window.open(whatsappLink, '_blank');
-                }
-            }}
-            sx={{ mt: 2, px: 4, py: 1.5, borderRadius: 2 }}
-          >
-            Reabrir Chat de WhatsApp
-          </Button>
-          {/* Botones de navegación adicionales */}
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => navigate('/profile')} // Asumiendo que tienes una ruta /myorders
-            sx={{ mt: 2, ml: { xs: 0, sm: 2 }, px: 4, py: 1.5, borderRadius: 2 }}
-          >
-            Ver Mis Pedidos
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/products')}
-            sx={{ mt: 2, ml: { xs: 0, sm: 2 }, px: 4, py: 1.5, borderRadius: 2 }}
-          >
-            Seguir Comprando
-          </Button>
-        </Paper>
-      </Container>
+        <Container maxWidth="md" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
+            <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+              <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
+                ¡Pedido Realizado con Éxito!
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Su pedido ha sido procesado. Se ha abierto una ventana de WhatsApp para que finalice la comunicación con nuestro agente.
+              </Typography>
+              {placedOrderDetails && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>ID de Pedido: {placedOrderDetails._id}</Typography>
+                  <Typography variant="body1">Total: {formatPrice(placedOrderDetails.totalPrice)}</Typography>
+                </Box>
+              )}
+              <Button variant="contained" color="primary" startIcon={<WhatsAppIcon />} onClick={() => {
+                  if (placedOrderDetails) {
+                      let message = `¡Hola! Soy *${user.firstName || ''} ${user.lastName || ''}* (${user.email || ''}). Estoy siguiendo mi pedido (#${placedOrderDetails._id}) y necesito contactarte.`;
+                      const encodedMessage = encodeURIComponent(message);
+                      const whatsappLink = `https://wa.me/${WHATSAPP_AGENT_NUMBER}?text=${encodedMessage}`;
+                      window.open(whatsappLink, '_blank');
+                  }
+              }} sx={{ mt: 2, px: 4, py: 1.5, borderRadius: 2 }}>
+                Reabrir Chat de WhatsApp
+              </Button>
+              <Button variant="outlined" color="secondary" onClick={() => navigate('/profile')} sx={{ mt: 2, ml: { xs: 0, sm: 2 }, px: 4, py: 1.5, borderRadius: 2 }}>
+                Ver Mis Pedidos
+              </Button>
+            </Paper>
+        </Container>
     );
   }
 
-  // Vista normal de la página de checkout antes de colocar la orden (tus estilos)
   return (
     <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -223,64 +176,44 @@ const CheckoutPage = () => {
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Información de Envío</Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Nombre Completo"
-                  name="name"
-                  value={shippingDetails.name}
-                  fullWidth
-                  required
-                  InputProps={{ readOnly: true }}
-                />
+                <TextField label="Nombre Completo" name="name" value={shippingDetails.name} fullWidth required InputProps={{ readOnly: true }} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Correo Electrónico"
-                  name="email"
-                  type="email"
-                  value={shippingDetails.email}
-                  fullWidth
-                  required
-                  InputProps={{ readOnly: true }}
-                />
+                <TextField label="Correo Electrónico" name="email" type="email" value={shippingDetails.email} fullWidth required InputProps={{ readOnly: true }} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Número de Teléfono"
-                  name="phone"
-                  value={shippingDetails.phone}
-                  fullWidth
-                  required
-                  InputProps={{ readOnly: true }}
-                />
+                <TextField label="Número de Teléfono" name="phone" value={shippingDetails.phone} fullWidth required InputProps={{ readOnly: true }} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="País"
-                  name="country"
-                  value={shippingDetails.country}
-                  fullWidth
-                  required
-                  InputProps={{ readOnly: true }}
-                />
+                <FormControl fullWidth required>
+                  {/* <InputLabel id="province-select-label">Provincia</InputLabel> */}
+                  <Select
+                    labelId="province-select-label"
+                    value={selectedProvince}
+                    label="Provincia"
+                    onChange={(e) => setSelectedProvince(e.target.value)}
+                    displayEmpty // --- CORRECCIÓN CLAVE ---
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione una provincia...</em>
+                    </MenuItem>
+                    {provinces.map((prov) => (
+                      <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  label="Dirección (Calle, número, apartamento)"
-                  name="address"
-                  value={shippingDetails.address}
-                  fullWidth
-                  required
-                  InputProps={{ readOnly: true }}
-                />
+                <TextField label="Dirección (Calle, número, etc.)" name="address" value={shippingDetails.address} fullWidth required InputProps={{ readOnly: true }} />
               </Grid>
             </Grid>
           </Card>
 
           <Card sx={{ p: { xs: 2, sm: 3 }, mt: 4, borderRadius: 2, boxShadow: 3 }}>
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Método de Pago</Typography>
-            <Typography variant="body1" color="text.secondary">      
-              Los detalles de pago se coordinarán a través de WhatsApp. Da click en "Finalizar Pedido y Coordinar por Whatsapp"
-            </Typography>
+            <Typography variant="body1" color="text.secondary">Los detalles de pago y envio se coordinarán a través de WhatsApp.</Typography>
+            <Typography variant="body1" color="text.secondary">Precio de envio dentro de la GAM ₡3000 Colones, fuera la de la GAM pago contra entrega en Correos de Costa Rica.</Typography>
+            <Typography variant="body1" color="text.secondary">***Seleccionar una provincia para calculo del envio.***</Typography>
           </Card>
         </Grid>
 
@@ -297,7 +230,7 @@ const CheckoutPage = () => {
                     sx={{ flexGrow: 1 }}
                   />
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    ₡{(item.quantity * item.priceAtSale).toFixed(2)}
+                    {formatPrice(item.quantity * item.priceAtSale)}
                   </Typography>
                 </ListItem>
               ))}
@@ -305,30 +238,24 @@ const CheckoutPage = () => {
             <Divider sx={{ my: 2 }} />
             <Box display="flex" justifyContent="space-between" mb={1}>
               <Typography variant="body1">Subtotal:</Typography>
-              <Typography variant="body1">₡{totalCartPrice.toFixed(2)}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>{formatPrice(totalCartPrice)}</Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" mb={2}>
               <Typography variant="body1">Costo de Envío:</Typography>
-              <Typography variant="body1">₡{shippingCost.toFixed(2)}</Typography>
+              <Typography variant="body1" color={shippingMessage ? "text.secondary" : "inherit"} sx={{ fontWeight: 600 }}>
+                {shippingMessage ? shippingMessage : formatPrice(shippingCost)}
+              </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" sx={{ borderTop: '1px solid #eee', pt: 2, mt: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>Total Final:</Typography>
-              <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>₡{finalTotalPrice.toFixed(2)}</Typography>
+              <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>{formatPrice(finalTotalPrice)}</Typography>
             </Box>
             <Button
               variant="contained"
-              // Estilos de WhatsApp directos
-              sx={{ 
-                mt: 3, 
-                p: 1.5,
-                bgcolor: '#25D366', // Verde WhatsApp
-                color: 'white', // Texto blanco
-                '&:hover': {
-                  bgcolor: '#1EBE57', // Un verde un poco más oscuro al pasar el ratón
-                },
-              }}
+              sx={{ mt: 3, p: 1.5, bgcolor: '#25D366', color: 'white', '&:hover': { bgcolor: '#1EBE57' } }}
+              fullWidth
               onClick={handlePlaceOrder}
-              disabled={cartItems.length === 0 || loading} // 'loading' viene de useOrders
+              disabled={cartItems.length === 0 || loading || !selectedProvince}
             >
               Finalizar Pedido y Coordinar por WhatsApp
             </Button>
