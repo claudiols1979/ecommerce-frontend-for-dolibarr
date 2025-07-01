@@ -9,6 +9,7 @@ import SortIcon from '@mui/icons-material/Sort';
 import ProductCard from '../components/product/ProductCard';
 import { useProducts } from '../contexts/ProductContext';
 import { useTheme } from '@mui/material/styles';
+import { Helmet } from 'react-helmet-async';
 // --- Import contexts needed for local logic ---
 import { useOrders } from '../contexts/OrderContext'; 
 import { useAuth } from '../contexts/AuthContext'; // We need the user for price calculation
@@ -158,6 +159,17 @@ const ProductsPage = () => {
 
 
   return (
+    <>
+    <Helmet>
+      <title>Look & Smell - Perfumería y Cosméticos para Revendedores en Costa Rica</title>
+      <meta name="description" content="Descubre el catálogo de perfumes y cosméticos en Look & Smell. Accede a precios exclusivos. Envíos a toda Costa Rica." />
+      <meta property="og:title" content="Look & Smell - Perfumería Fina en Costa Rica" />
+      <meta property="og:description" content="Tu socio de confianza en perfumería y cosméticos. Calidad, variedad y los mejores precios en Costa Rica." />
+      <meta property="og:image" content="https://res.cloudinary.com/dl4k0gqfv/image/upload/v1751088623/Gemini_Generated_Image_oscuvxoscuvxoscu_rck3fh.png" />
+      <meta property="og:url" content="https://www.look-and-smell.com/" />
+      <meta property="og:type" content="website" />
+    </Helmet>
+
     <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 700, color: 'primary.main' }}>
         
@@ -349,6 +361,7 @@ const ProductsPage = () => {
         </>
       )}
     </Container>
+    </>
   );
 };
 

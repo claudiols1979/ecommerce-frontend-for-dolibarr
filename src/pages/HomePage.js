@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
+import { Helmet } from 'react-helmet-async';
 
 // Importa los iconos necesarios para los widgets y las features
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -35,32 +36,6 @@ const HomePage = () => {
   useEffect(() => {
     fetchProducts(1, 8, 'createdAt_desc'); 
   }, [fetchProducts]);
-
-  //   // --- COPIA Y PEGA ESTE BLOQUE ---
-  // useEffect(() => {
-  //   // 1. Definimos el intervalo de tiempo en milisegundos (30 segundos)
-  //   const thirtySeconds = 30000;
-
-  //   // 2. Creamos un intervalo que se ejecutará cada 30 segundos
-  //   const intervalId = setInterval(() => {
-  //     console.log('Actualizando productos automáticamente...');
-      
-  //     // 3. Condición de seguridad: No iniciar una nueva carga si ya hay una en curso.
-  //     // Esto previene peticiones duplicadas y posibles race conditions.
-  //     if (!loading) {
-  //       fetchProducts();
-  //     }
-  //   }, thirtySeconds);
-
-  //   // 4. Función de limpieza: Esto es CRÍTICO.
-  //   // Se ejecuta cuando el componente se "desmonta" (ej. el usuario navega a otra página).
-  //   // Limpia el intervalo para que no siga ejecutándose en segundo plano.
-  //   return () => {
-  //     clearInterval(intervalId);
-  //     console.log('Intervalo de actualización de productos detenido.');
-  //   };
-  // }, [loading, fetchProducts]); // 5. Array de dependencias
-  // // --- FIN DEL BLOQUE ---
 
   // --- NEW: Handler to add items to cart, with local loading state ---
   const handleAddToCart = useCallback(async (product) => {
@@ -133,6 +108,17 @@ const HomePage = () => {
   ];
 
   return (
+    <>
+    <Helmet>
+        <title>Look & Smell - Perfumería y Cosméticos para Revendedores en Costa Rica</title>
+        <meta name="description" content="Descubre el catálogo de perfumes y cosméticos en Look & Smell. Accede a precios exclusivos. Envíos a toda Costa Rica." />
+        <meta property="og:title" content="Look & Smell - Perfumería Fina en Costa Rica" />
+        <meta property="og:description" content="Tu socio de confianza en perfumería y cosméticos. Calidad, variedad y los mejores precios en Costa Rica." />
+        <meta property="og:image" content="https://res.cloudinary.com/dl4k0gqfv/image/upload/v1751088623/Gemini_Generated_Image_oscuvxoscuvxoscu_rck3fh.png" />
+        <meta property="og:url" content="https://www.look-and-smell.com/" />
+        <meta property="og:type" content="website" />
+      </Helmet>
+
     <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>
       {/* Hero Carousel */}
       <HeroCarousel />
@@ -285,6 +271,7 @@ const HomePage = () => {
         </Grid>
       </Box>
     </Container>
+    </>
   );
 };
 
