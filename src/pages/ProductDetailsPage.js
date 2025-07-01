@@ -186,7 +186,7 @@ const ProductDetailsPage = () => {
         {/* Open Graph Tags (para compartir en redes sociales) */}
         <meta property="og:title" content={product ? product.name : 'Look & Smell'} />
         <meta property="og:description" content={product ? product.description.substring(0, 120) : 'Tu tienda de confianza para perfumería.'} />
-        <meta property="og:image" content={product?.imageUrls?.[0]} />
+        <meta property="og:image" content={product?.imageUrls?.[0]?.secure_url} />
       </Helmet>
 
     <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
