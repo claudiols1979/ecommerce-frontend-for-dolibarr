@@ -164,43 +164,150 @@ const ProductsPage = () => {
       </Typography>
 
       {/* Filters section remains unchanged */}
-      <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 3, bgcolor: 'background.paper', border: `1px solid ${theme.palette.grey[100]}` }}>
-        <Grid container spacing={6} alignItems="center" justifyContent="center"> 
-            {/* Search Field */}
-            <Grid item xs={12} sm={6} md={3}>
-                <TextField label="Buscar por Nombre" variant="outlined" fullWidth size="small" value={searchTerm} onChange={handleSearchChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
-            </Grid>
-            {/* Gender Selector */}
-            <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
-                <InputLabel id="gender-select-label">Filtrar por Género</InputLabel>
-                <Select labelId="gender-select-label" value={selectedGender} label="Filtrar por Género" onChange={handleGenderChange}>
-                    <MenuItem value=""><em>Todos</em></MenuItem>
-                    {availableGenders.map((gender) => (<MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>))}
-                </Select>
-                </FormControl>
-            </Grid>
-            {/* Price Range Slider */}
-            <Grid item xs={12} sm={6} md={3}>
-                <Typography gutterBottom sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 1 }}>Rango de Precios: ₡{priceRange[0]} - ₡{priceRange[1]}</Typography>
-                <Slider value={priceRange} onChange={handlePriceRangeChange} valueLabelDisplay="auto" getAriaValueText={valueLabelFormat} min={0} max={300000} step={1000} marks={[{ value: 0, label: '₡0' }, { value: 300000, label: '₡300K+' }]} color="primary" />
-            </Grid>
-            {/* Sort Selector */}
-            <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
-                <InputLabel id="sort-select-label">Ordenar por</InputLabel>
-                <Select labelId="sort-select-label" value={sortOrder} label="Ordenar por" onChange={handleSortChange}>
-                    <MenuItem value="createdAt_desc">Más Recientes</MenuItem>
-                    <MenuItem value="createdAt_asc">Más Antiguos</MenuItem>
-                    <MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem>
-                    <MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem>
-                    <MenuItem value="name_asc">Nombre: A-Z</MenuItem>
-                    <MenuItem value="name_desc">Nombre: Z-A</MenuItem>
-                </Select>
-                </FormControl>
-            </Grid>
-        </Grid>
-      </Paper>
+      <Paper
+  elevation={8}
+  sx={{
+    p: { xs: 2, sm: 4 },
+    mb: 6,
+    borderRadius: 4,
+    // --- CAMBIO DE ESTILO ---
+    // Se reemplaza el color de fondo sólido por un gradiente sutil.
+    background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 40%, rgba(253, 218, 13,0.4) 100%)',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255, 215, 0, 0.)',
+    boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
+  }}
+>
+  <Grid container spacing={3} alignItems="center" justifyContent="center">
+    {/* Campo de búsqueda */}
+    <Grid item xs={12} sm={6} md={3}>
+      <TextField
+        label="Buscar por Nombre"
+        variant="outlined"
+        fullWidth
+        size="small"
+        value={searchTerm}
+        onChange={handleSearchChange}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '8px',
+            color: 'white',
+            '& fieldset': { borderColor: 'rgba(255, 215, 0, 0.3)' },
+            '&:hover fieldset': { borderColor: '#FFD700' },
+            '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+          },
+          '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
+          '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
+        }}
+      />
+    </Grid>
+    
+    {/* Selector de Género */}
+    <Grid item xs={12} sm={6} md={3}>
+      <FormControl fullWidth size="small" variant="outlined">
+        <InputLabel id="gender-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Filtrar por Género</InputLabel>
+        <Select
+          labelId="gender-select-label"
+          value={selectedGender}
+          label="Filtrar por Género"
+          onChange={handleGenderChange}
+          sx={{
+            borderRadius: '8px',
+            color: 'white',
+            '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' },
+            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+            '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' },
+          }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                bgcolor: '#1E1E1E',
+                color: 'white',
+              },
+            },
+          }}
+        >
+          <MenuItem value=""><em>Todos</em></MenuItem>
+          {availableGenders.map((gender) => (
+            <MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    </Grid>
+
+    {/* Slider de Rango de Precios */}
+    <Grid item xs={12} sm={6} md={3}>
+      <Typography gutterBottom sx={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
+        Rango de Precios
+      </Typography>
+      <Slider
+        value={priceRange}
+        onChange={handlePriceRangeChange}
+        valueLabelDisplay="auto"
+        getAriaValueText={(value) => `₡${value}`}
+        min={0}
+        max={300000}
+        step={1000}
+        sx={{
+          color: '#FFD700', // Color dorado para el slider
+          '& .MuiSlider-thumb': {
+            backgroundColor: '#FFD700',
+            boxShadow: '0 0 10px rgba(255, 215, 0, 0.7)',
+          },
+          '& .MuiSlider-track': {
+            border: 'none',
+          },
+          '& .MuiSlider-rail': {
+            opacity: 0.5,
+            backgroundColor: '#bfbfbf',
+          },
+          '& .MuiSlider-markLabel': {
+            color: 'rgba(255, 255, 255, 0.5)',
+          }
+        }}
+      />
+    </Grid>
+
+    {/* Selector de Ordenar por */}
+    <Grid item xs={12} sm={6} md={3}>
+       <FormControl fullWidth size="small" variant="outlined">
+        <InputLabel id="sort-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Ordenar por</InputLabel>
+        <Select
+          labelId="sort-select-label"
+          value={sortOrder}
+          label="Ordenar por"
+          onChange={handleSortChange}
+          sx={{
+            borderRadius: '8px',
+            color: 'white',
+            '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' },
+            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+            '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' },
+          }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                bgcolor: '#1E1E1E',
+                color: 'white',
+              },
+            },
+          }}
+        >
+          <MenuItem value="createdAt_desc">Más Recientes</MenuItem>
+          <MenuItem value="createdAt_asc">Más Antiguos</MenuItem>
+          <MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem>
+          <MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem>
+          <MenuItem value="name_asc">Nombre: A-Z</MenuItem>
+          <MenuItem value="name_desc">Nombre: Z-A</MenuItem>
+        </Select>
+      </FormControl>
+    </Grid>
+  </Grid>
+</Paper>
+
+
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
