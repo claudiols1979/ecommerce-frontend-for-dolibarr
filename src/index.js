@@ -9,6 +9,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { ProductProvider } from './contexts/ProductContext';
 import { ToastContainer } from 'react-toastify';
+import { HelmetProvider } from 'react-helmet-async';
 import 'react-toastify/dist/ReactToastify.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -17,6 +18,7 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline /> {/* ¡Añade CssBaseline aquí! */}
       <Router>
+        <HelmetProvider>
         <AuthProvider>
           <ProductProvider>
             <OrderProvider>
@@ -25,6 +27,7 @@ root.render(
             </OrderProvider>
           </ProductProvider>
         </AuthProvider>
+        </HelmetProvider>
       </Router>
     </ThemeProvider>
   </React.StrictMode>

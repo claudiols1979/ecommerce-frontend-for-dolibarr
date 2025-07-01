@@ -7,6 +7,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductContext';
 import { useOrders } from '../contexts/OrderContext';
@@ -178,6 +179,16 @@ const ProductDetailsPage = () => {
   const getTranslatedGender = (gender) => genderMap[gender.toLowerCase()] || gender; 
 
   return (
+    <>
+    <Helmet>
+        <title>{product ? `${product.name} - Look & Smell` : 'Detalle de Producto'}</title>
+        <meta name="description" content={product ? `Compra ${product.name}, perfumería fina en Costa Rica. ${product.description.substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
+        {/* Open Graph Tags (para compartir en redes sociales) */}
+        <meta property="og:title" content={product ? product.name : 'Look & Smell'} />
+        <meta property="og:description" content={product ? product.description.substring(0, 120) : 'Tu tienda de confianza para perfumería.'} />
+        <meta property="og:image" content={product?.imageUrls?.[0]} />
+      </Helmet>
+
     <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
       <Box sx={{ mb: 3 }}>
         <Button
@@ -294,6 +305,7 @@ const ProductDetailsPage = () => {
         </Box>
       )}
     </Container>
+    </>
   );
 };
 
