@@ -82,10 +82,26 @@ const CheckoutPage = () => {
       toast.error("Debes iniciar sesión para finalizar el pedido.");
       return;
     }
-    if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email || !selectedProvince) {      
-        toast.error("Por favor, completa toda la información de envío, incluyendo la provincia.");
-        return;
+
+    if (user?.resellerCategory === 'cat1' && !selectedProvince){
+      toast.error("Debes seleccionar una provincia para el envio.");
+      return;
     }
+
+    if (user?.resellerCategory === 'cat1' && selectedProvince) {
+      if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email) {      
+          toast.error("Por favor, completa toda la información de envío.");
+          return;
+      }
+    }
+    
+    if (user?.resellerCategory !== 'cat1') {
+      if (!shippingDetails.name || !shippingDetails.phone || !shippingDetails.address || !shippingDetails.email) {      
+          toast.error("Por favor, completa toda la información de envío.");
+          return;
+      }
+    }
+
     if (cartItems.length === 0) {      
       return;
     }
