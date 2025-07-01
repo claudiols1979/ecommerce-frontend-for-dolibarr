@@ -160,7 +160,7 @@ const ProductsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 700, color: 'primary.main' }}>
-        Todos Nuestros Productos
+        
       </Typography>
 
       {/* Filters section remains unchanged */}
@@ -172,7 +172,7 @@ const ProductsPage = () => {
     borderRadius: 4,
     // --- CAMBIO DE ESTILO ---
     // Se reemplaza el color de fondo sólido por un gradiente sutil.
-    background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 40%, rgba(253, 218, 13,0.4) 100%)',
+    background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 60%, rgba(253, 218, 13,0.4) 100%)',
     backdropFilter: 'blur(10px)',
     border: '1px solid rgba(255, 215, 0, 0.)',
     boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
