@@ -6,7 +6,7 @@ import AuthBranding from '../components/common/AuthBranding';
 
 const TermsAndConditionsPage = () => {
   const theme = useTheme();
-
+  // deployment
   // Estilos consistentes con la página de Política de Privacidad
   const accordionStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
