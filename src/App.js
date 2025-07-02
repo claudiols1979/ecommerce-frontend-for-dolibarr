@@ -17,6 +17,8 @@ import ProfilePage from './pages/ProfilePage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import NewPasswordPage from './pages/NewPasswordPage';
+import PrivacyPolicies from './pages/PrivacyPolicies';
+import TermsConditions from './pages/TermsConditions';
 
 // PrivateRoute component
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -68,7 +70,8 @@ function App() {
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/products/:id" element={<ProductDetailsPage />} />
               <Route path="/cart" element={<CartPage />} />
-
+              <Route path="/privacy" element={<PrivacyPolicies />} />
+              <Route path='/conditions' element={<TermsConditions />} />
               {/* Rutas que requieren autenticación */}
               <Route element={<PrivateRoute />}>
                 <Route path="/checkout" element={<CheckoutPage />} />

@@ -23,14 +23,14 @@ const Footer = () => {
     >
       <Container maxWidth="lg">
         <Typography variant="body2">
-          &copy; {new Date().getFullYear()} Software Factory CR. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Look & Smell - Perfumería CR. Todos los derechos reservados.
         </Typography>
         <Typography variant="body2" sx={{ mt: 1 }}>
-          <MuiLink href="#" color="inherit" sx={{ mx: 1, '&:hover': { textDecoration: 'underline', color: theme.palette.primary.main } }}>
+          <MuiLink href="/Privacy" color="inherit" sx={{ mx: 1, '&:hover': { textDecoration: 'underline', color: theme.palette.primary.main } }}>
             Política de Privacidad
           </MuiLink>
           |
-          <MuiLink href="#" color="inherit" sx={{ mx: 1, '&:hover': { textDecoration: 'underline', color: theme.palette.primary.main } }}>
+          <MuiLink href="/conditions" color="inherit" sx={{ mx: 1, '&:hover': { textDecoration: 'underline', color: theme.palette.primary.main } }}>
             Términos de Servicio
           </MuiLink>
         </Typography>
