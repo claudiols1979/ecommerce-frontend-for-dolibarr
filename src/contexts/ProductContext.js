@@ -68,9 +68,10 @@ export const ProductProvider = ({ children }) => {
   }, [api]); // `api` es una dependencia para useCallback
 
   // Efecto para cargar productos cuando el componente de contexto se monta
-  useEffect(() => {
-    fetchProducts(); // Realiza una carga inicial de productos
-  }, [fetchProducts]);
+
+  // useEffect(() => {
+  //   fetchProducts(); 
+  // }, [fetchProducts]);
 
   const value = {
     products,

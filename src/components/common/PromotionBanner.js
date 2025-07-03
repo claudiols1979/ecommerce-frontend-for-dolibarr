@@ -32,7 +32,7 @@ const PromotionalBanner = () => {
       }}
     >
       <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
-      Aprovecha nuestros precios mayorista por el día de la madre
+      Aprovecha nuestros precios mayorista
       <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
     </Typography>
   );
@@ -43,7 +43,7 @@ const PromotionalBanner = () => {
       width: '100%',
       py: 1.5,
       overflow: 'hidden',
-      whiteSpace: 'nowrap',
+      whiteSpace: 'whitespace-nowrap',
       boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
     }}>
       {/* --- CONTENEDOR DE LA ANIMACIÓN --- */}
