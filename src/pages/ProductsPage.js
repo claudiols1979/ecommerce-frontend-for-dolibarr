@@ -29,6 +29,7 @@ const ProductsPage = () => {
     const params = new URLSearchParams(location.search);
     return params.get('search') || '';
   });
+  
   const [selectedGender, setSelectedGender] = useState(''); 
   const [priceRange, setPriceRange] = useState([0, 300000]); 
   const [sortOrder, setSortOrder] = useState('createdAt_desc'); 
