@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune'; 
 import SortIcon from '@mui/icons-material/Sort'; 
+import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import { useProducts } from '../contexts/ProductContext';
 import { useTheme } from '@mui/material/styles';
@@ -20,8 +21,14 @@ const ProductsPage = () => {
   const { products, loading, error, fetchProducts, currentPage, totalPages, totalProducts } = useProducts();
   const { addItemToCart } = useOrders();
   const { user } = useAuth(); // Get user for price logic
+  const location = useLocation(); // Hook para leer la URL
+  const navigate = useNavigate();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('search') || '';
+  });
   const [selectedGender, setSelectedGender] = useState(''); 
   const [priceRange, setPriceRange] = useState([0, 300000]); 
   const [sortOrder, setSortOrder] = useState('createdAt_desc'); 
@@ -39,50 +46,26 @@ const ProductsPage = () => {
     { value: 'other', label: 'Otro' },
   ];
 
-  // This useEffect remains unchanged
-  useEffect(() => {
-    const fetchProductsWithFilters = async () => {
-      const limit = 18; 
-      await fetchProducts(
-        page, 
-        limit, 
-        sortOrder, 
-        searchTerm, 
-        selectedGender, 
-        priceRange[0], 
-        priceRange[1]
-      );
-    };
 
-    fetchProductsWithFilters();
-  }, [page, searchTerm, selectedGender, priceRange, sortOrder, fetchProducts]); 
+  useEffect(() => {          
+      const fetchProductsWithFilters = async () => {
+        const limit = 18; 
+        await fetchProducts(
+          page, 
+          limit, 
+          sortOrder, 
+          searchTerm, 
+          selectedGender, 
+          priceRange[0], 
+          priceRange[1]
+        );
+      };
 
+      fetchProductsWithFilters();
+    }, [page, searchTerm, selectedGender, priceRange, sortOrder, fetchProducts]); 
+  
+  
 
-  //   // --- COPIA Y PEGA ESTE BLOQUE ---
-  // useEffect(() => {
-  //   // 1. Definimos el intervalo de tiempo en milisegundos (30 segundos)
-  //   const thirtySeconds = 30000;
-
-  //   // 2. Creamos un intervalo que se ejecutará cada 30 segundos
-  //   const intervalId = setInterval(() => {
-  //     console.log('Actualizando productos automáticamente...');
-      
-  //     // 3. Condición de seguridad: No iniciar una nueva carga si ya hay una en curso.
-  //     // Esto previene peticiones duplicadas y posibles race conditions.
-  //     if (!loading) {
-  //       fetchProducts();
-  //     }
-  //   }, thirtySeconds);
-
-  //   // 4. Función de limpieza: Esto es CRÍTICO.
-  //   // Se ejecuta cuando el componente se "desmonta" (ej. el usuario navega a otra página).
-  //   // Limpia el intervalo para que no siga ejecutándose en segundo plano.
-  //   return () => {
-  //     clearInterval(intervalId);
-  //     console.log('Intervalo de actualización de productos detenido.');
-  //   };
-  // }, [loading, fetchProducts]); // 5. Array de dependencias
-  // // --- FIN DEL BLOQUE ---
   
   // --- CORRECTED: Local handler now calculates price before adding ---
   const handleAddToCart = useCallback(async (product) => {
@@ -151,6 +134,13 @@ const ProductsPage = () => {
 
   const handlePageChange = (event, value) => {
     setPage(value);
+    navigate('/products', { replace: true });
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setPage(1);
+    navigate('/products', { replace: true }); // Limpia la URL
   };
 
   const valueLabelFormat = (value) => `₡${value}`;
@@ -319,12 +309,45 @@ const ProductsPage = () => {
   </Grid>
 </Paper>
 
+{searchTerm ? (
+  
+<Box sx={{ textAlign: 'center', my: 6 }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={handleClearSearch}
+          sx={{ 
+            borderRadius: 8, 
+            px: 5, 
+            py: 1.5,
+            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
+            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
+              backgroundColor: '#FFD740',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+            },
+            fontWeight: 700,
+            fontSize: { xs: '1rem', sm: '1.1rem' }
+          }}
+        >
+          Explorar Todos los Productos
+        </Button>
+      </Box>
+) : <></>
+
+
+}
 
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
           <CircularProgress color="primary" />
-          <Typography ml={2}>Cargando productos...</Typography>
+          {/* <Typography ml={2}>Cargando productos...</Typography> */}
         </Box>
       ) : error ? (
         <Alert severity="error">{error.message}</Alert>

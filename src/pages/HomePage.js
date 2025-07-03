@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Box, Typography, Button, Grid, CircularProgress, Alert, Card, CardContent, CardMedia } from '@mui/material';
+import { Container, Box, Typography, Button, Grid, CircularProgress, Alert, Card, CardContent, CardMedia, Paper, TextField, InputAdornment } from '@mui/material';
 import ProductCard from '../components/product/ProductCard';
 import HeroCarousel from '../components/common/HeroCarousel';
 import { useProducts } from '../contexts/ProductContext';
@@ -20,7 +20,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import SecurityIcon from '@mui/icons-material/Security';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
-
+import SearchIcon from '@mui/icons-material/Search';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -32,6 +32,8 @@ const HomePage = () => {
   
   // --- Add local state to manage the loading of a single product card ---
   const [addingProductId, setAddingProductId] = useState(null);
+
+  const [homeSearchTerm, setHomeSearchTerm] = useState('');
 
   useEffect(() => {
     fetchProducts(1, 8, 'createdAt_desc'); 
@@ -80,6 +82,15 @@ const HomePage = () => {
     }
   }, [addItemToCart, user]);
 
+  // --- NUEVO HANDLER PARA LA BÚSQUEDA ---
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (homeSearchTerm.trim()) {
+      // Navega a la página de productos y pasa el término de búsqueda como un parámetro en la URL
+      navigate(`/products?search=${encodeURIComponent(homeSearchTerm)}`);
+    }
+  };
+
 
   // All original data and layout constants remain untouched
   const topWidgetData = [
@@ -119,7 +130,67 @@ const HomePage = () => {
         <meta property="og:type" content="website" />
       </Helmet>
 
-    <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>
+    <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
+
+      {/* --- NUEVA SECCIÓN DE BÚSQUEDA --- */}
+        <Paper
+          elevation={8}
+          sx={{
+            p: { xs: 2, sm: 3 },
+            my: 6,
+            borderRadius: 4,
+            background: 'linear-gradient(135deg, rgba(18,18,18,0.95) 60%, rgba(139, 112, 0, 0.95) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 215, 0, 0.2)',
+          }}
+        >
+          <Typography variant="h4" sx={{ color: 'white', fontWeight: 700, textAlign: 'center', mb: 2 }}>
+            Encuentra tu Esencia
+          </Typography>
+          <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              label=""
+              variant="outlined"
+              fullWidth
+              size="medium"
+              value={homeSearchTerm}
+              onChange={(e) => setHomeSearchTerm(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                  color: 'white',
+                  '& fieldset': { borderColor: 'rgba(255, 215, 0, 0.3)' },
+                  '&:hover fieldset': { borderColor: '#FFD700' },
+                  '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+                },
+                '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                px: 4,
+                borderRadius: '8px',
+                color: 'common.black',
+                backgroundColor: '#FFD700',
+                fontWeight: 'bold',
+                '&:hover': { backgroundColor: '#FFC700' },
+              }}
+            >
+              Buscar
+            </Button>
+          </Box>
+        </Paper>
+
       {/* Hero Carousel */}
       <HeroCarousel />
 
