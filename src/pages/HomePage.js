@@ -10,6 +10,7 @@ import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
+import PromotionalBanner from '../components/common/PromotionBanner';
 
 // Importa los iconos necesarios para los widgets y las features
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -130,7 +131,11 @@ const HomePage = () => {
         <meta property="og:type" content="website" />
       </Helmet>
 
+
     <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
+
+      {/* Banner */}
+      <PromotionalBanner />
 
       {/* --- NUEVA SECCIÓN DE BÚSQUEDA --- */}
         <Paper

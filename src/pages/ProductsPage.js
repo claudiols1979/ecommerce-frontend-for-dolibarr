@@ -62,8 +62,7 @@ const ProductsPage = () => {
       };
 
       fetchProductsWithFilters();
-    }, [page, searchTerm, selectedGender, priceRange, sortOrder, fetchProducts]); 
-  
+    }, [page, searchTerm, selectedGender, priceRange, sortOrder, fetchProducts]);  
   
 
   
