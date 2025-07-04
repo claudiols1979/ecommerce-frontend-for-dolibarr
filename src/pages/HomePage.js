@@ -243,7 +243,7 @@ const HomePage = () => {
             fontSize: { xs: '1rem', sm: '1.1rem' }
           }}
         >
-          Explorar Todos los Productos
+          Explorar Todos los Perfumes
         </Button>
       </Box>
 

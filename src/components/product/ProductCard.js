@@ -21,19 +21,22 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
     return product.resellerPrices.cat1;
   }, [product, user, isAuthenticated]);
 
-  // --- NUEVA LÓGICA PARA EL PRECIO "ORIGINAL" ---
+  // --- LÓGICA DE PRECIO TACHADO RESTAURADA ---
   const originalPrice = React.useMemo(() => {
     if (!displayPrice || !product.promotionalLabels || product.promotionalLabels.length === 0) {
       return null;
     }
-
+    
+    // La lógica busca la etiqueta original que contiene '% OFF'
     const discountLabel = product.promotionalLabels.find(label => label.name.includes('% OFF'));
     
     if (discountLabel) {
-      const percentage = parseInt(discountLabel.name.replace('% OFF', ''));
-      if (!isNaN(percentage)) {
-        // Calculamos el precio "original" para que el displayPrice parezca un descuento
-        return displayPrice / (1 - (percentage / 100));
+      const percentageMatch = discountLabel.name.match(/\d+/);
+      if (percentageMatch) {
+        const percentage = parseInt(percentageMatch[0]);
+        if (!isNaN(percentage)) {
+          return displayPrice / (1 - (percentage / 100));
+        }
       }
     }
     
@@ -91,13 +94,13 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           <Typography 
             variant="caption" 
             sx={{ 
-                fontWeight: 'bold', 
-                color: 'common.black', 
-                textTransform: 'uppercase', 
-                fontSize: product.promotionalLabels[0].name === 'Últimas Unidades' || product.promotionalLabels[0].name === 'Nuevo Ingreso' ? '0.55rem' : '0.7rem'
-              }}
+              fontWeight: 'bold', 
+              color: 'common.black', 
+              textTransform: 'uppercase',
+              fontSize: ['Últimas Unidades', 'Nuevo Ingreso'].includes(product.promotionalLabels[0].name) ? '0.55rem' : '0.7rem'
+            }}
           >
-            {product.promotionalLabels[0].name}
+            {product.promotionalLabels[0].name.replace('OFF', 'Descuento')}
           </Typography>
         </Box>
       )}
@@ -132,11 +135,14 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
             {product.promotionalLabels.slice(1).map((label) => (
               <Chip
                 key={label._id}
-                label={label.name}
+                label={label.name.replace('OFF', 'Descuento')}
                 size="small"
                 sx={{
-                  bgcolor: 'secondary.light', color: 'secondary.contrastText',
-                  fontSize: '0.65rem', fontWeight: 'bold', height: '20px'
+                  bgcolor: 'secondary.light',
+                  color: 'secondary.contrastText',
+                  fontSize: '0.65rem',
+                  fontWeight: 'bold',
+                  height: '20px'
                 }}
               />
             ))}
@@ -154,8 +160,8 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           {product.shortDescription || (product.description ? product.description.substring(0, 60) + '...' : 'No description available.')}
         </Typography>
         
-        {/* --- MODIFICACIÓN QUIRÚRGICA AQUÍ --- */}
-        <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', width: '100%' }}>
+        {/* --- JSX DE PRECIOS RESTAURADO --- */}
+        <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 800, lineHeight: 1.2 }}> 
                     {displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}

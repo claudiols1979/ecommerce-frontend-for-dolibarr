@@ -150,7 +150,7 @@ const Header = () => {
               Inicio
             </Button>
             <Button color="inherit" component={RouterLink} to="/products" sx={getNavButtonStyle('/products')}>
-              Fragancias
+             Perfumes
             </Button>
             {user ? (
               <>
