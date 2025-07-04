@@ -32,7 +32,7 @@ const PromotionalBanner = () => {
       }}
     >
       <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
-      Aprovecha nuestros precios mayorista
+      Aprovecha todas nuestras ofertas
       <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
     </Typography>
   );
