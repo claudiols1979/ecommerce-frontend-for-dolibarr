@@ -21,22 +21,20 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
     return product.resellerPrices.cat1;
   }, [product, user, isAuthenticated]);
 
-  // --- NUEVA LÓGICA PARA EL PRECIO "ORIGINAL" ---
   const originalPrice = React.useMemo(() => {
     if (!displayPrice || !product.promotionalLabels || product.promotionalLabels.length === 0) {
       return null;
     }
-
-    const discountLabel = product.promotionalLabels.find(label => label.name.includes('% OFF'));
-    
+    const discountLabel = product.promotionalLabels.find(label => label.type === 'discount');
     if (discountLabel) {
-      const percentage = parseInt(discountLabel.name.replace('% OFF', ''));
-      if (!isNaN(percentage)) {
-        // Calculamos el precio "original" para que el displayPrice parezca un descuento
-        return displayPrice / (1 - (percentage / 100));
+      const percentageMatch = discountLabel.name.match(/\d+/);
+      if (percentageMatch) {
+        const percentage = parseInt(percentageMatch[0]);
+        if (!isNaN(percentage)) {
+          return displayPrice / (1 - (percentage / 100));
+        }
       }
     }
-    
     return null;
   }, [displayPrice, product.promotionalLabels]);
 
@@ -82,17 +80,30 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
       {product.promotionalLabels && product.promotionalLabels.length > 0 && (
         <Box
           sx={{
-            position: 'absolute', top: '18px', left: '-35px',
-            transform: 'rotate(-45deg)', zIndex: 1, width: '150px',
-            py: 0.5, background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, #FFD700 90%)`,
-            boxShadow: '0 4px 10px rgba(0,0,0,0.5)', textAlign: 'center',
+            position: 'absolute',
+            top: '18px',
+            left: '-35px',
+            transform: 'rotate(-45deg)',
+            zIndex: 1,
+            width: '150px',
+            py: 0.5,
+            background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, #FFD700 90%)`,
+            boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
+            textAlign: 'center',
           }}
         >
           <Typography 
             variant="caption" 
-            sx={{ fontWeight: 'bold', color: 'common.black', textTransform: 'uppercase', fontSize: '0.7rem' }}
+            sx={{ 
+              fontWeight: 'bold', 
+              color: 'common.black', 
+              textTransform: 'uppercase',
+              // --- CORRECCIÓN CLAVE 1: Ajuste de tamaño de fuente condicional ---
+              fontSize: product.promotionalLabels[0].name === 'Últimas Unidades' || product.promotionalLabels[0].name === 'Nuevo Ingreso' ? '0.55rem' : '0.7rem'
+            }}
           >
-            {product.promotionalLabels[0].name}
+            {/* --- CORRECCIÓN CLAVE 2: Reemplazo de texto --- */}
+            {product.promotionalLabels[0].name.replace('OFF', 'Descuento')}
           </Typography>
         </Box>
       )}
@@ -127,11 +138,15 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
             {product.promotionalLabels.slice(1).map((label) => (
               <Chip
                 key={label._id}
-                label={label.name}
+                // --- CORRECCIÓN CLAVE 2: Reemplazo de texto ---
+                label={label.name.replace('OFF', 'Descuento')}
                 size="small"
                 sx={{
-                  bgcolor: 'secondary.light', color: 'secondary.contrastText',
-                  fontSize: '0.65rem', fontWeight: 'bold', height: '20px'
+                  bgcolor: 'secondary.light',
+                  color: 'secondary.contrastText',
+                  fontSize: '0.65rem',
+                  fontWeight: 'bold',
+                  height: '20px'
                 }}
               />
             ))}
@@ -149,7 +164,6 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           {product.shortDescription || (product.description ? product.description.substring(0, 60) + '...' : 'No description available.')}
         </Typography>
         
-        {/* --- MODIFICACIÓN QUIRÚRGICA AQUÍ --- */}
         <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 800, lineHeight: 1.2 }}> 
