@@ -1,40 +1,51 @@
 import React from 'react';
-import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress, Tooltip, useTheme } from '@mui/material';
+import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress, Tooltip, useTheme, Chip } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import LoginIcon from '@mui/icons-material/Login'; // Se añade un icono para la acción de login
-import { useNavigate } from 'react-router-dom';
+import LoginIcon from '@mui/icons-material/Login';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../../utils/formatters';
 
-// El componente recibe 'onAddToCart' y 'isAdding' del componente padre.
 const ProductCard = ({ product, onAddToCart, isAdding }) => {
   const navigate = useNavigate();
-  // --- CORRECCIÓN CLAVE: Usamos 'isAuthenticated' para una comprobación clara ---
   const { user, isAuthenticated } = useAuth();
   const theme = useTheme();
 
-  // La lógica de precios se mantiene, pero ahora es más robusta.
   const displayPrice = React.useMemo(() => {
     if (!product || !product.resellerPrices) return null;
-    // Si el usuario está autenticado y es un revendedor, muestra su precio específico.
     if (isAuthenticated && user?.role === 'Revendedor') {
       return product.resellerPrices[user.resellerCategory] || product.resellerPrices.cat1;
     }
-    // Para todos los demás (visitantes, admin, etc.), siempre muestra el precio cat1.
     return product.resellerPrices.cat1;
   }, [product, user, isAuthenticated]);
 
+  // --- NUEVA LÓGICA PARA EL PRECIO "ORIGINAL" ---
+  const originalPrice = React.useMemo(() => {
+    if (!displayPrice || !product.promotionalLabels || product.promotionalLabels.length === 0) {
+      return null;
+    }
+
+    const discountLabel = product.promotionalLabels.find(label => label.name.includes('% OFF'));
+    
+    if (discountLabel) {
+      const percentage = parseInt(discountLabel.name.replace('% OFF', ''));
+      if (!isNaN(percentage)) {
+        // Calculamos el precio "original" para que el displayPrice parezca un descuento
+        return displayPrice / (1 - (percentage / 100));
+      }
+    }
+    
+    return null;
+  }, [displayPrice, product.promotionalLabels]);
+
   const handleAddToCartClick = () => {
-    // Si no hay un usuario autenticado, redirige a la página de login.
     if (!isAuthenticated) {
       toast.info("Por favor, inicia sesión para añadir productos al carrito.");
       navigate('/login');
       return;
     }
-
-    // Si el usuario está autenticado, procede con la lógica existente.
     if (product.countInStock <= 0) {
       toast.error('Este producto está agotado.');
       return;
@@ -43,10 +54,8 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
       toast.error('No se puede añadir al carrito: Precio no disponible.');
       return;
     }
-    
-    // Llama a la función que viene del padre (HomePage o ProductsPage).
     if (onAddToCart) {
-      onAddToCart(product, 1); // Asumimos que se añade 1 unidad desde la tarjeta
+      onAddToCart(product, 1);
     }
   };
 
@@ -65,8 +74,29 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         boxShadow: theme.shadows[8], 
       },
       bgcolor: 'background.default', 
-      border: `1px solid ${theme.palette.grey[200]}`, 
+      border: `1px solid ${theme.palette.grey[200]}`,
+      position: 'relative',
+      overflow: 'hidden',
     }}>
+      
+      {product.promotionalLabels && product.promotionalLabels.length > 0 && (
+        <Box
+          sx={{
+            position: 'absolute', top: '18px', left: '-35px',
+            transform: 'rotate(-45deg)', zIndex: 1, width: '150px',
+            py: 0.5, background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, #FFD700 90%)`,
+            boxShadow: '0 4px 10px rgba(0,0,0,0.5)', textAlign: 'center',
+          }}
+        >
+          <Typography 
+            variant="caption" 
+            sx={{ fontWeight: 'bold', color: 'common.black', textTransform: 'uppercase', fontSize: '0.7rem' }}
+          >
+            {product.promotionalLabels[0].name}
+          </Typography>
+        </Box>
+      )}
+
       <CardMedia
         component="img"
         height="140" 
@@ -77,19 +107,37 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           borderRadius: '12px 12px 0 0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
           cursor: 'pointer'
         }}
-        onClick={() => navigate(`/products/${product._id}`)} // Esta navegación siempre funciona
+        onClick={() => navigate(`/products/${product._id}`)}
       />
       <CardContent sx={{ flexGrow: 1, p: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <Typography 
-          gutterBottom variant="h6" component="div" 
+          gutterBottom variant="h6" component={RouterLink} to={`/products/${product._id}`}
           sx={{ 
             fontWeight: 700, minHeight: 40, overflow: 'hidden', textOverflow: 'ellipsis', 
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-            fontSize: '0.95rem', color: 'primary.main', 
+            fontSize: '0.95rem', color: 'primary.main', textDecoration: 'none',
+            '&:hover': { textDecoration: 'underline' }
           }}
         >
           {product.name}
         </Typography>
+
+        {product.promotionalLabels && product.promotionalLabels.length > 1 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 1 }}>
+            {product.promotionalLabels.slice(1).map((label) => (
+              <Chip
+                key={label._id}
+                label={label.name}
+                size="small"
+                sx={{
+                  bgcolor: 'secondary.light', color: 'secondary.contrastText',
+                  fontSize: '0.65rem', fontWeight: 'bold', height: '20px'
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
         <Typography 
           variant="body2" color="text.secondary" 
           sx={{ 
@@ -100,21 +148,30 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         >
           {product.shortDescription || (product.description ? product.description.substring(0, 60) + '...' : 'No description available.')}
         </Typography>
-        <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Typography variant="h6" color="primary" sx={{ fontWeight: 800 }}> 
-            {displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}
-          </Typography>
-          {isOutOfStock && (
-            <Typography variant="body2" color="error" sx={{ fontWeight: 700, ml: 1 }}>
-              Sin Stock
-            </Typography>
-          )}
+        
+        {/* --- MODIFICACIÓN QUIRÚRGICA AQUÍ --- */}
+        <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+                <Typography variant="h6" color="primary" sx={{ fontWeight: 800, lineHeight: 1.2 }}> 
+                    {displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}
+                </Typography>
+                {originalPrice && (
+                    <Typography variant="body2" sx={{ color: 'text.secondary', textDecoration: 'line-through', lineHeight: 1.1 }}>
+                        {formatPrice(originalPrice)}
+                    </Typography>
+                )}
+            </Box>
+            {isOutOfStock && (
+                <Typography variant="body2" color="error" sx={{ fontWeight: 700, ml: 1 }}>
+                    Sin Stock
+                </Typography>
+            )}
         </Box>
       </CardContent>
       <CardActions sx={{ p: 1.5, pt: 1, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.grey[100]}` }}>
         <Button
           size="small"
-          onClick={() => navigate(`/products/${product._id}`)} // Esta navegación siempre funciona
+          onClick={() => navigate(`/products/${product._id}`)}
           variant="outlined"
           color="secondary" 
           startIcon={<VisibilityIcon />}
@@ -122,14 +179,14 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         >
           Ver
         </Button>
-        <Tooltip title={isOutOfStock ? "Producto agotado" : "Añadir al carrito"}>
+        <Tooltip title={isOutOfStock ? "Producto agotado" : (isAuthenticated ? "Añadir al carrito" : "Inicia sesión para comprar")}>
           <span>
             <Button
               size="small"
               variant="contained"
               color="primary" 
-              onClick={handleAddToCartClick} // Se usa el nuevo handler inteligente
-              startIcon={isAdding ? <CircularProgress size={18} color="inherit" /> : <ShoppingCartIcon sx={{ fontSize: '1rem' }} />}
+              onClick={handleAddToCartClick}
+              startIcon={isAdding ? <CircularProgress size={18} color="inherit" /> : (isAuthenticated ? <ShoppingCartIcon sx={{ fontSize: '1rem' }} /> : <LoginIcon sx={{ fontSize: '1rem' }} />)}
               disabled={isAdding || isOutOfStock || !displayPrice || displayPrice <= 0}
               sx={{ 
                 ml: 1, borderRadius: 2, textTransform: 'none',
