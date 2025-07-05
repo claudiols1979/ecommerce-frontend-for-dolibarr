@@ -274,6 +274,35 @@ const HomePage = () => {
         </Grid>
       )}
 
+      {/* call in action button  */}
+      <Box sx={{ textAlign: 'center', my: 6 }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={() => navigate('/products')}
+          sx={{ 
+            borderRadius: 8, 
+            px: 5, 
+            py: 1.5,
+            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
+            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
+              backgroundColor: '#FFD740',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+            },
+            fontWeight: 700,
+            fontSize: { xs: '1rem', sm: '1.1rem' }
+          }}
+        >
+          Explorar Todos los Perfumes
+        </Button>
+      </Box>
+
       {/* Middle Widgets Section */}
       <Box sx={{ my: 8, textAlign: 'center' }}>
         <Grid container spacing={4} justifyContent="center">
@@ -316,6 +345,8 @@ const HomePage = () => {
           ))}
         </Grid>
       </Box>
+
+      
 
       {/* "Why Choose Us" Section */}
       <Box sx={{ 

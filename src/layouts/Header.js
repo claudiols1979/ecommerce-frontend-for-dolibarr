@@ -83,7 +83,7 @@ const Header = () => {
           <ListItemText primary="Inicio" />
         </ListItem>
         <ListItem button onClick={() => handleMenuNavigate('/products')} sx={getMobileNavStyle('/products')}>
-          <ListItemText primary="Fragancias" />
+          <ListItemText primary="Perfumes" />
         </ListItem>
         
         {user ? (

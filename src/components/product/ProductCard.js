@@ -97,7 +97,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
               fontWeight: 'bold', 
               color: 'common.black', 
               textTransform: 'uppercase',
-              fontSize: ['Últimas Unidades', 'Nuevo Ingreso'].includes(product.promotionalLabels[0].name) ? '0.55rem' : '0.7rem'
+              fontSize: ['Últimas Unidades', 'Nuevo Ingreso', '10% OFF', '15% OFF', '20% OFF'].includes(product.promotionalLabels[0].name) ? '0.55rem' : '0.7rem'
             }}
           >
             {product.promotionalLabels[0].name.replace('OFF', 'Descuento')}
