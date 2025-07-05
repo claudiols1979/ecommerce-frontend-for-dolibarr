@@ -37,7 +37,7 @@ const HomePage = () => {
   const [homeSearchTerm, setHomeSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchProducts(1, 8, 'createdAt_desc'); 
+    fetchProducts(1, 20, 'createdAt_desc'); 
   }, [fetchProducts]);
 
   // --- NEW: Handler to add items to cart, with local loading state ---

@@ -50,7 +50,7 @@ const ProductsPage = () => {
 
   useEffect(() => {          
       const fetchProductsWithFilters = async () => {
-        const limit = 18; 
+        const limit = 20; 
         await fetchProducts(
           page, 
           limit, 
