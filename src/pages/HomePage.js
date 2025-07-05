@@ -260,7 +260,7 @@ const HomePage = () => {
       ) : products.length === 0 ? (
         <Alert severity="info" sx={{ p: 3 }}>No hay productos destacados disponibles.</Alert>
       ) : (
-        <Grid container spacing={4} justifyContent="center">
+        <Grid container spacing={2} justifyContent="center">
           {products.map((product) => (
             <Grid item key={product._id} xs={12} sm={6} md={3} lg={3}> 
               {/* --- MODIFIED: Pass the new props to ProductCard --- */}

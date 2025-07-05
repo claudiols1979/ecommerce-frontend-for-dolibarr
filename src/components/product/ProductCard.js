@@ -67,6 +67,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
   return (
     <Card sx={{ 
       height: '100%', 
+      width: 250,
       display: 'flex', 
       flexDirection: 'column', 
       borderRadius: 4, 
@@ -84,7 +85,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
       
       {product.promotionalLabels && product.promotionalLabels.length > 0 && (
         <Box
-          sx={{
+          sx={{            
             position: 'absolute', top: '18px', left: '-35px',
             transform: 'rotate(-45deg)', zIndex: 1, width: '150px',
             py: 0.5, background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, #FFD700 90%)`,
@@ -103,11 +104,12 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
             {product.promotionalLabels[0].name.replace('OFF', 'Descuento')}
           </Typography>
         </Box>
-      )}
+      )}      
 
+      
       <CardMedia
         component="img"
-        height="140" 
+        height="140"        
         image={product.imageUrls?.[0]?.secure_url || 'https://placehold.co/600x400/E0E0E0/FFFFFF?text=No+Image'}
         alt={product.name}
         sx={{ 
@@ -117,6 +119,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         }}
         onClick={() => navigate(`/products/${product._id}`)}
       />
+     
       <CardContent sx={{ flexGrow: 1, p: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <Typography 
           gutterBottom variant="h6" component={RouterLink} to={`/products/${product._id}`}
