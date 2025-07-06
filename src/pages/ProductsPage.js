@@ -356,9 +356,36 @@ const ProductsPage = () => {
 
 
         {loading && page === 1 ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-            <CircularProgress color="primary" />
-            {/* <Typography ml={2}>Cargando productos...</Typography> */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            {/* Contenedor para aplicar el efecto de sombra/resplandor */}
+            <Box sx={{ position: 'relative', display: 'inline-flex', filter: 'drop-shadow(0 0 6px rgba(255, 215, 0, 0.7))' }}>
+              {/* Círculo de fondo (la pista) */}
+              <CircularProgress
+                variant="determinate"
+                sx={{
+                  color: 'rgba(255, 215, 0, 0.25)', // Pista de un color amarillo muy tenue
+                }}
+                size={40}
+                thickness={4}
+                value={100}
+              />
+              {/* Círculo de progreso animado */}
+              <CircularProgress
+                variant="indeterminate"
+                disableShrink
+                sx={{
+                  color: '#FFD700', // Color dorado principal
+                  animationDuration: '600ms',
+                  position: 'absolute',
+                  left: 0,
+                  '& .MuiCircularProgress-circle': {
+                    strokeLinecap: 'round', // Bordes redondeados para un look más suave
+                  },
+                }}
+                size={40}
+                thickness={4}
+              />
+            </Box>
           </Box>
         ) : error ? (
           <Alert severity="error">{error.message}</Alert>
@@ -382,7 +409,35 @@ const ProductsPage = () => {
             {/* Pagination remains unchanged */}
             {loading && page > 1 && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress />
+                {/* Contenedor para aplicar el efecto de sombra/resplandor */}
+                <Box sx={{ position: 'relative', display: 'inline-flex', filter: 'drop-shadow(0 0 6px rgba(255, 215, 0, 0.7))' }}>
+                  {/* Círculo de fondo (la pista) */}
+                  <CircularProgress
+                    variant="determinate"
+                    sx={{
+                      color: 'rgba(255, 215, 0, 0.25)', // Pista de un color amarillo muy tenue
+                    }}
+                    size={40}
+                    thickness={4}
+                    value={100}
+                  />
+                  {/* Círculo de progreso animado */}
+                  <CircularProgress
+                    variant="indeterminate"
+                    disableShrink
+                    sx={{
+                      color: '#FFD700', // Color dorado principal
+                      animationDuration: '600ms',
+                      position: 'absolute',
+                      left: 0,
+                      '& .MuiCircularProgress-circle': {
+                        strokeLinecap: 'round', // Bordes redondeados para un look más suave
+                      },
+                    }}
+                    size={40}
+                    thickness={4}
+                  />
+                </Box>
               </Box>
             )}
           </>
