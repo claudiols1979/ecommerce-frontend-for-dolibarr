@@ -7,7 +7,6 @@ import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import AuthBranding from '../components/common/AuthBranding'
 import NavBranding from '../components/common/NavBranding';
 
 const Header = () => {
