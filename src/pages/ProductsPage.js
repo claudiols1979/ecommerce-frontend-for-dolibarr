@@ -51,7 +51,7 @@ const ProductsPage = () => {
   useEffect(() => {
     // Al cambiar cualquier filtro, la página se resetea a 1 en los manejadores de eventos.
     // El contexto se encarga de reemplazar la lista de productos si page es 1.
-    const limit = 18;
+    const limit = 20;
     fetchProducts(page, limit, sortOrder, searchTerm, selectedGender, priceRange[0], priceRange[1]);
   }, [page, sortOrder, searchTerm, selectedGender, priceRange, fetchProducts]);
 
