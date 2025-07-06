@@ -4,8 +4,9 @@ import { Box, styled, useTheme, Grid } from '@mui/material';
 // Componente estilizado para el contenedor de la imagen principal
 const MainImageContainer = styled(Box)(({ theme }) => ({
   width: '100%',
-  // CLAVE: Altura fija para el contenedor principal de la imagen en todos los tamaños de pantalla
-  height: { xs: 280, sm: 350, md: 400 }, // Alturas específicas para controlar el tamaño
+  // ✅ FIX: Add a maximum width to stabilize the layout. Adjust this value as needed.
+  maxWidth: '450px', 
+  height: { xs: 280, sm: 350, md: 400 }, 
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -14,16 +15,16 @@ const MainImageContainer = styled(Box)(({ theme }) => ({
   boxShadow: theme.shadows[3],
   transition: 'all 0.3s ease-in-out',
   mb: theme.spacing(2),
-  bgcolor: theme.palette.grey[100], // Fondo claro detrás de la imagen
+  bgcolor: theme.palette.grey[100],
 }));
 
 // Estilo para la imagen principal
 const StyledMainImage = styled('img')({
-  // La imagen se ajustará al contenedor de tamaño fijo
-  maxWidth: '50%', // Asegura que la imagen no exceda el ancho del contenedor
-  maxHeight: '100%', // Asegura que la imagen no exceda la altura del contenedor
-  objectFit: 'contain', // CLAVE: Escala la imagen para que encaje dentro del contenedor sin ser cortada.
-                        // El espacio sobrante dentro del contenedor fixed-size será el bgcolor.
+  // Force the image to respect the container's boundaries
+  width: '100%',
+  height: '100%',
+  // 'contain' scales the image to fit perfectly inside the container
+  objectFit: 'contain', 
 });
 
 // Estilo para las miniaturas
