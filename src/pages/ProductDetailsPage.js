@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container, Box, Typography, Button, Grid, CircularProgress, Alert,
+  Container, Box, Typography, Button, Grid, CircularProgress, Alert,Card, CardContent,
   TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductContext';
@@ -35,6 +36,10 @@ const ProductDetailsPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addingProductId, setAddingProductId] = useState(null);
+  // --- 2. NUEVO ESTADO PARA LA PREGUNTA DEL CLIENTE ---
+  const [customerQuestion, setCustomerQuestion] = useState('');
+  
+  const WHATSAPP_AGENT_NUMBER = '50672317420';
 
   const getPriceAtSale = useCallback((productData) => {
     if (!productData) return 0;
@@ -136,6 +141,27 @@ const ProductDetailsPage = () => {
       setAddingProductId(null);
     }
   }, [addItemToCart, getPriceAtSale]);
+
+  // --- 3. NUEVA FUNCIÓN PARA ENVIAR CONSULTA POR WHATSAPP ---
+  const handleWhatsAppInquiry = () => {
+    if (!product) {
+        toast.error("No se puede enviar la consulta, los detalles del producto no están disponibles.");
+        return;
+    }
+
+    let message = `¡Hola! 👋\n\nQuisiera hacer una consulta sobre el siguiente producto:\n\n`;
+    message += `*Producto:* ${product.name}\n`;
+    message += `*Código:* ${product.code}\n`;
+    message += `*Precio:* ${formatPrice(displayPrice)}\n\n`;
+    message += `*Mi consulta es:*\n${customerQuestion || "(Por favor, escribe tu pregunta aquí)"}\n\n`;
+    message += `¡Gracias!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappLink = `https://wa.me/${WHATSAPP_AGENT_NUMBER}?text=${encodedMessage}`;
+    
+    window.open(whatsappLink, '_blank');
+    setCustomerQuestion('')
+  };
 
 
   if (loadingSpecificProduct) {
@@ -347,6 +373,45 @@ const formatProductNameMultiLine = (name, maxLength) => {
         <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Descripción del Producto</Typography>
           <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.7 }}>{product.description || 'No hay descripción detallada disponible para este producto.'}</Typography>
+
+          {/* --- 4. NUEVA SECCIÓN DE CONSULTA POR WHATSAPP --- */}
+        <Card sx={{ ...contentSectionStyle, mt: 5 }}>
+          <CardContent>
+            <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
+              ¿Tienes alguna consulta?
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Escríbenos directamente a WhatsApp y te ayudaremos con gusto.
+            </Typography>
+            <TextField
+              label="Escribe tu pregunta aquí..."
+              multiline
+              rows={3}
+              fullWidth
+              variant="outlined"
+              value={customerQuestion}
+              onChange={(e) => setCustomerQuestion(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<WhatsAppIcon />}
+              onClick={handleWhatsAppInquiry}
+              sx={{
+                py: 1.5,
+                fontWeight: 'bold',
+                borderRadius: '8px',
+                bgcolor: '#25D366',
+                '&:hover': {
+                  bgcolor: '#1EBE57',
+                },
+              }}
+            >
+              Consultar por WhatsApp
+            </Button>
+          </CardContent>
+        </Card>
         </Box>
         <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Especificaciones</Typography>
