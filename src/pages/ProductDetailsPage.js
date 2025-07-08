@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Box, Typography, Button, Grid, CircularProgress, Alert,Card, CardContent,
-  TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery
+  TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery,
+  Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductContext';
@@ -162,6 +164,62 @@ const ProductDetailsPage = () => {
     window.open(whatsappLink, '_blank');
     setCustomerQuestion('')
   };
+
+
+// --- DATOS DE FAQ ACTUALIZADOS ---
+
+// 1. Se define el número de WhatsApp y el mensaje por defecto
+const WHATSAPP_AGENT_NUMBER_ = '50672317420';
+const wholesaleMessage = "Hola, estoy interesado/a en sus precios de mayoreo y me gustaría recibir más información. Gracias.";
+const whatsappUrl = `https://wa.me/${WHATSAPP_AGENT_NUMBER_}?text=${encodeURIComponent(wholesaleMessage)}`;
+
+// 2. Se reescribe el contenido para un tono más profesional
+const faqData = [
+  {
+    question: '1. ¿Cuáles son los métodos de pago aceptados?',
+    answer: 'Aceptamos pagos a través de SINPE Móvil y Transferencia Bancaria. Una vez que finalices tu pedido, se abrirá una ventana de WhatsApp donde nuestro equipo coordinará contigo los detalles del pago y la confirmación del envío de manera segura y personalizada.'
+  },
+  {
+    question: '2. ¿Cuál es el tiempo de entrega estimado?',
+    answer: 'Para envíos dentro de la GAM, trabajamos con Mensajería Fonseca para garantizar una entrega rápida, usualmente en las siguientes 24 horas. Dependiendo de la demanda, el plazo puede extenderse a un máximo de 48 horas. Tu entrega es nuestra prioridad y está 100% garantizada.'
+  },
+  {
+    question: '3. ¿La perfumería es original?',
+    answer: 'Absolutamente. Garantizamos que todos nuestros productos son 100% originales, nuevos y se entregan sellados en su empaque de fábrica. La autenticidad es el pilar de nuestra marca.'
+  },
+  {
+    question: '4. ¿Realizan envíos fuera de la GAM?',
+    answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envío se cancela contra entrega directamente en la sucursal. Te proporcionaremos el número de guía oficial para que puedas rastrear tu paquete en todo momento.'
+  },
+  {
+    question: '5. ¿Ofrecen precios especiales para ventas al por mayor?',
+    answer: (
+      // 3. La respuesta ahora es un componente de React para incluir el botón
+      <>
+        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 2 }}>
+          Definitivamente. Nuestro modelo de negocio está diseñado para potenciar a los revendedores. Para acceder a nuestras listas de precios mayoristas y recibir asesoría personalizada, por favor contáctanos directamente.
+        </Typography>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<WhatsAppIcon />}
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            bgcolor: '#25D366',
+            '&:hover': {
+              bgcolor: '#1EBE57',
+            },
+            fontWeight: 'bold',
+          }}
+        >
+          Consultar por WhatsApp
+        </Button>
+      </>
+    )
+  }
+];
 
 
   if (loadingSpecificProduct) {
@@ -436,6 +494,37 @@ const formatProductNameMultiLine = (name, maxLength) => {
             </Box>
           </Box>
         )}
+
+{/* --- 4. NUEVA SECCIÓN DE PREGUNTAS FRECUENTES (FAQ) --- */}
+        <Box sx={{ ...contentSectionStyle, mt: 5 }}>
+            <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
+              Preguntas Frecuentes
+            </Typography>
+            {faqData.map((faq, index) => (
+              <Accordion key={index} sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: 'text.primary',
+                boxShadow: 'none',
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                '&:before': { display: 'none' },
+                '&.Mui-expanded': { margin: 'auto 0' }
+              }}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: 'secondary.main' }} />}
+                  aria-controls={`panel${index}a-content`}
+                  id={`panel${index}a-header`}
+                >
+                  <Typography sx={{ fontWeight: 'bold', color: 'primary.main' }}>{faq.question}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+                    {faq.answer}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+        </Box>
+
 
         {relatedProducts.length > 0 && (
           <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
