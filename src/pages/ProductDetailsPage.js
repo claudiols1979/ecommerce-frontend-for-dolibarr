@@ -87,7 +87,7 @@ useEffect(() => {
         if (allProductsFromContext.length > 1) {
           const filtered = allProductsFromContext.filter(p => p._id !== id);
           const shuffled = [...filtered].sort(() => 0.5 - Math.random());
-          setRelatedProducts(shuffled.slice(0, 2));
+          setRelatedProducts(shuffled.slice(0, 3));
         }
       } catch (err) {
         setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
