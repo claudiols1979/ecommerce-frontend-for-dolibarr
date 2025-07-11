@@ -69,7 +69,7 @@ const ProductDetailsPage = () => {
     return isNaN(calculatedPrice) || calculatedPrice <= 0 ? 0 : calculatedPrice;
   }, [user]);
 
-  // --- LÓGICA DE CARGA DE DATOS CORREGIDA Y ROBUSTA ---
+  
 useEffect(() => {
     window.scrollTo(0, 0);
     const fetchProductDetails = async () => {
