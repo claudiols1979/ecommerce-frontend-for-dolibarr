@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress, Tooltip, useTheme, Chip } from '@mui/material';
+import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress, Tooltip, useTheme, Chip, Rating } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LoginIcon from '@mui/icons-material/Login';
@@ -132,6 +132,22 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
         >
           {product.name}
         </Typography>
+
+                  {/* --- SECCIÓN DE CALIFICACIÓN --- */}
+          {product.numReviews > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', my: 0.5 }}>
+              <Rating
+                name="read-only"
+                value={product.averageRating || 0}
+                precision={0.5}
+                readOnly
+                size="small"
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                ({product.numReviews})
+              </Typography>
+            </Box>
+          )}
 
         {product.promotionalLabels && product.promotionalLabels.length > 1 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 1 }}>

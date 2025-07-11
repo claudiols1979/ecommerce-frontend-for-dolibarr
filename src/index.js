@@ -8,6 +8,7 @@ import theme from './theme';
 import { AuthProvider } from './contexts/AuthContext';
 import { OrderProvider } from './contexts/OrderContext';
 import { ProductProvider } from './contexts/ProductContext';
+import { ReviewProvider } from './contexts/ReviewContext';
 import { ToastContainer } from 'react-toastify';
 import { HelmetProvider } from 'react-helmet-async';
 import 'react-toastify/dist/ReactToastify.css';
@@ -22,7 +23,9 @@ root.render(
         <AuthProvider>
           <ProductProvider>
             <OrderProvider>
+              <ReviewProvider>
               <App />
+              </ReviewProvider>
               <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
             </OrderProvider>
           </ProductProvider>

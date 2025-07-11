@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Box, Typography, Button, Grid, CircularProgress, Alert,Card, CardContent,
   TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery,
-  Accordion, AccordionSummary, AccordionDetails,
+  Accordion, AccordionSummary, AccordionDetails, Rating, List, ListItem, Avatar, ListItemText, 
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -15,6 +15,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductContext';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useReviews } from '../contexts/ReviewContext';
 import { toast } from 'react-toastify';
 import ProductImageCarousel from '../components/product/ProductImageCarousel';
 import ProductCard from '../components/product/ProductCard';
@@ -29,8 +30,10 @@ const ProductDetailsPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { products: allProductsFromContext } = useProducts();
-  const { addItemToCart, loading: cartLoading } = useOrders();
+  const { addItemToCart, loading: cartLoading, myOrders } = useOrders();
   const { user } = useAuth();
+
+  const { reviews, loading: reviewsLoading, fetchReviews, createReview } = useReviews();
 
   const [product, setProduct] = useState(null);
   const [loadingSpecificProduct, setLoadingSpecificProduct] = useState(true);
@@ -40,6 +43,13 @@ const ProductDetailsPage = () => {
   const [addingProductId, setAddingProductId] = useState(null);
   // --- 2. NUEVO ESTADO PARA LA PREGUNTA DEL CLIENTE ---
   const [customerQuestion, setCustomerQuestion] = useState('');
+
+
+  const [newRating, setNewRating] = useState(0);
+  const [newComment, setNewComment] = useState('');
+
+  const [canReview, setCanReview] = useState(false);
+  const [reviewDisabledMessage, setReviewDisabledMessage] = useState('');
   
   const WHATSAPP_AGENT_NUMBER = '50672317420';
 
@@ -60,41 +70,67 @@ const ProductDetailsPage = () => {
   }, [user]);
 
   // --- LÓGICA DE CARGA DE DATOS CORREGIDA Y ROBUSTA ---
-  useEffect(() => {
-    window.scrollTo(0, 0); // Siempre lleva al usuario al inicio de la página
-
+useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchProductDetails = async () => {
       setLoadingSpecificProduct(true);
       setErrorSpecificProduct(null);
       try {
-        // Hacemos una llamada directa y autorizada a la API para obtener los detalles del producto.
-        // Esto asegura que la página funcione siempre, sin importar cómo se llegó a ella.
         const token = user?.token;
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
         const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-
         setProduct(data);
 
-        // Una vez que tenemos el producto, buscamos los relacionados en el contexto
+        // Se obtienen las reseñas para este producto
+        fetchReviews(id);
+
         if (allProductsFromContext.length > 1) {
           const filtered = allProductsFromContext.filter(p => p._id !== id);
           const shuffled = [...filtered].sort(() => 0.5 - Math.random());
           setRelatedProducts(shuffled.slice(0, 2));
         }
-
       } catch (err) {
         setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-
       } finally {
         setLoadingSpecificProduct(false);
       }
     };
-
     if (id) {
       fetchProductDetails();
     }
     setQuantity(1);
-  }, [id, user?.token]); // Depende del ID del producto y del token del usuario
+  }, [id, user?.token, allProductsFromContext, fetchReviews]);
+
+
+  // --- useEffect para determinar si el usuario puede dejar una reseña ---
+  useEffect(() => {
+    if (!user) {
+      setCanReview(false);
+      setReviewDisabledMessage('Inicia sesión para dejar una reseña.');
+      return;
+    }
+
+    const hasReviewed = reviews.some(review => review.user._id === user._id);
+    if (hasReviewed) {
+      setCanReview(false);
+      setReviewDisabledMessage('Ya has dejado una reseña para este producto.');
+      return;
+    }
+
+    const hasPurchased = myOrders.some(order => 
+      order.status === 'delivered' && 
+      order.items.some(item => item.product && item.product._id === id)
+    );
+    
+    if (!hasPurchased) {
+      setCanReview(false);
+      setReviewDisabledMessage('Debes haber comprado este producto para dejar una reseña.');
+      return;
+    }
+    
+    setCanReview(true);
+    setReviewDisabledMessage('Tu comentario (opcional)');
+  }, [user, reviews, myOrders, id]);
 
 
   const displayPrice = getPriceAtSale(product);
@@ -163,6 +199,30 @@ const ProductDetailsPage = () => {
     
     window.open(whatsappLink, '_blank');
     setCustomerQuestion('')
+  };
+
+
+const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!canReview) {
+      toast.info("No cumples los requisitos para dejar una reseña.");
+      return;
+    }
+    if (newRating === 0) {
+      toast.error("Por favor, selecciona una calificación de estrellas.");
+      return;
+    }
+    try {
+      await createReview({
+        productId: id,
+        rating: newRating,
+        comment: newComment,
+      });
+      setNewRating(0);
+      setNewComment('');
+    } catch (err) {
+      console.error("Fallo al enviar la reseña:", err);
+    }
   };
 
 
@@ -524,6 +584,99 @@ const formatProductNameMultiLine = (name, maxLength) => {
               </Accordion>
             ))}
         </Box>
+
+
+{/* --- SECCIÓN DE CALIFICACIONES Y RESEÑAS ACTUALIZADA --- */}
+        <Card sx={{ ...contentSectionStyle, mt: 5 }}>
+          <CardContent>
+            <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
+              Calificaciones y Reseñas
+            </Typography>
+            {product.numReviews > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                <Typography variant="h4" sx={{ mr: 2, fontWeight: 'bold' }}>
+                  {product.averageRating.toFixed(1)}
+                </Typography>
+                <Box>
+                  <Rating value={product.averageRating} precision={0.5} readOnly />
+                  <Typography variant="body2" color="text.secondary">
+                    Basado en {product.numReviews} reseña(s)
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {reviewsLoading ? (
+              <CircularProgress />
+            ) : reviews.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 2 }}>
+                Aún no hay reseñas para este producto. ¡Sé el primero en calificarlo!
+              </Typography>
+            ) : (
+              <List>
+                {reviews.map((review, index) => (
+                  <React.Fragment key={review._id}>
+                    <ListItem alignItems="flex-start">
+                      <Avatar sx={{ bgcolor: 'secondary.main', mr: 2 }}>
+                        {review.user.firstName ? review.user.firstName.charAt(0) : '?'}
+                      </Avatar>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Typography component="span" variant="body1" sx={{ fontWeight: 'bold' }}>
+                              {review.user.firstName || 'Usuario'} {review.user.lastName || ''}
+                            </Typography>
+                            <Rating value={review.rating} readOnly size="small" sx={{ ml: 1.5, verticalAlign: 'middle' }} />
+                          </Box>
+                        }
+                        secondary={
+                          <>
+                            <Typography component="span" variant="body2" color="text.primary" sx={{ display: 'block', mt: 1, whiteSpace: 'pre-wrap' }}>
+                              {review.comment}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {new Date(review.createdAt).toLocaleDateString('es-CR')}
+                            </Typography>
+                          </>
+                        }
+                      />
+                    </ListItem>
+                    {index < reviews.length - 1 && <Divider variant="inset" component="li" />}
+                  </React.Fragment>
+                ))}
+              </List>
+            )}
+
+            {/* Formulario para Dejar una Reseña (con lógica condicional) */}
+            {user && (
+              <Box component="form" onSubmit={handleReviewSubmit} sx={{ mt: 4, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Escribe tu propia reseña</Typography>
+                <Box sx={{ mb: 2 }}>
+                  <Typography component="legend">Tu Calificación</Typography>
+                  <Rating
+                    name="new-rating"
+                    value={newRating}
+                    onChange={(event, newValue) => { setNewRating(newValue); }}
+                    readOnly={!canReview} // Se deshabilita si no puede reseñar
+                  />
+                </Box>
+                <TextField
+                  label={reviewDisabledMessage} // Label dinámico
+                  multiline
+                  rows={4}
+                  fullWidth
+                  variant="outlined"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  disabled={!canReview} // Se deshabilita si no puede reseñar
+                />
+                <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={!canReview || reviewsLoading}>
+                  Enviar Reseña
+                </Button>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
 
 
         {relatedProducts.length > 0 && (
