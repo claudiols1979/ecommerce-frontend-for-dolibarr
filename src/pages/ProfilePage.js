@@ -20,6 +20,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import InfoIcon from '@mui/icons-material/Info';
 import PersonIcon from '@mui/icons-material/Person'; 
+import RateReviewIcon from '@mui/icons-material/RateReview';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const ProfilePage = () => {
   const [localLoading, setLocalLoading] = useState(true);
 
   console.log("user in profile: ", user)
+  console.log("My orders in profile", myOrders)
 
 useEffect(() => {
   // 1. Fetch the user's orders as soon as the page loads.
@@ -362,6 +364,26 @@ useEffect(() => {
                             <Typography variant="body1" fontWeight="bold" color="text.primary" sx={{ ml: { xs: 0, sm: 3 }, mt: { xs: 1, sm: 0 }, minWidth: { xs: '100%', sm: 'auto' }, textAlign: { xs: 'left', sm: 'right' } }}>
                               Subtotal: ₡{(item.quantity * Number(item.priceAtSale || 0)).toFixed(2)}
                             </Typography>
+                            <Box sx={{ width: '100%', mt: 1.5, display: 'flex', justifyContent: 'flex-start' }}>
+                                  <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    size="small"
+                                    startIcon={<RateReviewIcon />}
+                                    onClick={() => navigate(`/products/${item.product._id}`)}
+                                    sx={{
+                                      textTransform: 'none',
+                                      fontWeight: 'bold',
+                                      boxShadow: theme.shadows[2],
+                                      '&:hover': {
+                                        boxShadow: theme.shadows[4],
+                                        transform: 'translateY(-1px)'
+                                      }
+                                    }}
+                                  >
+                                    Dejar Reseña
+                                  </Button>
+                                </Box>
                         </ListItem>
                       ))}
                     </List>

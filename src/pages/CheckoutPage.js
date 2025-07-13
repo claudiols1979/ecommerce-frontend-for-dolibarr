@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../utils/formatters'; // Importamos el formateador de precios
+import RateReviewIcon from '@mui/icons-material/RateReview';
 
 const WHATSAPP_AGENT_NUMBER = '50672317420'; 
 
@@ -174,6 +175,31 @@ const CheckoutPage = () => {
               <Button variant="outlined" color="secondary" onClick={() => navigate('/profile')} sx={{ mt: 2, ml: { xs: 0, sm: 2 }, px: 4, py: 1.5, borderRadius: 2 }}>
                 Ver Mis Pedidos
               </Button>
+              {/* --- 2. NUEVA SECCIÓN PARA DEJAR RESEÑAS --- */}
+              {placedOrderDetails && placedOrderDetails.items.length > 0 && (
+                <Box sx={{ mt: 4, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                    ¡Gracias por tu compra! Ayúdanos a mejorar dejando tu opinión:
+                  </Typography>
+                  <List>
+                    {placedOrderDetails.items.map(item => (
+                      <ListItem key={item.product} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: `1px solid ${theme.palette.grey[200]}` }}>
+                        <Typography variant="body1">{item.name}</Typography>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          size="small"
+                          startIcon={<RateReviewIcon />}
+                          onClick={() => navigate(`/products/${item.product}`)}
+                          sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                        >
+                          Dejar Reseña
+                        </Button>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              )}
             </Paper>
         </Container>
     );
