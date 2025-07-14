@@ -117,8 +117,7 @@ useEffect(() => {
       return;
     }
 
-    const hasPurchased = myOrders.some(order => 
-      order.status === 'delivered' && 
+    const hasPurchased = myOrders.some(order =>       
       order.items.some(item => item.product && item.product._id === id)
     );
     
