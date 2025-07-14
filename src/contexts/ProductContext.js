@@ -1,27 +1,22 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'; // Se añade useRef y useEffect
-import { toast } from 'react-toastify';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
+import { useAuth } from './AuthContext'; 
+import axios from 'axios';
+import API_URL from '../config';
 
 const ProductContext = createContext();
 
 export const useProducts = () => useContext(ProductContext);
 
 export const ProductProvider = ({ children }) => {
-  const { api } = useAuth();
+  const { api } = useAuth(); 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-
-  // --- CORRECCIÓN: Usar una referencia para evitar bucles infinitos ---
-  // Guardamos los valores que cambian en una ref para que fetchProducts no se regenere
-  const stateRef = useRef({ loading, totalPages });
-  useEffect(() => {
-    stateRef.current = { loading, totalPages };
-  }, [loading, totalPages]);
 
   const fetchProducts = useCallback(async (
     page = 1,
@@ -32,13 +27,9 @@ export const ProductProvider = ({ children }) => {
     minPrice = 0,
     maxPrice = 300000
   ) => {
-    // Leemos los valores actuales desde la referencia
-    const currentState = stateRef.current;
-
-    // Previene una nueva carga si ya hay una en curso o si se han cargado todas las páginas
-    if (currentState.loading || (page > currentState.totalPages && currentState.totalPages > 1)) {
-      return;
-    }
+    // Si es una nueva búsqueda, se indica que se está cargando.
+    // Si es para cargar más (page > 1) y ya está cargando, se detiene.
+    if (page > 1 && loading) return;
 
     setLoading(true);
     setError(null);
@@ -53,27 +44,30 @@ export const ProductProvider = ({ children }) => {
         maxPrice: maxPrice.toString(),
       }).toString();
 
+      // Usamos la instancia 'api' que ya tiene la lógica de autenticación
       const response = await api.get(`/api/products-filtered?${queryParams}`);
-
+      
       if (page === 1) {
+        // Si es la primera página (o una nueva búsqueda), reemplaza la lista.
         setProducts(response.data.products);
       } else {
+        // Si es una página subsiguiente, añade los nuevos productos a la lista existente.
         setProducts(prevProducts => [...prevProducts, ...response.data.products]);
       }
-
+      
       setCurrentPage(response.data.page);
       setTotalPages(response.data.pages);
       setTotalProducts(response.data.totalProducts);
 
     } catch (err) {
       console.error('ProductContext: Error al obtener productos filtrados:', err.response?.data || err);
-      const errorMessage = err.response?.data?.message || 'Error al cargar los productos filtrados. Verifica la conexión o el servidor.';
+      const errorMessage = err.response?.data?.message || 'Error al cargar los productos filtrados.';
       setError({ message: errorMessage });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
-    // --- CORRECCIÓN: El array de dependencias ahora es estable ---
-  }, [api]);
+  }, [api]); // --- CORRECCIÓN CLAVE: La dependencia es solo 'api', que es estable.
 
   const value = {
     products,
@@ -93,5 +87,5 @@ export const ProductProvider = ({ children }) => {
 };
 
 ProductProvider.propTypes = {
-  children: PropTypes.node.isRequired,
+    children: PropTypes.node.isRequired,
 };

@@ -10,7 +10,7 @@ import ProductCard from '../components/product/ProductCard';
 import { useProducts } from '../contexts/ProductContext';
 import { useTheme } from '@mui/material/styles';
 import { Helmet } from 'react-helmet-async';
-import { useOrders } from '../contexts/OrderContext'; 
+import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
@@ -28,9 +28,9 @@ const ProductsPage = () => {
   // 'submittedSearchTerm' guarda el valor que realmente se busca.
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState(() => new URLSearchParams(location.search).get('search') || '');
 
-  const [selectedGender, setSelectedGender] = useState(''); 
-  const [priceRange, setPriceRange] = useState([0, 300000]); 
-  const [sortOrder, setSortOrder] = useState('updatedAt_desc'); 
+  const [selectedGender, setSelectedGender] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 300000]);
+  const [sortOrder, setSortOrder] = useState('updatedAt_desc');
   const [page, setPage] = useState(1);
   const [addingProductId, setAddingProductId] = useState(null);
 
@@ -119,10 +119,10 @@ const ProductsPage = () => {
     setSelectedGender(event.target.value);
   };
 
-  const handlePriceRangeChange = (event, newValue) => {
-    setPage(1);
-    setPriceRange(newValue);
-  };
+  // const handlePriceRangeChange = (event, newValue) => {
+  //   setPage(1);
+  //   setPriceRange(newValue);
+  // };
 
   const handleSortChange = (event) => {
     setPage(1);
@@ -137,7 +137,7 @@ const ProductsPage = () => {
   };
 
   const valueLabelFormat = (value) => `₡${value}`;
-  const displayedProducts = products; 
+  const displayedProducts = products;
 
   return (
     <>
@@ -194,40 +194,40 @@ const ProductsPage = () => {
                 </Button>
               </Box>
             </Grid>
-            
-<Grid item xs={12} sm={6} md={3}>
-  <FormControl fullWidth size="small" variant="outlined">
-    <InputLabel id="gender-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
-    <Select
-      labelId="gender-select-label"
-      value={selectedGender}
-      label="Filtrar por Género"
-      onChange={handleGenderChange}
-      displayEmpty // <-- ESTA ES LA ÚNICA LÍNEA AÑADIDA
-      sx={{
-        borderRadius: '8px',
-        color: 'white',
-        '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' },
-        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
-        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
-        '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' },
-      }}
-      MenuProps={{
-        PaperProps: {
-          sx: {
-            bgcolor: '#1E1E1E',
-            color: 'white',
-          },
-        },
-      }}
-    >
-      <MenuItem value=""><em>Todos</em></MenuItem>
-      {availableGenders.map((gender) => (<MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>))}
-    </Select>
-  </FormControl>
-</Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small" variant="outlined">
+                <InputLabel id="gender-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
+                <Select
+                  labelId="gender-select-label"
+                  value={selectedGender}
+                  label="Filtrar por Género"
+                  onChange={handleGenderChange}
+                  displayEmpty // <-- ESTA ES LA ÚNICA LÍNEA AÑADIDA
+                  sx={{
+                    borderRadius: '8px',
+                    color: 'white',
+                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+                    '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: '#1E1E1E',
+                        color: 'white',
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value=""><em>Todos</em></MenuItem>
+                  {availableGenders.map((gender) => (<MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>))}
+                </Select>
+              </FormControl>
+            </Grid>
             {/* <Grid item xs={12} sm={6} md={3}><Typography gutterBottom sx={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Rango de Precios</Typography><Slider value={priceRange} onChange={handlePriceRangeChange} valueLabelDisplay="auto" getAriaValueText={(value) => `₡${value}`} min={0} max={300000} step={1000} sx={{ color: '#FFD700', '& .MuiSlider-thumb': { backgroundColor: '#FFD700', boxShadow: '0 0 10px rgba(255, 215, 0, 0.7)' }, '& .MuiSlider-track': { border: 'none' }, '& .MuiSlider-rail': { opacity: 0.5, backgroundColor: '#bfbfbf' }, '& .MuiSlider-markLabel': { color: 'rgba(255, 255, 255, 0.5)' } }} /></Grid> */}
-            <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size="small"><InputLabel sx={{color: 'rgba(255, 255, 255, 0.7)'}}></InputLabel><Select value={sortOrder} label="Ordenar por" onChange={handleSortChange} sx={{ borderRadius: '8px', color: 'white', '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' }, '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' }, }} MenuProps={{ PaperProps: { sx: { bgcolor: '#1E1E1E', color: 'white' } } }}><MenuItem value="updatedAt_desc">Más Recientes</MenuItem><MenuItem value="createdAt_asc">Más Antiguos</MenuItem><MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem><MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem><MenuItem value="name_asc">Nombre: A-Z</MenuItem><MenuItem value="name_desc">Nombre: Z-A</MenuItem></Select></FormControl></Grid>
+            <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size="small"><InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel><Select value={sortOrder} label="Ordenar por" onChange={handleSortChange} sx={{ borderRadius: '8px', color: 'white', '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' }, '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' }, }} MenuProps={{ PaperProps: { sx: { bgcolor: '#1E1E1E', color: 'white' } } }}><MenuItem value="updatedAt_desc">Más Recientes</MenuItem><MenuItem value="createdAt_asc">Más Antiguos</MenuItem><MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem><MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem><MenuItem value="name_asc">Nombre: A-Z</MenuItem><MenuItem value="name_desc">Nombre: Z-A</MenuItem></Select></FormControl></Grid>
           </Grid>
         </Paper>
 
@@ -253,16 +253,16 @@ const ProductsPage = () => {
           <>
             <Grid container spacing={4} justifyContent="center">
               {displayedProducts.map((product) => (
-                <Grid item key={product._id} xs={12} sm={6} md={4} lg={3}> 
-                  <ProductCard 
-                    product={product} 
+                <Grid item key={product._id} xs={12} sm={6} md={4} lg={3}>
+                  <ProductCard
+                    product={product}
                     onAddToCart={() => handleAddToCart(product)}
                     isAdding={addingProductId === product._id}
                   />
                 </Grid>
               ))}
             </Grid>
-            
+
             {loading && products.length > 0 && (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress color="primary" />
