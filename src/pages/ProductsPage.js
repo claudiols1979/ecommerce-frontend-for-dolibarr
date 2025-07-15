@@ -237,6 +237,7 @@ const ProductsPage = () => {
               variant="contained"
               color="secondary"
               onClick={handleClearSearch}
+              sx={{ fontWeight: 'bold',textTransform: 'uppercase' }}
             >
               Mostrar Todos los Productos
             </Button>
