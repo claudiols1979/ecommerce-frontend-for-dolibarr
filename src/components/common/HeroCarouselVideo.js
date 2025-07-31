@@ -27,48 +27,50 @@ const CarouselSlideContent = styled(Box)(({ theme }) => ({
   },
 }));
 
-const HeroCarouselVideo = () => {
+const HeroCarousel = () => {
   const navigate = useNavigate();
-  // Esta es una URL de incrustación (embed) para el reproductor de Cloudinary
-  const videoEmbedURL = 'https://player.cloudinary.com/embed/?cloud_name=dl4k0gqfv&public_id=Mother_s_Day_Perfume_Ad_Request_moc2w1&fluid=true&controls=false&loop=true&autoplay=true&muted=true';
+  
+  // --- CORRECCIÓN CLAVE 1: Se usa la URL directa al archivo .mp4 ---
+  // Esto nos permite usar la etiqueta <video> y tener control total sobre el estilo.
+  const videoURL = 'https://res.cloudinary.com/dl4k0gqfv/video/upload/Mother_s_Day_Perfume_Ad_Request_moc2w1.mp4';
 
   return (
     <Box sx={{
-      position: 'relative', // Necesario para anclar el contenido superpuesto
+      position: 'relative',
       width: '100%',
-      height: { xs: 300, sm: 400, md: 550 }, // Altura del video
+      height: { xs: 300, sm: 400, md: 550 },
       mb: 4,
       borderRadius: 2,
       overflow: 'hidden',
       boxShadow: 3,
-      backgroundColor: 'black', // Fondo de respaldo mientras carga el video
+      backgroundColor: 'black',
     }}>
-      {/* --- CORRECCIÓN CLAVE: Se usa un <iframe> en lugar de <video> --- */}
-      <iframe
-        src={videoEmbedURL}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        // --- CORRECCIÓN CLAVE 2: Estilos para que el video cubra el contenedor ---
         style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
           position: 'absolute',
-          top: 0,
-          left: 0,
-          border: 'none', // Quitar el borde del iframe
+          top: '50%',
+          left: '50%',
+          width: '100%', // El video siempre ocupará el 100% del ancho
+          height: 'auto', // La altura se ajustará para mantener la proporción
+          transform: 'translate(-50%, -50%)', // Centra el video
           zIndex: 1,
         }}
-        frameBorder="0"
-        allow="autoplay; encrypted-media"
-        allowFullScreen
-        title="Hero Video"
-      ></iframe>
+      >
+        <source src={videoURL} type="video/mp4" />
+        Tu navegador no soporta la etiqueta de video.
+      </video>
       
-      {/* El contenido se coloca encima del video */}
       <CarouselSlideContent sx={{ zIndex: 2 }}>
         <Typography variant="h4" component="h2" sx={{ mb: 1, fontWeight: 700, fontSize: { xs: '1.8rem', sm: '2.5rem', md: '3.5rem' } }}>
           Siente la Esencia de la Elegancia
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, maxWidth: { xs: '90%', md: '50%' }, fontSize: { xs: '1rem', sm: '1.2rem' } }}>
-          Fragancias que enamoran. Descubre nuestra colección exclusiva.
+          Videos que inspiran, fragancias que enamoran. Descubre nuestra colección exclusiva.
         </Typography>
         <Button
           variant="contained"
@@ -95,4 +97,4 @@ const HeroCarouselVideo = () => {
   );
 };
 
-export default HeroCarouselVideo;
+export default HeroCarousel;
