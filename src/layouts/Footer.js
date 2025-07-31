@@ -1,67 +1,84 @@
 import React from 'react';
-import { Box, Typography, Container, Link as MuiLink, IconButton } from '@mui/material'; // <-- 1. IMPORTAR IconButton
+import { Box, Typography, Container, Link as MuiLink, IconButton, Grid, Divider } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { grey } from '@mui/material/colors';
-import FacebookIcon from '@mui/icons-material/Facebook';   // <-- 2. IMPORTAR ICONO DE FACEBOOK
-import InstagramIcon from '@mui/icons-material/Instagram'; // <-- 3. IMPORTAR ICONO DE INSTAGRAM
+import FacebookIcon from '@mui/icons-material/Facebook';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import NavBranding from '../components/common/NavBranding'; // Reutilizamos el componente de branding
 
 const Footer = () => {
   const theme = useTheme();
+
+  const linkStyle = {
+    color: 'grey.400',
+    textDecoration: 'none',
+    display: 'block',
+    mb: 1,
+    transition: 'color 0.2s ease-in-out',
+    '&:hover': {
+      color: 'common.white',
+    },
+  };
+
   return (
     <Box
       component="footer"
       sx={{
-        py: 3,
+        py: { xs: 4, sm: 6 }, // Aumentamos el padding vertical para más altura
         px: 2,
         mt: 'auto',
-        backgroundColor: grey[100],
-        color: theme.palette.text.secondary,
-        textAlign: 'center',
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        boxShadow: '0 -2px 8px rgba(0,0,0,0.05)',
+        backgroundColor: '#121212', // Un negro profundo y elegante
+        color: 'grey.500',
       }}
     >
       <Container maxWidth="lg">
-        {/* --- 4. NUEVA SECCIÓN DE REDES SOCIALES --- */}
-        <Box sx={{ mb: 1 }}>
-          <MuiLink href="https://www.facebook.com/profile.php?id=61576158096800" target="_blank" rel="noopener noreferrer">
-            <IconButton
-              aria-label="Facebook"
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main', transform: 'scale(1.1)' },
-                transition: 'transform 0.2s ease-in-out',
-              }}
-            >
-              <FacebookIcon />
-            </IconButton>
-          </MuiLink>
-          <MuiLink href="https://www.instagram.com/look_and_smell_cr" target="_blank" rel="noopener noreferrer">
-            <IconButton
-              aria-label="Instagram"
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { color: 'primary.main', transform: 'scale(1.1)' },
-                transition: 'transform 0.2s ease-in-out',
-              }}
-            >
-              <InstagramIcon />
-            </IconButton>
-          </MuiLink>
-        </Box>
+        <Grid container spacing={5}>
+          {/* Columna 1: Branding y Redes Sociales */}
+          <Grid item xs={12} sm={4} md={3}>
+            <NavBranding />
+            <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
+              Tu esencia, tu estilo.
+            </Typography>
+            <Box>
+              <MuiLink href="https://www.facebook.com/profile.php?id=61576158096800" target="_blank" rel="noopener noreferrer">
+                <IconButton aria-label="Facebook" sx={{ color: 'grey.400', '&:hover': { color: 'common.white' } }}>
+                  <FacebookIcon />
+                </IconButton>
+              </MuiLink>
+              <MuiLink href="https://www.instagram.com/look_and_smell_cr" target="_blank" rel="noopener noreferrer">
+                <IconButton aria-label="Instagram" sx={{ color: 'grey.400', '&:hover': { color: 'common.white' } }}>
+                  <InstagramIcon />
+                </IconButton>
+              </MuiLink>
+            </Box>
+          </Grid>
 
-        <Typography variant="body2">
+          {/* Columna 2: Navegación (con placeholders) */}
+          <Grid item xs={6} sm={4} md={3}>
+            <Typography variant="h6" sx={{ color: 'common.white', fontWeight: 'bold', mb: 2 }}>Navegación</Typography>
+            <MuiLink href="/" sx={linkStyle}>Inicio</MuiLink>
+            <MuiLink href="/products" sx={linkStyle}>Productos</MuiLink>   
+            
+          </Grid>
+
+          {/* Columna 3: Legal */}
+          <Grid item xs={6} sm={4} md={3}>
+            <Typography variant="h6" sx={{ color: 'common.white', fontWeight: 'bold', mb: 2 }}>Legal</Typography>
+            <MuiLink href="/privacy" sx={linkStyle}>Política de Privacidad</MuiLink>
+            <MuiLink href="/conditions" sx={linkStyle}>Términos de Servicio</MuiLink>            
+          </Grid>
+
+          {/* Columna 4: Contacto (con placeholders) */}
+          <Grid item xs={12} sm={4} md={3}>
+             <Typography variant="h6" sx={{ color: 'common.white', fontWeight: 'bold', mb: 2 }}>Contacto</Typography>
+             <Typography variant="body2" sx={{...linkStyle, cursor: 'default'}}>Alajuela, Costa Rica</Typography>             
+             <Typography variant="body2" sx={{...linkStyle, cursor: 'default'}}>(506) 7231-7420</Typography>
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 4, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+
+        <Typography variant="body2" sx={{ textAlign: 'center' }}>
           &copy; {new Date().getFullYear()} Look & Smell - Perfumería CR. Todos los derechos reservados.
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          <MuiLink href="/privacy" color="inherit" sx={{ mx: 1, '&:hover': { textDecoration: 'underline', color: theme.palette.primary.main } }}>
-            Política de Privacidad
-          </MuiLink>
-          |
-          <MuiLink href="/conditions" color="inherit" sx={{ mx: 1, '&:hover': { textDecoration: 'underline', color: theme.palette.primary.main } }}>
-            Términos de Servicio
-          </MuiLink>
         </Typography>
       </Container>
     </Box>
