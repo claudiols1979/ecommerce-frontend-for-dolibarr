@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Box, Typography, Button, Grid, CircularProgress, Alert, Card, CardContent, CardMedia, Paper, TextField, InputAdornment } from '@mui/material';
 import ProductCard from '../components/product/ProductCard';
 import HeroCarousel from '../components/common/HeroCarousel';
+import HeroCarouselVideo from '../components/common/HeroCarouselVideo';
 import { useProducts } from '../contexts/ProductContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -307,6 +308,9 @@ const HomePage = () => {
           Explorar Todos los Perfumes
         </Button>
       </Box>
+
+      {/** Hero Carousel Video**/}
+     <HeroCarouselVideo />
 
       {/* Middle Widgets Section */}
       <Box sx={{ my: 8, textAlign: 'center' }}>
