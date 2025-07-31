@@ -170,7 +170,7 @@ const HomePage = () => {
             p: { xs: 2, sm: 3 },
             my: 6,
             borderRadius: 4,
-            background: 'linear-gradient(135deg, rgba(18,18,18,0.95) 60%, rgba(139, 112, 0, 0.95) 100%)',
+            background: 'linear-gradient(135deg, rgba(112,112,112,0.95) 60%, rgba(139, 112, 0, 0.95) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 215, 0, 0.2)',
           }}
