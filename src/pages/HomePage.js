@@ -170,12 +170,11 @@ const HomePage = () => {
             p: { xs: 2, sm: 3 },
             my: 6,
             borderRadius: 4,
-            background: 'linear-gradient(135deg, rgba(112,112,112,0.95) 60%, rgba(139, 112, 0, 0.95) 100%)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 215, 0, 0.2)',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255,0.95) 55%, rgba(139, 112, 0, 0.95) 100%)',
+            backdropFilter: 'blur(10px)',            
           }}
         >
-          <Typography variant="h4" sx={{ color: 'white', fontWeight: 700, textAlign: 'center', mb: 2 }}>
+          <Typography variant="h4" sx={{ color: 'black', fontWeight: 700, textAlign: 'center', mb: 2 }}>
             Encuentra tu Esencia
           </Typography>
           <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', gap: 2 }}>
@@ -189,7 +188,7 @@ const HomePage = () => {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '8px',
-                  color: 'white',
+                  color: 'black',
                   '& fieldset': { borderColor: 'rgba(255, 215, 0, 0.3)' },
                   '&:hover fieldset': { borderColor: '#FFD700' },
                   '&.Mui-focused fieldset': { borderColor: '#FFD700' },
@@ -200,7 +199,7 @@ const HomePage = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
+                    <SearchIcon sx={{ color: 'rgba(0, 0, 0, 0.7)' }} />
                   </InputAdornment>
                 ),
               }}
