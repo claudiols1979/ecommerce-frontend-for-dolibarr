@@ -163,36 +163,7 @@ const HomePage = () => {
         </Grid>
       </Box>
 
-      {/* Explore All Products Button */}
-      <Box sx={{ textAlign: 'center', my: 6 }}>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          onClick={() => navigate('/products')}
-          sx={{ 
-            borderRadius: 8, 
-            px: 5, 
-            py: 1.5,
-            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
-            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'translateY(-3px)',
-              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
-              backgroundColor: '#FFD740',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-            fontWeight: 700,
-            fontSize: { xs: '1rem', sm: '1.1rem' }
-          }}
-        >
-          Explorar Todos los Perfumes
-        </Button>
-      </Box>
-
-      {/* --- NUEVA SECCIÓN DE BÚSQUEDA --- */}
+       {/* --- NUEVA SECCIÓN DE BÚSQUEDA --- */}
        <Paper
           elevation={8}
           sx={{
@@ -250,6 +221,37 @@ const HomePage = () => {
             </Button>
           </Box>
         </Paper>
+
+      {/* Explore All Products Button */}
+      <Box sx={{ textAlign: 'center', my: 6 }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={() => navigate('/products')}
+          sx={{ 
+            borderRadius: 8, 
+            px: 5, 
+            py: 1.5,
+            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
+            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
+              backgroundColor: '#FFD740',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+            },
+            fontWeight: 700,
+            fontSize: { xs: '1rem', sm: '1.1rem' }
+          }}
+        >
+          Explorar Todos los Perfumes
+        </Button>
+      </Box>
+
+     
 
 
       {/* Featured Products Section */}
