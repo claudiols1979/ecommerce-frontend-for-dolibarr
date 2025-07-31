@@ -135,10 +135,65 @@ const HomePage = () => {
     <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
 
       {/* Banner */}
-      <PromotionalBanner />
+      {/* <PromotionalBanner /> */}
+      
+     
+       
+
+      {/* Hero Carousel */}
+      <HeroCarousel />
+      
+
+      {/* Top Widgets Section */}
+      <Box sx={{ my: 6, textAlign: 'center' }}>
+        <Grid container spacing={4} justifyContent="center">
+          {topWidgetData.map((widget, index) => (
+            <Grid item key={index} xs={12} sm={6} md={3}>
+              <Box sx={{ p: 3, bgcolor: 'transparent', boxShadow: 'none', border: 'none', borderRadius: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', }}>
+                {widget.icon}
+                <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, color: 'primary.main' }}>
+                  {widget.title}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  {widget.description}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* Explore All Products Button */}
+      <Box sx={{ textAlign: 'center', my: 6 }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={() => navigate('/products')}
+          sx={{ 
+            borderRadius: 8, 
+            px: 5, 
+            py: 1.5,
+            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
+            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
+              backgroundColor: '#FFD740',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+            },
+            fontWeight: 700,
+            fontSize: { xs: '1rem', sm: '1.1rem' }
+          }}
+        >
+          Explorar Todos los Perfumes
+        </Button>
+      </Box>
 
       {/* --- NUEVA SECCIÓN DE BÚSQUEDA --- */}
-        <Paper
+       <Paper
           elevation={8}
           sx={{
             p: { xs: 2, sm: 3 },
@@ -195,57 +250,6 @@ const HomePage = () => {
             </Button>
           </Box>
         </Paper>
-
-      {/* Hero Carousel */}
-      <HeroCarousel />
-
-      {/* Top Widgets Section */}
-      <Box sx={{ my: 6, textAlign: 'center' }}>
-        <Grid container spacing={4} justifyContent="center">
-          {topWidgetData.map((widget, index) => (
-            <Grid item key={index} xs={12} sm={6} md={3}>
-              <Box sx={{ p: 3, bgcolor: 'transparent', boxShadow: 'none', border: 'none', borderRadius: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', }}>
-                {widget.icon}
-                <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, color: 'primary.main' }}>
-                  {widget.title}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                  {widget.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      {/* Explore All Products Button */}
-      <Box sx={{ textAlign: 'center', my: 6 }}>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          onClick={() => navigate('/products')}
-          sx={{ 
-            borderRadius: 8, 
-            px: 5, 
-            py: 1.5,
-            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
-            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'translateY(-3px)',
-              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
-              backgroundColor: '#FFD740',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-            fontWeight: 700,
-            fontSize: { xs: '1rem', sm: '1.1rem' }
-          }}
-        >
-          Explorar Todos los Perfumes
-        </Button>
-      </Box>
 
 
       {/* Featured Products Section */}
