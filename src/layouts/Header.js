@@ -46,12 +46,12 @@ const Header = () => {
       mx: 1,
       fontWeight: isActive ? 900 : 600,
       color: '#71797E',
-      borderBottom: isActive ? `3px solid ${theme.palette.secondary.main}` : '3px solid transparent',
+      borderBottom: isActive ? `3px solid grey` : '3px solid transparent',
       borderRadius: 0, // Para que el borde sea una línea recta
       paddingBottom: '4px',
       transition: 'border-bottom 0.2s ease-in-out',
       '&:hover': {
-        borderBottom: `3px solid ${theme.palette.secondary.light}`,
+        borderBottom: `3px solid ${theme.palette.secondary.dark}`,
       }
     };
   };
