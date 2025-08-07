@@ -135,7 +135,7 @@ const Header = () => {
               component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1 }}
               aria-label={`cart with ${cartItemCount} items`}
             >
-              <Badge badgeContent={cartItemCount} color="secondary">
+              <Badge badgeContent={cartItemCount} color="success">
                 <ShoppingCartIcon />
               </Badge>
             </IconButton>
@@ -177,7 +177,7 @@ const Header = () => {
               component={RouterLink} to="/cart" color="#71797E"
               sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
             >
-              <Badge badgeContent={cartItemCount} color="secondary">
+              <Badge badgeContent={cartItemCount} color="success">
                 <ShoppingCartIcon sx={{color: '#71797E'}}/>
               </Badge>
             </IconButton>
