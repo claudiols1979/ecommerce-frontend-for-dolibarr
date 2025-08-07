@@ -43,7 +43,7 @@ const HeroCarousel = () => {
 
   const slides = [
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1751088623/Gemini_Generated_Image_oscuvxoscuvxoscu_rck3fh.png', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589232/imageHome_rr1pkn.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Nueva Colección Primavera',
       title: 'Descubre las nuevas colecciones',
       description: 'Estilo y frescura para cada gusto. ¡Explora nuestros últimos productos!',
@@ -51,7 +51,7 @@ const HeroCarousel = () => {
       buttonLink: '/products',
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172461/hero2_rtwpab.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589040/syed-muhammad-baqir-zaidi-3qNVEa7SN_8-unsplash_jrfvpr.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Ofertas Exclusivas',
       title: 'Ofertas Exclusivas',
       description: 'Precios especiales que no querrás perder!',
