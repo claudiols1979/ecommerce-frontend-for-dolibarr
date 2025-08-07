@@ -146,7 +146,7 @@ const ProductsPage = () => {
         <meta name="description" content="Explora nuestro catálogo completo de perfumes, cosméticos y sets de regalo." />
       </Helmet>
 
-      <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>
+      <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
         <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 700, color: 'primary.main' }}>
           Todos Nuestros Productos
         </Typography>
@@ -154,11 +154,14 @@ const ProductsPage = () => {
         <Paper
           elevation={8}
           sx={{
-            p: { xs: 2, sm: 4 }, mb: 4, borderRadius: 4,
-            background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 60%, rgba(253, 218, 13,0.6) 100%)',
-            backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 215, 0, 0.2)',
-            boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
-          }}
+          p: { xs: 2, sm: 3 },
+          mb: 4,
+          borderRadius: 4,
+          background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 60%, rgba(253, 218, 13,0.6) 100%)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 215, 0, 0.2)',
+          boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
+        }}
         >
           <Grid container spacing={3} alignItems="center" justifyContent="center">
             <Grid item xs={12} sm={6} md={3}>

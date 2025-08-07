@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import NavBranding from '../components/common/NavBranding';
+import { amber } from '@mui/material/colors';
 
 const Header = () => {
   const { cartItems } = useOrders();
@@ -43,8 +44,8 @@ const Header = () => {
     const isActive = location.pathname === path;
     return {
       mx: 1,
-      fontWeight: isActive ? 800 : 600,
-      color: 'inherit',
+      fontWeight: isActive ? 900 : 600,
+      color: '#71797E',
       borderBottom: isActive ? `3px solid ${theme.palette.secondary.main}` : '3px solid transparent',
       borderRadius: 0, // Para que el borde sea una línea recta
       paddingBottom: '4px',
@@ -105,7 +106,14 @@ const Header = () => {
   );
 
   return (
-    <AppBar position="sticky" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}> 
+    <AppBar position="sticky" 
+      sx={{ 
+        zIndex: (theme) => theme.zIndex.drawer + 1, 
+        backgroundColor: 'transparent',
+        backgroundImage: `linear-gradient(to bottom, transparent, ${amber[600]})`,
+        boxShadow: 0,
+
+        }}> 
       <Toolbar sx={{ justifyContent: 'space-between', flexWrap: 'wrap', py: { xs: 1, sm: 0 } }}>
         {/* <Typography
           variant="h6"
@@ -153,24 +161,24 @@ const Header = () => {
             </Button>
             {user ? (
               <>
-                <Button color="inherit" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
+                <Button color="#71797E" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
                   Mi cuenta 
                 </Button>
-                <Button color="inherit" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
-                  <ExitToAppIcon />
+                <Button color="#71797E" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
+                  <ExitToAppIcon sx={{color: '#71797E'}}/>
                 </Button>
               </>
             ) : (
-              <Button color="inherit" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
+              <Button color="#71797E" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
                 Iniciar Sesión
               </Button>
             )}
             <IconButton
-              component={RouterLink} to="/cart" color="inherit"
+              component={RouterLink} to="/cart" color="#71797E"
               sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="secondary">
-                <ShoppingCartIcon />
+                <ShoppingCartIcon sx={{color: '#71797E'}}/>
               </Badge>
             </IconButton>
           </Box>

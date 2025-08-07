@@ -9,7 +9,7 @@ const Footer = () => {
   const theme = useTheme();
 
   const linkStyle = {
-    color: 'grey.400',
+    color: 'grey.200',
     textDecoration: 'none',
     display: 'block',
     mb: 1,

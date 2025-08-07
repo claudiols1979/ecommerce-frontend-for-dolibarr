@@ -24,6 +24,7 @@ const NavBranding = () => {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
             letterSpacing: '0.1em', // Un espaciado sutil
+            color: "#71797E"
             // No se especifica color para que herede el de la AppBar
           }}
         >

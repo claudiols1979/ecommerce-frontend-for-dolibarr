@@ -23,6 +23,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import SearchIcon from '@mui/icons-material/Search';
+import ProductFilters from '../components/common/ProductFilters';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -40,6 +41,24 @@ const HomePage = () => {
   useEffect(() => {
     fetchProducts(1, 20, 'createdAt_desc'); 
   }, [fetchProducts]);
+
+  const handleFilterAndNavigate = (filters) => {
+    // URLSearchParams es una forma segura de construir query strings
+    const params = new URLSearchParams();
+
+    if (filters.search) {
+      params.append('search', filters.search);
+    }
+    if (filters.gender) {
+      params.append('gender', filters.gender);
+    }
+    if (filters.sort) {
+      params.append('sort', filters.sort);
+    }
+
+    // Navega a la página de productos con los parámetros
+    navigate(`/products?${params.toString()}`);
+  };
 
   // --- NEW: Handler to add items to cart, with local loading state ---
   const handleAddToCart = useCallback(async (product) => {
@@ -131,6 +150,11 @@ const HomePage = () => {
         <meta property="og:url" content="https://www.look-and-smell.com/" />
         <meta property="og:type" content="website" />
       </Helmet>
+
+      <Container maxWidth="xl" sx={{ mt: 4 }}>
+        {/* 3. AÑADE EL COMPONENTE DE FILTROS */}
+        <ProductFilters onFilterSubmit={handleFilterAndNavigate} />
+      </Container>
 
 
     <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
