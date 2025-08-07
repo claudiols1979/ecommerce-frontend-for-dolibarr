@@ -59,7 +59,7 @@ const HeroCarousel = () => {
       buttonLink: '/products', // O una ruta de ofertas real
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1750172461/hero3_iy7hsi.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754588891/darklammur-oRgeDVPL1ks-unsplash_unq6af.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Calidad Garantizada',
       title: 'Productos 100% originales',
       description: 'Comprometidos con la excelencia en cada artículo.',
