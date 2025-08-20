@@ -45,13 +45,13 @@ const Header = () => {
     return {
       mx: 1,
       fontWeight: isActive ? 900 : 600,
-      color: '#71797E',
-      borderBottom: isActive ? `3px solid grey` : '3px solid transparent',
+      color: '#36454F',
+      borderBottom: isActive ? `3px solid #FFBF00` : '3px solid transparent',
       borderRadius: 0, // Para que el borde sea una línea recta
       paddingBottom: '4px',
       transition: 'border-bottom 0.2s ease-in-out',
       '&:hover': {
-        borderBottom: `3px solid ${theme.palette.secondary.dark}`,
+        borderBottom: `3px solid ${theme.palette.secondary.light}`,
       }
     };
   };
@@ -110,7 +110,7 @@ const Header = () => {
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1, 
         backgroundColor: 'transparent',
-        backgroundImage: `linear-gradient(to bottom, transparent, ${amber[600]})`,
+        backgroundImage: `linear-gradient(to bottom, transparent, ${amber[200]})`,
         boxShadow: 0,
 
         }}> 
@@ -161,24 +161,24 @@ const Header = () => {
             </Button>
             {user ? (
               <>
-                <Button color="#71797E" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
+                <Button color="#36454F" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
                   Mi cuenta 
                 </Button>
-                <Button color="#71797E" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
-                  <ExitToAppIcon sx={{color: '#71797E'}}/>
+                <Button color="#36454F" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
+                  <ExitToAppIcon sx={{color: '#36454F'}}/>
                 </Button>
               </>
             ) : (
-              <Button color="#71797E" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
+              <Button color="#36454F" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
                 Iniciar Sesión
               </Button>
             )}
             <IconButton
-              component={RouterLink} to="/cart" color="#71797E"
+              component={RouterLink} to="/cart" color="#36454F"
               sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="success">
-                <ShoppingCartIcon sx={{color: '#71797E'}}/>
+                <ShoppingCartIcon sx={{color: '#36454F'}}/>
               </Badge>
             </IconButton>
           </Box>

@@ -36,7 +36,7 @@ const NavBranding = () => {
               fontFamily: '"Lato", sans-serif',
               fontWeight: 300,
               fontStyle: 'italic',
-              color: '#71797E',
+              color: '#36454F',
               mx: 1, // Margen horizontal reducido para un look más compacto
             }}
           >
