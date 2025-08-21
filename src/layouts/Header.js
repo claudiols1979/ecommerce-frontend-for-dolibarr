@@ -71,29 +71,30 @@ const Header = () => {
 
   const drawerContent = (
     <Box
-      sx={{ width: 225, p: 2 }}
+      sx={{ width: 225, height: '100%', p: 2, backgroundColor: 'rgba(0, 0, 0, 0.5)', }}
       role="presentation"
       onClick={handleMobileMenuClose}
       onKeyDown={handleMobileMenuClose}
+      
     >
-      <Typography variant="h6" sx={{ mb: 2 }}>Menú</Typography>
+      <Typography variant="h6" sx={{ mb: 6 }}></Typography>
       <Divider />
       <List>
         <ListItem button onClick={() => handleMenuNavigate('/')} sx={getMobileNavStyle('/')}>
-          <ListItemText primary="Inicio" />
+          <ListItemText primary="Inicio" sx={{ mr: 1, color: '#FFBF00' }}/>
         </ListItem>
         <ListItem button onClick={() => handleMenuNavigate('/products')} sx={getMobileNavStyle('/products')}>
-          <ListItemText primary="Perfumes" />
+          <ListItemText primary="Perfumes" sx={{ mr: 1, color: '#FFBF00' }}/>
         </ListItem>
         
         {user ? (
           <>
             <ListItem button onClick={() => handleMenuNavigate('/profile')} sx={getMobileNavStyle('/profile')}>
-              <ListItemText primary="Mi cuenta" />
+              <ListItemText primary="Mi cuenta" sx={{ mr: 1, color: '#FFBF00' }}/>
             </ListItem>
             <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }}>
-              <ExitToAppIcon sx={{mr: 1}}/>
-              <ListItemText primary="Cerrar Sesión" />
+              <ExitToAppIcon sx={{mr: 1, color: '#FFBF00'}}/>
+              <ListItemText primary="Cerrar Sesión" sx={{ mr: 1, color: '#FFBF00' }}/>
             </ListItem>
           </>
         ) : (
@@ -132,7 +133,7 @@ const Header = () => {
         {isMobile ? (
           <Box>
             <IconButton
-              component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1 }}
+              component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#FFBF00' }}
               aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="success">
@@ -143,7 +144,7 @@ const Header = () => {
               color="inherit" aria-label="open drawer" edge="end"
               onClick={handleMobileMenuToggle}
             >
-              <MenuIcon />
+              <MenuIcon sx={{ color: '#FFBF00' }}/>
             </IconButton>
             <Drawer
               anchor="right" open={mobileMenuOpen} onClose={handleMobileMenuClose}
