@@ -137,7 +137,16 @@ const ProductsPage = () => {
   };
 
   const valueLabelFormat = (value) => `₡${value}`;
-  const displayedProducts = products;
+
+  const displayedProducts = (() => {
+    // Si no hay un género seleccionado, no filtramos el stock.
+    if (!selectedGender) {
+      return products;
+    }
+
+    // Si el usuario seleccionó un género, filtramos solo los que tienen stock.
+    return products.filter(product => product.countInStock > 0);
+  })();
 
   return (
     <>
