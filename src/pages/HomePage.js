@@ -195,7 +195,7 @@ const HomePage = () => {
             p: { xs: 2, sm: 3 },
             my: 6,
             borderRadius: 4,
-            background: 'linear-gradient(135deg, rgba(255, 255, 255,0.95) 55%, rgba(139, 112, 0, 0.95) 100%)',
+            background: 'linear-gradient(155deg, rgba(121, 112, 80, 0.4) 55%, rgba(139, 112, 0, 0.95) 80%)',
             backdropFilter: 'blur(10px)',            
           }}
         >
