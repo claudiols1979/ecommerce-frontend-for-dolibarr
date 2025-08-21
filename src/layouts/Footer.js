@@ -26,7 +26,7 @@ const Footer = () => {
         py: { xs: 4, sm: 6 }, // Aumentamos el padding vertical para más altura
         px: 2,
         mt: 'auto',
-        backgroundColor: '#121212', // Un negro profundo y elegante
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
         color: 'grey.500',
       }}
     >

@@ -45,7 +45,7 @@ const Header = () => {
     return {
       mx: 1,
       fontWeight: isActive ? 900 : 600,
-      color: '#36454F',
+      color: '#FFBF00',
       borderBottom: isActive ? `3px solid #FFBF00` : '3px solid transparent',
       borderRadius: 0, // Para que el borde sea una línea recta
       paddingBottom: '4px',
@@ -109,8 +109,8 @@ const Header = () => {
     <AppBar position="sticky" 
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1, 
-        backgroundColor: 'transparent',
-        backgroundImage: `linear-gradient(to bottom, transparent, ${amber[200]})`,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundImage: `linear-gradient(to bottom, transparent, ${amber[0]})`,
         boxShadow: 0,
 
         }}> 
@@ -165,7 +165,7 @@ const Header = () => {
                   Mi cuenta 
                 </Button>
                 <Button color="#36454F" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
-                  <ExitToAppIcon sx={{color: '#36454F'}}/>
+                  <ExitToAppIcon sx={{color: '#FFBF00'}}/>
                 </Button>
               </>
             ) : (
@@ -178,7 +178,7 @@ const Header = () => {
               sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="success">
-                <ShoppingCartIcon sx={{color: '#36454F'}}/>
+                <ShoppingCartIcon sx={{color: '#FFBF00'}}/>
               </Badge>
             </IconButton>
           </Box>

@@ -24,7 +24,7 @@ const NavBranding = () => {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
             letterSpacing: '0.1em', // Un espaciado sutil
-            color: "#36454F"
+            color: "#FFBF00"
             // No se especifica color para que herede el de la AppBar
           }}
         >
@@ -36,7 +36,7 @@ const NavBranding = () => {
               fontFamily: '"Lato", sans-serif',
               fontWeight: 300,
               fontStyle: 'italic',
-              color: '#36454F',
+              color: '#FFBF00',
               mx: 1, // Margen horizontal reducido para un look más compacto
             }}
           >
