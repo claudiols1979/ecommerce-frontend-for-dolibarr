@@ -662,86 +662,86 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
               
               {/* Dynamic attribute selection */}
               {attributeOptions && attributeOptions.map((attribute, index) => {
-  const options = getAvailableOptionsForAttribute(index) || [];
-  const isLastAttribute = index === attributeOptions.length - 1;
-  
-  return (
-    <Box key={index} sx={{ mb: 3 }}>
-      <Typography 
-        variant="body2" 
-        sx={{ 
-          display: 'block', 
-          fontWeight: 'bold', 
-          color: 'grey.800', 
-          mb: 2,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em'
-        }}
-      >
-        {attribute.type}:
-      </Typography>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {options.map((option, optionIndex) => {
-          const isSelected = selectedAttributes[attribute.type] === option.value;
-          
-          return (
-            <Button
-              key={optionIndex}
-              variant="outlined"
-              onClick={() => handleAttributeChange(attribute.type, option.value)}
-              disabled={isLastAttribute && !option.isAvailable}
-              sx={{
-                px: 3,
-                py: 1.5,
-                borderRadius: 2,
-                fontSize: '0.875rem',
-                fontWeight: 'bold',
-                minWidth: '60px',
-                transition: 'all 0.3s ease',
-                transform: 'scale(1)',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                  ...(!isSelected && {
-                    bgcolor: 'primary.50',
-                    color: 'primary.700',
-                    borderColor: 'primary.300',
-                  })
-                },
-                '&:active': {
-                  transform: 'scale(0.95)'
-                },
-                ...(isSelected && {
-                  bgcolor: '#263C5C', // Color específico solicitado
-                  color: 'white',
-                  borderColor: '#263C5C',
-                  boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
-                  '&:hover': {
-                    bgcolor: '#1E2F4A',
-                    borderColor: '#1E2F4A',
-                  }
-                }),
-                ...(!isSelected && {
-                  bgcolor: 'white',
-                  color: 'grey.800',
-                  borderColor: 'grey.300',
-                }),
-                ...(isLastAttribute && !option.isAvailable && {
-                  bgcolor: 'grey.100',
-                  color: 'grey.500',
-                  borderColor: 'grey.300',
-                  cursor: 'not-allowed',
-                  opacity: 0.7,
-                })
-              }}
-            >
-              {option.value}
-            </Button>
-          );
-        })}
-      </Box>
-    </Box>
-  );
-})}
+                const options = getAvailableOptionsForAttribute(index) || [];
+                const isLastAttribute = index === attributeOptions.length - 1;
+                
+                return (
+                  <Box key={index} sx={{ mb: 3 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        display: 'block', 
+                        fontWeight: 'bold', 
+                        color: 'grey.800', 
+                        mb: 2,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {options.map((option, optionIndex) => {
+                        const isSelected = selectedAttributes[attribute.type] === option.value;
+                        
+                        return (
+                          <Button
+                            key={optionIndex}
+                            variant="outlined"
+                            onClick={() => handleAttributeChange(attribute.type, option.value)}
+                            disabled={isLastAttribute && !option.isAvailable}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              borderRadius: 2,
+                              fontSize: '0.875rem',
+                              fontWeight: 'bold',
+                              minWidth: '60px',
+                              transition: 'all 0.3s ease',
+                              transform: 'scale(1)',
+                              '&:hover': {
+                                transform: 'scale(1.05)',
+                                ...(!isSelected && {
+                                  bgcolor: 'primary.50',
+                                  color: 'primary.700',
+                                  borderColor: 'primary.300',
+                                })
+                              },
+                              '&:active': {
+                                transform: 'scale(0.95)'
+                              },
+                              ...(isSelected && {
+                                bgcolor: '#263C5C', // Color específico solicitado
+                                color: 'white',
+                                borderColor: '#263C5C',
+                                boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
+                                '&:hover': {
+                                  bgcolor: '#1E2F4A',
+                                  borderColor: '#1E2F4A',
+                                }
+                              }),
+                              ...(!isSelected && {
+                                bgcolor: 'white',
+                                color: 'grey.800',
+                                borderColor: 'grey.300',
+                              }),
+                              ...(isLastAttribute && !option.isAvailable && {
+                                bgcolor: 'grey.100',
+                                color: 'grey.500',
+                                borderColor: 'grey.300',
+                                cursor: 'not-allowed',
+                                opacity: 0.7,
+                              })
+                            }}
+                          >
+                            {option.value}
+                          </Button>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                );
+              })}
 
               
               <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
