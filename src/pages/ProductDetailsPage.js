@@ -301,29 +301,54 @@ const extractBaseNameFromProduct = (productName, productCode) => {
   };
 
   // Filter available options based on current selections
-  const getAvailableOptionsForAttribute = (attributeIndex) => {
-    const currentSelections = Object.values(selectedAttributes);
-    const availableValues = new Set();
+  // const getAvailableOptionsForAttribute = (attributeIndex) => {
+  //   const currentSelections = Object.values(selectedAttributes);
+  //   const availableValues = new Set();
 
-    Array.from(availableOptions.keys()).forEach(optionKey => {
-      const values = optionKey.split('|');
+  //   Array.from(availableOptions.keys()).forEach(optionKey => {
+  //     const values = optionKey.split('|');
       
-      // Check if this option matches current selections (except the target attribute)
-      let matches = true;
-      for (let i = 0; i < values.length; i++) {
-        if (i !== attributeIndex && currentSelections[i] && currentSelections[i] !== values[i]) {
-          matches = false;
-          break;
-        }
-      }
+  //     // Check if this option matches current selections (except the target attribute)
+  //     let matches = true;
+  //     for (let i = 0; i < values.length; i++) {
+  //       if (i !== attributeIndex && currentSelections[i] && currentSelections[i] !== values[i]) {
+  //         matches = false;
+  //         break;
+  //       }
+  //     }
       
-      if (matches) {
-        availableValues.add(values[attributeIndex]);
-      }
-    });
+  //     if (matches) {
+  //       availableValues.add(values[attributeIndex]);
+  //     }
+  //   });
 
-    return Array.from(availableValues);
-  };
+  //   return Array.from(availableValues);
+  // };
+
+// Filter available options based on current selections
+const getAvailableOptionsForAttribute = (attributeIndex) => {
+  const currentSelections = Object.values(selectedAttributes);
+  const allValues = attributeOptions[attributeIndex]?.values || [];
+  const isLastAttribute = attributeIndex === attributeOptions.length - 1;
+  
+  // Para atributos que NO son el último, siempre están disponibles
+  if (!isLastAttribute) {
+    return allValues.map(value => ({ value, isAvailable: true }));
+  }
+  
+  // Solo para el último atributo verificamos disponibilidad
+  return allValues.map(value => {
+    const testSelections = [...currentSelections];
+    testSelections[attributeIndex] = value;
+    const optionKey = testSelections.join('|');
+    const isAvailable = availableOptions.has(optionKey);
+    
+    return {
+      value,
+      isAvailable
+    };
+  });
+};
 
   // --- useEffect para determinar si el usuario puede dejar una reseña ---
   useEffect(() => {
@@ -636,44 +661,88 @@ const extractBaseNameFromProduct = (productName, productCode) => {
               <Divider sx={{ my: 2 }} />
               
               {/* Dynamic attribute selection */}
-              {attributeOptions.map((attribute, index) => {
-                const availableValues = getAvailableOptionsForAttribute(index);
-                if (availableValues.length === 0) return null;
+              {attributeOptions && attributeOptions.map((attribute, index) => {
+  const options = getAvailableOptionsForAttribute(index) || [];
+  const isLastAttribute = index === attributeOptions.length - 1;
+  
+  return (
+    <Box key={index} sx={{ mb: 3 }}>
+      <Typography 
+        variant="body2" 
+        sx={{ 
+          display: 'block', 
+          fontWeight: 'bold', 
+          color: 'grey.800', 
+          mb: 2,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}
+      >
+        {attribute.type}:
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        {options.map((option, optionIndex) => {
+          const isSelected = selectedAttributes[attribute.type] === option.value;
+          
+          return (
+            <Button
+              key={optionIndex}
+              variant="outlined"
+              onClick={() => handleAttributeChange(attribute.type, option.value)}
+              disabled={isLastAttribute && !option.isAvailable}
+              sx={{
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '0.875rem',
+                fontWeight: 'bold',
+                minWidth: '60px',
+                transition: 'all 0.3s ease',
+                transform: 'scale(1)',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  ...(!isSelected && {
+                    bgcolor: 'primary.50',
+                    color: 'primary.700',
+                    borderColor: 'primary.300',
+                  })
+                },
+                '&:active': {
+                  transform: 'scale(0.95)'
+                },
+                ...(isSelected && {
+                  bgcolor: '#263C5C', // Color específico solicitado
+                  color: 'white',
+                  borderColor: '#263C5C',
+                  boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
+                  '&:hover': {
+                    bgcolor: '#1E2F4A',
+                    borderColor: '#1E2F4A',
+                  }
+                }),
+                ...(!isSelected && {
+                  bgcolor: 'white',
+                  color: 'grey.800',
+                  borderColor: 'grey.300',
+                }),
+                ...(isLastAttribute && !option.isAvailable && {
+                  bgcolor: 'grey.100',
+                  color: 'grey.500',
+                  borderColor: 'grey.300',
+                  cursor: 'not-allowed',
+                  opacity: 0.7,
+                })
+              }}
+            >
+              {option.value}
+            </Button>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+})}
 
-                return (
-                  <Box key={attribute.type} sx={{ mb: 2 }}>
-                    {/* <Typography variant="subtitle2" gutterBottom>
-                      {attribute.type.charAt(0).toUpperCase() + attribute.type.slice(1)}:
-                    </Typography> */}
-                    <ToggleButtonGroup
-                      value={selectedAttributes[attribute.type] || ''}
-                      exclusive
-                      onChange={(e, newValue) => newValue && handleAttributeChange(attribute.type, newValue)}
-                      aria-label={`${attribute.type} selection`}
-                      sx={{ flexWrap: 'wrap', gap: 1 }}
-                    >
-                      {availableValues.map(value => (
-                        <ToggleButton 
-                          key={value} 
-                          value={value}
-                          sx={{ 
-                            textTransform: 'none',
-                            border: '1px solid',
-                            borderColor: selectedAttributes[attribute.type] === value ? 'primary.main' : 'grey.300',
-                            backgroundColor: selectedAttributes[attribute.type] === value ? 'primary.light' : 'white',
-                            color: selectedAttributes[attribute.type] === value ? 'white' : 'text.primary',
-                            '&:hover': {
-                              backgroundColor: selectedAttributes[attribute.type] === value ? 'primary.main' : 'grey.100',
-                            }
-                          }}
-                        >
-                          {value}
-                        </ToggleButton>
-                      ))}
-                    </ToggleButtonGroup>
-                  </Box>
-                );
-              })}
               
               <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
                 {priceWithTax !== null ? formatPrice(priceWithTax) : 'Precio no disponible'}
