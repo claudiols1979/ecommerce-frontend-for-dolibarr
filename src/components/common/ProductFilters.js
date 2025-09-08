@@ -35,7 +35,7 @@ const ProductFilters = ({ initialFilters = {}, onFilterSubmit }) => {
         p: { xs: 2, sm: 3 },
         mb: 4,
         borderRadius: 4,
-        background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 60%, rgba(253, 218, 13,0.6) 100%)',
+        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 60%, rgba(233, 229, 209, 0.6) 100%)',
         backdropFilter: 'blur(10px)',
         border: '1px solid rgba(255, 215, 0, 0.2)',
         boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
@@ -54,12 +54,12 @@ const ProductFilters = ({ initialFilters = {}, onFilterSubmit }) => {
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '8px', color: 'white',
-                '& fieldset': { borderColor: 'rgba(255, 215, 0, 0.3)' },
-                '&:hover fieldset': { borderColor: '#FFD700' },
-                '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+                '& fieldset': { borderColor: 'rgba(238, 234, 219, 0.3)' },
+                '&:hover fieldset': { borderColor: '#efe9c8ff' },
+                '&.Mui-focused fieldset': { borderColor: '#eae8daff' },
               },
               '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-              '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
+              '& .MuiInputLabel-root.Mui-focused': { color: '#f2f0e6ff' },
             }}
           />
         </Grid>
@@ -73,8 +73,8 @@ const ProductFilters = ({ initialFilters = {}, onFilterSubmit }) => {
              variant="contained"
              fullWidth
              sx={{
-               height: '40px', borderRadius: '8px', color: 'common.black',
-               backgroundColor: '#FFD700', '&:hover': { backgroundColor: '#FFC700' },
+               height: '40px', borderRadius: '8px', color: '#faf8f8ff',
+               backgroundColor: '#bb4343ff', '&:hover': { backgroundColor: '#ff0000ff' },
                fontWeight: 'bold'
              }}
              startIcon={<SearchIcon />}

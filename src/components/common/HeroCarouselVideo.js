@@ -73,8 +73,7 @@ const HeroCarousel = () => {
           Videos que inspiran, fragancias que enamoran. Descubre nuestra colección exclusiva.
         </Typography>
         <Button
-          variant="contained"
-          color="secondary"
+          variant="contained"         
           size="large"
           onClick={() => navigate('/products')}
           sx={{ 
@@ -82,6 +81,8 @@ const HeroCarousel = () => {
             py: { xs: 1.5, sm: 2 }, 
             borderRadius: 8,
             fontWeight: 'bold',
+            backgroundColor: '#bb4343ff',
+            '&:hover': { backgroundColor: '#ff0000ff' },
             fontSize: { xs: '0.9rem', sm: '1rem' },
             boxShadow: '0 4px 20px rgba(255, 215, 0, 0.4)',
             transition: 'transform 0.2s ease-in-out',

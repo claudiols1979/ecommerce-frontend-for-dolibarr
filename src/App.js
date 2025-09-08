@@ -19,6 +19,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import NewPasswordPage from './pages/NewPasswordPage';
 import PrivacyPolicies from './pages/PrivacyPolicies';
 import TermsConditions from './pages/TermsConditions';
+import PaymentRedirectPage from './pages/PaymentRedirectPage';
 
 // PrivateRoute component
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -58,6 +59,9 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<NewPasswordPage />} />
 
+      {/* --- AHORA LA RUTA DE PAGO ES UNA RUTA PRINCIPAL CON SU PROPIO LAYOUT --- */}
+      <Route path="/payment-redirect" element={<PaymentRedirectPage />} />
+
       {/* --- GRUPO 2: RUTAS CON LAYOUT PRINCIPAL --- */}
       {/* Todas las rutas aquí tendrán Header y Footer */}
       <Route
@@ -71,11 +75,11 @@ function App() {
               <Route path="/products/:id" element={<ProductDetailsPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/privacy" element={<PrivacyPolicies />} />
-              <Route path='/conditions' element={<TermsConditions />} />
+              <Route path='/conditions' element={<TermsConditions />} />              
               {/* Rutas que requieren autenticación */}
               <Route element={<PrivateRoute />}>
                 <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile" element={<ProfilePage />} />                
               </Route>
               
               {/* Fallback para cualquier ruta desconocida dentro de este layout */}

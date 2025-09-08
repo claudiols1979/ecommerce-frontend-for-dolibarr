@@ -24,14 +24,14 @@ const AuthBranding = () => {
         sx={{
           fontFamily: '"Playfair Display", serif', // Tipografía elegante y clásica para "Look" y "Smell"
           fontWeight: 700, // Bold
-          color: 'text.secondary', // Se adapta automáticamente al modo claro/oscuro
+          color: '#263C5C', // Se adapta automáticamente al modo claro/oscuro
           letterSpacing: '0.1em', // Espaciado entre letras para un look más refinado
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
         }}
       >
-        Look
+        Tienda
         <Typography
           component="span"
           variant="h3" // Ligeramente más pequeño
@@ -40,21 +40,20 @@ const AuthBranding = () => {
             fontWeight: 300, // Light
             fontStyle: 'italic', // Cursiva para darle un toque especial
             mx: 2, // Margen horizontal para separarlo
-            color: 'text.secondary', // Un color secundario sutil
+            color: '#263C5C', // Un color secundario sutil
           }}
         >
-          &
+          en
         </Typography>
-        Smell
+        Linea
       </Typography>
 
       {/* Un subtítulo o eslogan opcional */}
       <Typography 
-        variant="body2" 
-        color="text.secondary" 
-        sx={{ mt: 1, letterSpacing: '0.05em' }}
+        variant="body2"         
+        sx={{ mt: 1, letterSpacing: '0.05em', color: '#263C5C' }}
       >
-        Tu Esencia, Tu Estilo
+        (Demo)
       </Typography>
     </Box>
   );

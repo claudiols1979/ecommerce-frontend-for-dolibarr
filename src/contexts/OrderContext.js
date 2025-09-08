@@ -1,6 +1,8 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext'; 
+import { calculatePriceWithTax } from '../utils/taxCalculations';
+import { formatPrice } from '../utils/formatters';
 
 const OrderContext = createContext();
 
@@ -197,6 +199,7 @@ export const OrderProvider = ({ children }) => {
     try {
       // Usamos 'api.get'
       const response = await api.get(`/api/orders/my-orders`);
+      // console.log("orders context: ", response.data)
       if (response.data && Array.isArray(response.data.orders)) {
         setMyOrders(response.data.orders);
       } else {
@@ -229,6 +232,73 @@ export const OrderProvider = ({ children }) => {
   }, [user, fetchMyOrders]); 
 
 
+const initiateTilopayPayment = useCallback(async (shippingDetails) => {
+    if (!user || !user.token) {
+        toast.error("Debes iniciar sesión para procesar el pago.");
+        return null;
+    }
+    if (cartItems.length === 0) {
+        toast.error("No puedes iniciar el pago con el carrito vacío.");
+        return null;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+        // Calcular el total con IVA
+        const totalWithTax = cartItems.reduce((acc, item) => {
+            const priceWithTax = item.product && item.product.iva ? 
+                calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
+                item.priceAtSale;
+            return acc + (item.quantity * priceWithTax);
+        }, 0);            
+
+        // Calcular costo de envío (ejemplo: 3000 colones para GAM)
+        const isGAM = ["San José", "Alajuela", "Cartago", "Heredia"].includes(shippingDetails.province);
+        const shippingCost = isGAM ? 3000 : 0;
+
+        // Total final con IVA y envío
+        const finalTotal = totalWithTax + shippingCost;
+
+        // ¡APLICAR EL REDONDEO HACIA ARRIBA! (igual que formatPrice)
+        const roundedTotal = Math.ceil(finalTotal / 100) * 100;
+
+        // Llama al endpoint del backend para iniciar el pago
+        const response = await api.post('/api/orders/cart/create-payment', { 
+            shippingDetails: shippingDetails,
+            totalAmount: roundedTotal, // ← Enviar el total REDONDEADO
+            items: cartItems.map(item => ({
+                productId: item.product?._id,
+                name: item.name,
+                quantity: item.quantity,
+                unitPrice: item.product && item.product.iva ? 
+                    calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
+                    item.priceAtSale,
+                iva: item.product?.iva || 0
+            }))
+        });
+
+        const { paymentUrl } = response.data;
+
+        if (!paymentUrl) {
+            toast.error("Error al obtener la URL de pago de Tilopay.");
+            return null;
+        }
+
+        return paymentUrl;
+
+    } catch (err) {
+        console.error('Error al iniciar el pago con Tilopay:', err.response?.data || err);
+        const errorMessage = err.response?.data?.message || 'Error al iniciar el pago.';
+        setError({ message: errorMessage });
+        toast.error(errorMessage);
+        return null;
+    } finally {
+        setLoading(false);
+    }
+}, [api, user, cartItems]);
+
+
 
   const value = {
     cartItems,
@@ -241,7 +311,8 @@ export const OrderProvider = ({ children }) => {
     addItemToCart,
     clearCart, 
     myOrders,
-    fetchMyOrders
+    fetchMyOrders,
+    initiateTilopayPayment
     
   };
 

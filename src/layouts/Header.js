@@ -45,13 +45,13 @@ const Header = () => {
     return {
       mx: 1,
       fontWeight: isActive ? 900 : 600,
-      color: '#FFBF00',
-      borderBottom: isActive ? `3px solid #FFBF00` : '3px solid transparent',
+      color: '#Fff',
+      borderBottom: isActive ? `3px solid #fff` : '3px solid transparent',
       borderRadius: 0, // Para que el borde sea una línea recta
       paddingBottom: '4px',
       transition: 'border-bottom 0.2s ease-in-out',
       '&:hover': {
-        borderBottom: `3px solid ${theme.palette.secondary.light}`,
+        borderBottom: `3px solid #fff`,
       }
     };
   };
@@ -71,7 +71,7 @@ const Header = () => {
 
   const drawerContent = (
     <Box
-      sx={{ width: 225, height: '100%', p: 2, backgroundColor: 'rgba(0, 0, 0, 0.5)', }}
+      sx={{ width: 225, height: '100%', p: 2, backgroundColor: 'rgba(38, 60, 92, 0.9)', }}
       role="presentation"
       onClick={handleMobileMenuClose}
       onKeyDown={handleMobileMenuClose}
@@ -81,20 +81,20 @@ const Header = () => {
       <Divider />
       <List>
         <ListItem button onClick={() => handleMenuNavigate('/')} sx={getMobileNavStyle('/')}>
-          <ListItemText primary="Inicio" sx={{ mr: 1, color: '#FFBF00' }}/>
+          <ListItemText primary="Inicio" sx={{ mr: 1, color: '#fff' }}/>
         </ListItem>
         <ListItem button onClick={() => handleMenuNavigate('/products')} sx={getMobileNavStyle('/products')}>
-          <ListItemText primary="Perfumes" sx={{ mr: 1, color: '#FFBF00' }}/>
+          <ListItemText primary="Productos" sx={{ mr: 1, color: '#fff' }}/>
         </ListItem>
         
         {user ? (
           <>
             <ListItem button onClick={() => handleMenuNavigate('/profile')} sx={getMobileNavStyle('/profile')}>
-              <ListItemText primary="Mi cuenta" sx={{ mr: 1, color: '#FFBF00' }}/>
+              <ListItemText primary="Mi cuenta" sx={{ mr: 1, color: '#fff' }}/>
             </ListItem>
             <ListItem button onClick={() => { handleLogout(); handleMobileMenuClose(); }}>
-              <ExitToAppIcon sx={{mr: 1, color: '#FFBF00'}}/>
-              <ListItemText primary="Cerrar Sesión" sx={{ mr: 1, color: '#FFBF00' }}/>
+              <ExitToAppIcon sx={{mr: 1, color: '#fff'}}/>
+              <ListItemText primary="Cerrar Sesión" sx={{ mr: 1, color: '#fff' }}/>
             </ListItem>
           </>
         ) : (
@@ -110,7 +110,7 @@ const Header = () => {
     <AppBar position="sticky" 
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1, 
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(38, 60, 92, 0.9)', 
         backgroundImage: `linear-gradient(to bottom, transparent, ${amber[0]})`,
         boxShadow: 0,
 
@@ -133,7 +133,7 @@ const Header = () => {
         {isMobile ? (
           <Box>
             <IconButton
-              component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#FFBF00' }}
+              component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#fff' }}
               aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="success">
@@ -144,7 +144,7 @@ const Header = () => {
               color="inherit" aria-label="open drawer" edge="end"
               onClick={handleMobileMenuToggle}
             >
-              <MenuIcon sx={{ color: '#FFBF00' }}/>
+              <MenuIcon sx={{ color: '#fff' }}/>
             </IconButton>
             <Drawer
               anchor="right" open={mobileMenuOpen} onClose={handleMobileMenuClose}
@@ -158,7 +158,7 @@ const Header = () => {
               Inicio
             </Button>
             <Button color="inherit" component={RouterLink} to="/products" sx={getNavButtonStyle('/products')}>
-             Perfumes
+             Productos
             </Button>
             {user ? (
               <>
@@ -166,20 +166,20 @@ const Header = () => {
                   Mi cuenta 
                 </Button>
                 <Button color="#36454F" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
-                  <ExitToAppIcon sx={{color: '#FFBF00'}}/>
+                  <ExitToAppIcon sx={{color: '#fff'}}/>
                 </Button>
               </>
             ) : (
-              <Button color="#36454F" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
+              <Button color="#fff" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
                 Iniciar Sesión
               </Button>
             )}
             <IconButton
-              component={RouterLink} to="/cart" color="#36454F"
+              component={RouterLink} to="/cart" color="#fff"
               sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
             >
               <Badge badgeContent={cartItemCount} color="success">
-                <ShoppingCartIcon sx={{color: '#FFBF00'}}/>
+                <ShoppingCartIcon sx={{color: '#fff'}}/>
               </Badge>
             </IconButton>
           </Box>

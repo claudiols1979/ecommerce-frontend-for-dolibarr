@@ -5,15 +5,11 @@ import HeroCarousel from '../components/common/HeroCarousel';
 import HeroCarouselVideo from '../components/common/HeroCarouselVideo';
 import { useProducts } from '../contexts/ProductContext';
 import { useNavigate } from 'react-router-dom';
-
-// --- Import necessary hooks and components for the fix ---
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
 import PromotionalBanner from '../components/common/PromotionBanner';
-
-// Importa los iconos necesarios para los widgets y las features
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -25,25 +21,105 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import SearchIcon from '@mui/icons-material/Search';
 import ProductFilters from '../components/common/ProductFilters';
 
+// Helper functions para manejar variantes - SIN HARDCORES
+const getBaseCode = (code) => {
+  const firstUnderscoreIndex = code.indexOf('_');
+  return firstUnderscoreIndex === -1 ? code : code.substring(0, firstUnderscoreIndex);
+};
+
+// Helper function to extract base name based on attribute count
+const extractBaseNameFromAttributes = (productName, productCode) => {
+  // Contar número de atributos en el código
+  const attributeCount = (productCode.match(/_/g) || []).length;
+  
+  if (attributeCount === 0) {
+    return productName; // No hay atributos, devolver nombre completo
+  }
+  
+  // Dividir el nombre en palabras
+  const words = productName.split(' ');
+  
+  // Remover la cantidad de palabras igual al número de atributos
+  if (words.length > attributeCount) {
+    return words.slice(0, words.length - attributeCount).join(' ');
+  }
+  
+  return productName; // Si tiene menos palabras que atributos, devolver completo
+};
+
+// Function to group products by their base product
+const groupProductsByBase = (products) => {
+  const groups = {};
+  
+  products.forEach(product => {
+    const baseCode = getBaseCode(product.code);
+    
+    if (!groups[baseCode]) {
+      groups[baseCode] = [];
+    }
+    
+    groups[baseCode].push(product);
+  });
+  
+  return groups;
+};
+
+// Function to select one random variant from each product group
+const selectRandomVariantFromEachGroup = (groupedProducts) => {
+  const displayProducts = [];
+  
+  for (const baseCode in groupedProducts) {
+    const variants = groupedProducts[baseCode];
+    
+    if (variants.length === 1) {
+      const baseName = extractBaseNameFromAttributes(variants[0].name, variants[0].code);
+      displayProducts.push({
+        ...variants[0],
+        baseCode: baseCode,
+        baseName: baseName,
+        variantCount: 1
+      });
+    } else {
+      const randomIndex = Math.floor(Math.random() * variants.length);
+      const selectedVariant = variants[randomIndex];
+      
+      const baseName = extractBaseNameFromAttributes(selectedVariant.name, selectedVariant.code);
+      
+      displayProducts.push({
+        ...selectedVariant,
+        baseCode: baseCode,
+        baseName: baseName,
+        variantCount: variants.length
+      });
+    }
+  }
+  
+  return displayProducts;
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { products, loading, error, fetchProducts } = useProducts();
-  
-  // --- Add hooks needed for the "Add to Cart" functionality ---
   const { addItemToCart } = useOrders();
   const { user } = useAuth();
-  
-  // --- Add local state to manage the loading of a single product card ---
   const [addingProductId, setAddingProductId] = useState(null);
-
   const [homeSearchTerm, setHomeSearchTerm] = useState('');
+  const [groupedProducts, setGroupedProducts] = useState([]);
 
   useEffect(() => {
     fetchProducts(1, 20, 'createdAt_desc'); 
   }, [fetchProducts]);
 
+  // Process products when they change
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const grouped = groupProductsByBase(products);
+      const displayProducts = selectRandomVariantFromEachGroup(grouped);
+      setGroupedProducts(displayProducts);
+    }
+  }, [products]);
+
   const handleFilterAndNavigate = (filters) => {
-    // URLSearchParams es una forma segura de construir query strings
     const params = new URLSearchParams();
 
     if (filters.search) {
@@ -56,21 +132,19 @@ const HomePage = () => {
       params.append('sort', filters.sort);
     }
 
-    // Navega a la página de productos con los parámetros
     navigate(`/products?${params.toString()}`);
   };
 
-  // --- NEW: Handler to add items to cart, with local loading state ---
+  // Handler to add items to cart
   const handleAddToCart = useCallback(async (product) => {
     if (typeof addItemToCart !== 'function') {
       toast.error("La funcionalidad para añadir al carrito no está disponible.");
       return;
     }
 
-    // Set loading state for THIS CARD ONLY
     setAddingProductId(product._id);
 
-    // --- Price Calculation Logic (replicated from your other components) ---
+    // Price Calculation Logic
     const getPriceForCart = () => {
         let calculatedPrice = null;
         if (user && user.role === 'Revendedor' && user.resellerCategory && product.resellerPrices) {
@@ -88,30 +162,26 @@ const HomePage = () => {
     const priceToPass = getPriceForCart();
     if (priceToPass <= 0) {
         toast.error("No se puede añadir al carrito: precio no disponible.");
-        setAddingProductId(null); // Stop loading
+        setAddingProductId(null);
         return;
     }
-    // --- End of Price Logic ---
 
     try {
       await addItemToCart(product._id, 1, priceToPass);      
     } catch (err) {
       toast.error(err.message || "No se pudo añadir el producto.");
     } finally {
-      // ALWAYS reset the loading state
       setAddingProductId(null);
     }
   }, [addItemToCart, user]);
 
-  // --- NUEVO HANDLER PARA LA BÚSQUEDA ---
+  // Search handler
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (homeSearchTerm.trim()) {
-      // Navega a la página de productos y pasa el término de búsqueda como un parámetro en la URL
       navigate(`/products?search=${encodeURIComponent(homeSearchTerm)}`);
     }
   };
-
 
   // All original data and layout constants remain untouched
   const topWidgetData = [
@@ -141,7 +211,7 @@ const HomePage = () => {
 
   return (
     <>
-    <Helmet>
+      <Helmet>
         <title>Look & Smell - Perfumería y Cosméticos para Revendedores en Costa Rica</title>
         <meta name="description" content="Descubre el catálogo de perfumes y cosméticos en Look & Smell. Accede a precios exclusivos. Envíos a toda Costa Rica." />
         <meta property="og:title" content="Look & Smell - Perfumería Fina en Costa Rica" />
@@ -151,56 +221,46 @@ const HomePage = () => {
         <meta property="og:type" content="website" />
       </Helmet>
 
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
-        {/* 3. AÑADE EL COMPONENTE DE FILTROS */}
+      <Container maxWidth="xl" sx={{ my: 1 }}>
         <ProductFilters onFilterSubmit={handleFilterAndNavigate} />
       </Container>
 
-
-    <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
-
-      {/* Banner */}
-      {/* <PromotionalBanner /> */}
+      <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
+        {/* Hero Carousel */}
+        <HeroCarousel />
       
-     
-       
+        {/* Top Widgets Section */}
+        <Box sx={{ my: 6, textAlign: 'center' }}>
+          <Grid container spacing={4} justifyContent="center">
+            {topWidgetData.map((widget, index) => (
+              <Grid item key={index} xs={12} sm={6} md={3}>
+                <Box sx={{ p: 3, bgcolor: 'transparent', boxShadow: 'none', border: 'none', borderRadius: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', }}>
+                  {widget.icon}
+                  <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, color: 'primary.main' }}>
+                    {widget.title}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                    {widget.description}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-      {/* Hero Carousel */}
-      <HeroCarousel />
-      
-
-      {/* Top Widgets Section */}
-      <Box sx={{ my: 6, textAlign: 'center' }}>
-        <Grid container spacing={4} justifyContent="center">
-          {topWidgetData.map((widget, index) => (
-            <Grid item key={index} xs={12} sm={6} md={3}>
-              <Box sx={{ p: 3, bgcolor: 'transparent', boxShadow: 'none', border: 'none', borderRadius: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', }}>
-                {widget.icon}
-                <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, color: 'primary.main' }}>
-                  {widget.title}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                  {widget.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-       {/* --- NUEVA SECCIÓN DE BÚSQUEDA --- */}
-       <Paper
+        {/* Search Section */}
+        <Paper
           elevation={8}
           sx={{
             p: { xs: 2, sm: 3 },
             my: 6,
             borderRadius: 4,
-            background: 'linear-gradient(155deg, rgba(121, 112, 80, 0.4) 55%, rgba(139, 112, 0, 0.95) 80%)',
+            background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 60%, rgba(233, 229, 209, 0.6) 100%)',
             backdropFilter: 'blur(10px)',            
           }}
         >
-          <Typography variant="h4" sx={{ color: 'black', fontWeight: 700, textAlign: 'center', mb: 2 }}>
-            Encuentra tu Esencia
+          <Typography variant="h4" sx={{ color: 'white', fontWeight: 700, textAlign: 'center', mb: 2 }}>
+            Encuentra tu producto
           </Typography>
           <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', gap: 2 }}>
             <TextField
@@ -213,10 +273,10 @@ const HomePage = () => {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '8px',
-                  color: 'black',
-                  '& fieldset': { borderColor: 'rgba(255, 215, 0, 0.3)' },
-                  '&:hover fieldset': { borderColor: '#FFD700' },
-                  '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+                  color: 'white',
+                  '& fieldset': { borderColor: '#afb4c5ff' },
+                  '&:hover fieldset': { borderColor: '#cfd3dfff' },
+                  '&.Mui-focused fieldset': { borderColor: '#ffffffff' },
                 },
                 '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
                 '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
@@ -224,7 +284,7 @@ const HomePage = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'rgba(0, 0, 0, 0.7)' }} />
+                    <SearchIcon sx={{ color: 'white' }} />
                   </InputAdornment>
                 ),
               }}
@@ -235,10 +295,11 @@ const HomePage = () => {
               sx={{
                 px: 4,
                 borderRadius: '8px',
-                color: 'common.black',
-                backgroundColor: '#FFD700',
+                color: 'white',
+                backgroundColor: '#bb4343ff',
                 fontWeight: 'bold',
-                '&:hover': { backgroundColor: '#FFC700' },
+                '&:hover': { backgroundColor: '#ff0000ff' },
+                
               }}
             >
               Buscar
@@ -246,171 +307,169 @@ const HomePage = () => {
           </Box>
         </Paper>
 
-      {/* Explore All Products Button */}
-      <Box sx={{ textAlign: 'center', my: 6 }}>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          onClick={() => navigate('/products')}
-          sx={{ 
-            borderRadius: 8, 
-            px: 5, 
-            py: 1.5,
-            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
-            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'translateY(-3px)',
-              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
-              backgroundColor: '#FFD740',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-            fontWeight: 700,
-            fontSize: { xs: '1rem', sm: '1.1rem' }
-          }}
-        >
-          Explorar Todos los Perfumes
-        </Button>
-      </Box>
-
-     
-
-
-      {/* Featured Products Section */}
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 700, textAlign: 'center' }}>Nuestros Productos Destacados</Typography>
-      {loading && products.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-          <CircularProgress color="primary" />
-          <Typography ml={2}>Cargando productos...</Typography>
+        {/* Explore All Products Button */}
+        <Box sx={{ textAlign: 'center', my: 6 }}>
+          <Button
+            variant="contained"            
+            size="large"
+            onClick={() => navigate('/products')}
+            sx={{ 
+              borderRadius: 8, 
+              px: 5, 
+              py: 1.5,
+              boxShadow: '0 4px 15px rgba(247, 245, 239, 0.4)',
+              transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+              backgroundColor: '#263C5C',
+              '&:hover': {
+                transform: 'translateY(-3px)',
+                boxShadow: '0 6px 20px rgba(238, 236, 230, 0.6)',
+                backgroundColor: '#1E2F4A',
+              },
+              '&:active': {
+                transform: 'translateY(0)',
+              },
+              fontWeight: 700,
+              fontSize: { xs: '1rem', sm: '1.1rem' }
+            }}
+          >
+            Explorar Todos los Productos
+          </Button>
         </Box>
-      ) : error ? (
-        <Alert severity="error">{error.message}</Alert>
-      ) : products.length === 0 ? (
-        <Alert severity="info" sx={{ p: 3 }}>No hay productos destacados disponibles.</Alert>
-      ) : (
-        <Grid container spacing={2} justifyContent="center">
-          {products.map((product) => (
-            <Grid item key={product._id} xs={12} sm={6} md={3} lg={3}> 
-              {/* --- MODIFIED: Pass the new props to ProductCard --- */}
-              <ProductCard 
-                product={product} 
-                onAddToCart={() => handleAddToCart(product)}
-                isAdding={addingProductId === product._id}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      )}
 
-      {/* call in action button  */}
-      <Box sx={{ textAlign: 'center', my: 6 }}>
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          onClick={() => navigate('/products')}
-          sx={{ 
-            borderRadius: 8, 
-            px: 5, 
-            py: 1.5,
-            boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
-            transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'translateY(-3px)',
-              boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
-              backgroundColor: '#FFD740',
-            },
-            '&:active': {
-              transform: 'translateY(0)',
-            },
-            fontWeight: 700,
-            fontSize: { xs: '1rem', sm: '1.1rem' }
-          }}
-        >
-          Explorar Todos los Perfumes
-        </Button>
-      </Box>
+        {/* Featured Products Section */}
+        <Typography variant="h5" sx={{ mb: 3, fontWeight: 700, textAlign: 'center' }}>Nuestros Productos Destacados</Typography>
+        {loading && groupedProducts.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <CircularProgress color="primary" />
+            <Typography ml={2}>Cargando productos...</Typography>
+          </Box>
+        ) : error ? (
+          <Alert severity="error">{error.message}</Alert>
+        ) : groupedProducts.length === 0 ? (
+          <Alert severity="info" sx={{ p: 3 }}>No hay productos destacados disponibles.</Alert>
+        ) : (
+          <Grid container spacing={2} justifyContent="center">
+            {groupedProducts.map((product) => (
+              <Grid item key={product._id} xs={12} sm={6} md={3} lg={3}> 
+                <ProductCard 
+                  product={{
+                    ...product,
+                    name: product.baseName || product.name,
+                    variantCount: product.variantCount
+                  }}
+                  onAddToCart={() => handleAddToCart(product)}
+                  isAdding={addingProductId === product._id}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-      {/** Hero Carousel Video**/}
-     <HeroCarouselVideo />
+        {/* Call to action button */}
+        <Box sx={{ textAlign: 'center', my: 6 }}>
+          <Button
+            variant="contained"           
+            size="large"
+            onClick={() => navigate('/products')}
+            sx={{ 
+              borderRadius: 8, 
+              px: 5, 
+              py: 1.5,
+              boxShadow: '0 4px 15px rgba(238, 235, 225, 0.4)',
+              transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+              backgroundColor: '#263C5C',
+              '&:hover': {
+                transform: 'translateY(-3px)',
+                boxShadow: '0 6px 20px rgba(235, 232, 222, 0.6)',
+                backgroundColor: '#1E2F4A',
+              },
+              '&:active': {
+                transform: 'translateY(0)',
+              },
+              fontWeight: 700,
+              fontSize: { xs: '1rem', sm: '1.1rem' }
+            }}
+          >
+            Explorar Todos los Productos
+          </Button>
+        </Box>
 
-      {/* Middle Widgets Section */}
-      <Box sx={{ my: 8, textAlign: 'center' }}>
-        <Grid container spacing={4} justifyContent="center">
-          {middleWidgetData.map((widget, index) => (
-            <Grid item key={index} xs={12} sm={6} md={3}>
-              <Box 
-                sx={{ 
-                  p: 3, 
-                  bgcolor: 'transparent',
-                  boxShadow: 'none',
-                  border: 'none',
-                  borderRadius: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%', 
-                  textAlign: 'center',
-                  cursor: widget.link ? 'pointer' : 'default', 
-                  transition: 'transform 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: widget.link ? 'translateY(-5px)' : 'none', 
-                  }
-                }}
-                onClick={() => {
-                  if (widget.link) {
-                    window.open(widget.link, '_blank'); 
-                  }
-                }}
-              >
-                {widget.icon}
-                <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, color: 'primary.main' }}>
-                  {widget.title}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                  {widget.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+        {/** Hero Carousel Video**/}
+        <HeroCarouselVideo />
 
-      
+        {/* Middle Widgets Section */}
+        <Box sx={{ my: 8, textAlign: 'center' }}>
+          <Grid container spacing={4} justifyContent="center">
+            {middleWidgetData.map((widget, index) => (
+              <Grid item key={index} xs={12} sm={6} md={3}>
+                <Box 
+                  sx={{ 
+                    p: 3, 
+                    bgcolor: 'transparent',
+                    boxShadow: 'none',
+                    border: 'none',
+                    borderRadius: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%', 
+                    textAlign: 'center',
+                    cursor: widget.link ? 'pointer' : 'default', 
+                    transition: 'transform 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: widget.link ? 'translateY(-5px)' : 'none', 
+                    }
+                  }}
+                  onClick={() => {
+                    if (widget.link) {
+                      window.open(widget.link, '_blank'); 
+                    }
+                  }}
+                >
+                  {widget.icon}
+                  <Typography variant="h6" sx={{ mt: 2, fontWeight: 700, color: 'primary.main' }}>
+                    {widget.title}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                    {widget.description}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-      {/* "Why Choose Us" Section */}
-      <Box sx={{ 
-        my: 8, 
-        textAlign: 'center', 
-        bgcolor: 'background.default', 
-        color: 'text.primary', 
-        p: { xs: 4, sm: 6 }, 
-        borderRadius: 3,
-        boxShadow: '0 4px 15px rgba(0,0,0,0.05)', 
-      }}>
-        <Typography variant="h5" sx={{ mb: 4, fontWeight: 700, color: 'primary.main' }}>
-          Por Qué Elegirnos
-        </Typography>
-        <Grid container spacing={4} justifyContent="center">
-          {features.map((feature, index) => (
-            <Grid item xs={12} sm={4} key={index}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2 }}>
-                {feature.icon} 
-                <Typography variant="h6" sx={{ mt: 2, fontWeight: 600, color: 'primary.main' }}>
-                  {feature.title}
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 1, color: 'text.secondary' }}>
-                  {feature.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Container>
+        {/* "Why Choose Us" Section */}
+        <Box sx={{ 
+          my: 8, 
+          textAlign: 'center', 
+          bgcolor: 'background.default', 
+          color: 'text.primary', 
+          p: { xs: 4, sm: 6 }, 
+          borderRadius: 3,
+          boxShadow: '0 4px 15px rgba(0,0,0,0.05)', 
+        }}>
+          <Typography variant="h5" sx={{ mb: 4, fontWeight: 700, color: 'primary.main' }}>
+            Por Qué Elegirnos
+          </Typography>
+          <Grid container spacing={4} justifyContent="center">
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={4} key={index}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2 }}>
+                  {feature.icon} 
+                  <Typography variant="h6" sx={{ mt: 2, fontWeight: 600, color: 'primary.main' }}>
+                    {feature.title}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1, color: 'text.secondary' }}>
+                    {feature.description}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Container>
     </>
   );
 };

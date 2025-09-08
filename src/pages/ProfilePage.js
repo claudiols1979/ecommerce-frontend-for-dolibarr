@@ -26,17 +26,17 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, error: authError } = useAuth(); 
   const { myOrders, loading: ordersLoading, error: ordersError, fetchMyOrders } = useOrders(); 
+
+  
   const theme = useTheme(); 
 
-  const [localLoading, setLocalLoading] = useState(true);
-
-  console.log("user in profile: ", user)
-  console.log("My orders in profile", myOrders)
+  const [localLoading, setLocalLoading] = useState(true);  
 
 useEffect(() => {
   // 1. Fetch the user's orders as soon as the page loads.
   if (fetchMyOrders) {
     fetchMyOrders();
+    // console.log("order today: ", myOrders)
   }
 
   // 2. Set up an interval to call the function again every 30 seconds.

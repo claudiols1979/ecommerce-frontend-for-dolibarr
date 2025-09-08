@@ -24,11 +24,11 @@ const NavBranding = () => {
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
             letterSpacing: '0.1em', // Un espaciado sutil
-            color: "#FFBF00"
+            color: "#fff"
             // No se especifica color para que herede el de la AppBar
           }}
         >
-          Look
+          Tienda
           <Typography
             component="span"
             variant="h4" // Mantenemos el mismo tamaño para el '&'
@@ -36,13 +36,13 @@ const NavBranding = () => {
               fontFamily: '"Lato", sans-serif',
               fontWeight: 300,
               fontStyle: 'italic',
-              color: '#FFBF00',
+              color: '#fff',
               mx: 1, // Margen horizontal reducido para un look más compacto
             }}
           >
-            &
+            En Linea
           </Typography>
-          Smell
+          
         </Typography>
       </Box>
     </RouterLink>

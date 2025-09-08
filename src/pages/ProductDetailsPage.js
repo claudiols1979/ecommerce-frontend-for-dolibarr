@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container, Box, Typography, Button, Grid, CircularProgress, Alert,Card, CardContent,
+  Container, Box, Typography, Button, Grid, CircularProgress, Alert, Card, CardContent,
   TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery,
-  Accordion, AccordionSummary, AccordionDetails, Rating, List, ListItem, Avatar, ListItemText, 
+  Accordion, AccordionSummary, AccordionDetails, Rating, List, ListItem, Avatar, ListItemText,
+  ToggleButtonGroup, ToggleButton
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -22,6 +23,44 @@ import ProductCard from '../components/product/ProductCard';
 import axios from 'axios';
 import API_URL from '../config';
 import { formatPrice } from '../utils/formatters';
+import { calculatePriceWithTax } from '../utils/taxCalculations';
+
+// Helper function to extract base product name from code
+const extractBaseProductName = (name, code) => {
+  if (!code || !code.includes('_')) return name;
+  
+  // Contar número de atributos en el código
+  const attributeCount = (code.match(/_/g) || []).length;
+  if (attributeCount === 0) return name;
+  
+  // Dividir el nombre en palabras y remover la cantidad de atributos
+  const words = name.split(' ');
+  if (words.length > attributeCount) {
+    return words.slice(0, words.length - attributeCount).join(' ');
+  }
+  
+  return name;
+};
+
+// Helper function to extract all variant attributes from product code
+const extractVariantAttributes = (code) => {
+  const firstUnderscoreIndex = code.indexOf('_');
+  if (firstUnderscoreIndex === -1) {
+    return { baseCode: code, attributes: [] };
+  }
+  
+  const baseCode = code.substring(0, firstUnderscoreIndex);
+  const attributesPart = code.substring(firstUnderscoreIndex + 1);
+  const attributes = attributesPart.split('_');
+  
+  return { baseCode, attributes };
+};
+
+// Helper function to get attribute type based on position (generic approach)
+const getAttributeType = (index) => {
+  const attributeTypes = ['color', 'size', 'model', 'type', 'material'];
+  return attributeTypes[index] || `attribute_${index + 1}`;
+};
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -41,16 +80,16 @@ const ProductDetailsPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addingProductId, setAddingProductId] = useState(null);
-  // --- 2. NUEVO ESTADO PARA LA PREGUNTA DEL CLIENTE ---
   const [customerQuestion, setCustomerQuestion] = useState('');
-
-
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
-
   const [canReview, setCanReview] = useState(false);
   const [reviewDisabledMessage, setReviewDisabledMessage] = useState('');
-  
+  const [productVariants, setProductVariants] = useState([]);
+  const [selectedAttributes, setSelectedAttributes] = useState({});
+  const [availableOptions, setAvailableOptions] = useState({});
+  const [attributeOptions, setAttributeOptions] = useState([]);
+
   const WHATSAPP_AGENT_NUMBER = '50672317420';
 
   const getPriceAtSale = useCallback((productData) => {
@@ -69,38 +108,222 @@ const ProductDetailsPage = () => {
     return isNaN(calculatedPrice) || calculatedPrice <= 0 ? 0 : calculatedPrice;
   }, [user]);
 
+  // Helper functions para el agrupamiento de productos relacionados
+const groupProductsByBase = (products) => {
+  const groups = {};
   
-useEffect(() => {
-    window.scrollTo(0, 0);
-    const fetchProductDetails = async () => {
-      setLoadingSpecificProduct(true);
-      setErrorSpecificProduct(null);
-      try {
-        const token = user?.token;
-        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-        setProduct(data);
-
-        // Se obtienen las reseñas para este producto
-        fetchReviews(id);
-
-        if (allProductsFromContext.length > 1) {
-          const filtered = allProductsFromContext.filter(p => p._id !== id);
-          const shuffled = [...filtered].sort(() => 0.5 - Math.random());
-          setRelatedProducts(shuffled.slice(0, 3));
-        }
-      } catch (err) {
-        setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-      } finally {
-        setLoadingSpecificProduct(false);
-      }
-    };
-    if (id) {
-      fetchProductDetails();
+  products.forEach(product => {
+    const baseCode = getBaseCodeFromProductCode(product.code);
+    
+    if (!groups[baseCode]) {
+      groups[baseCode] = [];
     }
-    setQuantity(1);
-  }, [id, user?.token, allProductsFromContext, fetchReviews]);
+    
+    groups[baseCode].push(product);
+  });
+  
+  return groups;
+};
 
+const getBaseCodeFromProductCode = (code) => {
+  const firstUnderscoreIndex = code.indexOf('_');
+  return firstUnderscoreIndex === -1 ? code : code.substring(0, firstUnderscoreIndex);
+};
+
+const selectRandomVariantFromEachGroup = (groupedProducts) => {
+  const displayProducts = [];
+  
+  for (const baseCode in groupedProducts) {
+    const variants = groupedProducts[baseCode];
+    
+    if (variants.length === 1) {
+      const baseName = extractBaseNameFromProduct(variants[0].name, variants[0].code);
+      displayProducts.push({
+        ...variants[0],
+        baseCode: baseCode,
+        baseName: baseName,
+        variantCount: 1
+      });
+    } else {
+      const randomIndex = Math.floor(Math.random() * variants.length);
+      const selectedVariant = variants[randomIndex];
+      
+      const baseName = extractBaseNameFromProduct(selectedVariant.name, selectedVariant.code);
+      
+      displayProducts.push({
+        ...selectedVariant,
+        baseCode: baseCode,
+        baseName: baseName,
+        variantCount: variants.length
+      });
+    }
+  }
+  
+  return displayProducts;
+};
+
+const extractBaseNameFromProduct = (productName, productCode) => {
+  // Contar número de atributos en el código
+  const attributeCount = (productCode.match(/_/g) || []).length;
+  
+  if (attributeCount === 0) {
+    return productName;
+  }
+  
+  // Dividir el nombre en palabras
+  const words = productName.split(' ');
+  
+  // Remover la cantidad de palabras igual al número de atributos
+  if (words.length > attributeCount) {
+    return words.slice(0, words.length - attributeCount).join(' ');
+  }
+  
+  return productName;
+};
+
+ useEffect(() => {
+  window.scrollTo(0, 0);
+  const fetchProductDetails = async () => {
+    setLoadingSpecificProduct(true);
+    setErrorSpecificProduct(null);
+    try {
+      const token = user?.token;
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+      setProduct(data);
+
+      // Find all variants of this product
+      const currentVariantAttributes = extractVariantAttributes(data.code);
+      
+      if (currentVariantAttributes.attributes.length > 0) {
+        // This is a variant product, find all its siblings
+        const variants = allProductsFromContext.filter(p => {
+          const attr = extractVariantAttributes(p.code);
+          return attr.baseCode === currentVariantAttributes.baseCode;
+        });
+        
+        setProductVariants(variants);
+        
+        // Extract available options from variants WITH STOCK ONLY
+        const optionsMap = new Map();
+        const attributeOptionsList = [];
+
+        // Initialize attribute options structure
+        currentVariantAttributes.attributes.forEach((_, index) => {
+          attributeOptionsList.push({
+            type: getAttributeType(index),
+            values: new Set()
+          });
+        });
+
+        variants.forEach(variant => {
+          // ONLY include variants that have available stock
+          if (variant.countInStock > 0) {
+            const attr = extractVariantAttributes(variant.code);
+            
+            // Add values to attribute options
+            attr.attributes.forEach((value, index) => {
+              if (index < attributeOptionsList.length) {
+                attributeOptionsList[index].values.add(value);
+              }
+            });
+
+            // Create option key for filtering
+            const optionKey = attr.attributes.join('|');
+            optionsMap.set(optionKey, variant);
+          }
+        });
+
+        // Convert Sets to Arrays
+        const finalAttributeOptions = attributeOptionsList.map(opt => ({
+          type: opt.type,
+          values: Array.from(opt.values)
+        }));
+
+        setAttributeOptions(finalAttributeOptions);
+        setAvailableOptions(optionsMap);
+
+        // Set initial selections based on current product
+        const initialSelections = {};
+        currentVariantAttributes.attributes.forEach((value, index) => {
+          initialSelections[getAttributeType(index)] = value;
+        });
+        setSelectedAttributes(initialSelections);
+      }
+
+      // Get reviews for this product
+      fetchReviews(id);
+
+      if (allProductsFromContext.length > 1) {
+        const filtered = allProductsFromContext.filter(p => p._id !== id);
+        
+        // Aplicar la misma lógica de agrupamiento a los productos relacionados
+        const groupedRelated = groupProductsByBase(filtered);
+        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
+        
+        // Tomar solo 3 productos aleatorios
+        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+        setRelatedProducts(shuffled.slice(0, 3));
+      }
+    } catch (err) {
+      setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+    } finally {
+      setLoadingSpecificProduct(false);
+    }
+  };
+  if (id) {
+    fetchProductDetails();
+  }
+  setQuantity(1);
+}, [id, user?.token, allProductsFromContext, fetchReviews]);
+
+  // Update product when attribute selection changes
+  useEffect(() => {
+    if (Object.keys(selectedAttributes).length > 0 && productVariants.length > 0) {
+      const selectedValues = Object.values(selectedAttributes);
+      const optionKey = selectedValues.join('|');
+      
+      const selectedVariant = availableOptions.get(optionKey);
+      
+      if (selectedVariant) {
+        setProduct(selectedVariant);
+        setQuantity(1); // Reset quantity when variant changes
+      }
+    }
+  }, [selectedAttributes, productVariants, availableOptions]);
+
+  // Handle attribute selection change
+  const handleAttributeChange = (attributeType, value) => {
+    setSelectedAttributes(prev => ({
+      ...prev,
+      [attributeType]: value
+    }));
+  };
+
+  // Filter available options based on current selections
+  const getAvailableOptionsForAttribute = (attributeIndex) => {
+    const currentSelections = Object.values(selectedAttributes);
+    const availableValues = new Set();
+
+    Array.from(availableOptions.keys()).forEach(optionKey => {
+      const values = optionKey.split('|');
+      
+      // Check if this option matches current selections (except the target attribute)
+      let matches = true;
+      for (let i = 0; i < values.length; i++) {
+        if (i !== attributeIndex && currentSelections[i] && currentSelections[i] !== values[i]) {
+          matches = false;
+          break;
+        }
+      }
+      
+      if (matches) {
+        availableValues.add(values[attributeIndex]);
+      }
+    });
+
+    return Array.from(availableValues);
+  };
 
   // --- useEffect para determinar si el usuario puede dejar una reseña ---
   useEffect(() => {
@@ -131,27 +354,24 @@ useEffect(() => {
     setReviewDisabledMessage('Tu comentario (opcional)');
   }, [user, reviews, myOrders, id]);
 
-
   const displayPrice = getPriceAtSale(product);
+  const priceWithTax = product && displayPrice !== null ? 
+    calculatePriceWithTax(displayPrice, product.iva) : null;
 
   const handleAddToCart = async () => {
     if (!user) {
       navigate('/login');
       return;
-
     }
     if (!product) { return; }
     if (quantity <= 0) {
-
       return;
     }
     if (quantity > product.countInStock) {
-
       return;
     }
     const priceToPass = getPriceAtSale(product);
     if (priceToPass <= 0) {
-
       return;
     }
     await addItemToCart(product._id, quantity, priceToPass);
@@ -159,19 +379,16 @@ useEffect(() => {
 
   const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
     if (typeof addItemToCart !== 'function') {
-
       return;
     }
     setAddingProductId(relatedProduct._id);
     const priceToPass = getPriceAtSale(relatedProduct);
     if (priceToPass <= 0) {
-
       setAddingProductId(null);
       return;
     }
     try {
       await addItemToCart(relatedProduct._id, qty, priceToPass);
-
     } catch (err) {
       console.log(err.message);
     } finally {
@@ -179,7 +396,6 @@ useEffect(() => {
     }
   }, [addItemToCart, getPriceAtSale]);
 
-  // --- 3. NUEVA FUNCIÓN PARA ENVIAR CONSULTA POR WHATSAPP ---
   const handleWhatsAppInquiry = () => {
     if (!product) {
         toast.error("No se puede enviar la consulta, los detalles del producto no están disponibles.");
@@ -187,7 +403,7 @@ useEffect(() => {
     }
 
     let message = `¡Hola! 👋\n\nQuisiera hacer una consulta sobre el siguiente producto:\n\n`;
-    message += `*Producto:* ${product.name}\n`;
+    message += `*Producto:* ${extractBaseProductName(product.name, product.code)}\n`;
     message += `*Código:* ${product.code}\n`;
     message += `*Precio:* ${formatPrice(displayPrice)}\n\n`;
     message += `*Mi consulta es:*\n${customerQuestion || "(Por favor, escribe tu pregunta aquí)"}\n\n`;
@@ -200,8 +416,7 @@ useEffect(() => {
     setCustomerQuestion('')
   };
 
-
-const handleReviewSubmit = async (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!canReview) {
       toast.info("No cumples los requisitos para dejar una reseña.");
@@ -224,89 +439,80 @@ const handleReviewSubmit = async (e) => {
     }
   };
 
+  // FAQ Data (unchanged)
+  const WHATSAPP_AGENT_NUMBER_ = '50672317420';
+  const wholesaleMessage = "Hola, estoy interesado/a en sus precios de mayoreo y me gustaría recibir más información. Gracias.";
+  const whatsappUrl = `https://wa.me/${WHATSAPP_AGENT_NUMBER_}?text=${encodeURIComponent(wholesaleMessage)}`;
 
-// --- DATOS DE FAQ ACTUALIZADOS ---
-
-// 1. Se define el número de WhatsApp y el mensaje por defecto
-const WHATSAPP_AGENT_NUMBER_ = '50672317420';
-const wholesaleMessage = "Hola, estoy interesado/a en sus precios de mayoreo y me gustaría recibir más información. Gracias.";
-const whatsappUrl = `https://wa.me/${WHATSAPP_AGENT_NUMBER_}?text=${encodeURIComponent(wholesaleMessage)}`;
-
-// 2. Se reescribe el contenido para un tono más profesional
-const faqData = [
-  {
-    question: '1. ¿Cuáles son los métodos de pago aceptados?',
-    answer: 'Aceptamos pagos a través de SINPE Móvil y Transferencia Bancaria. Una vez que finalices tu pedido, se abrirá una ventana de WhatsApp donde nuestro equipo coordinará contigo los detalles del pago y la confirmación del envío de manera segura y personalizada.'
-  },
-  {
-    question: '2. ¿Cuál es el tiempo de entrega estimado?',
-    answer: 'Para envíos dentro de la GAM, trabajamos con Mensajería Fonseca para garantizar una entrega rápida, usualmente en las siguientes 24 horas. Dependiendo de la demanda, el plazo puede extenderse a un máximo de 48 horas. Tu entrega es nuestra prioridad y está 100% garantizada.'
-  },
-  {
-    question: '3. ¿La perfumería es original?',
-    answer: 'Absolutamente. Garantizamos que todos nuestros productos son 100% originales, nuevos y se entregan sellados en su empaque de fábrica. La autenticidad es el pilar de nuestra marca.'
-  },
-  {
-    question: '4. ¿Realizan envíos fuera de la GAM?',
-    answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envío se cancela contra entrega directamente en la sucursal. Te proporcionaremos el número de guía oficial para que puedas rastrear tu paquete en todo momento.'
-  },
-  {
-    question: '5. ¿Ofrecen precios especiales para ventas al por mayor?',
-    answer: (
-      // 3. La respuesta ahora es un componente de React para incluir el botón
-      <>
-        <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 2 }}>
-          Definitivamente. Nuestro modelo de negocio está diseñado para potenciar a los revendedores. Para acceder a nuestras listas de precios mayoristas y recibir asesoría personalizada, por favor contáctanos directamente.
-        </Typography>
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<WhatsAppIcon />}
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{
-            bgcolor: '#25D366',
-            '&:hover': {
-              bgcolor: '#1EBE57',
-            },
-            fontWeight: 'bold',
-          }}
-        >
-          Consultar por WhatsApp
-        </Button>
-      </>
-    )
-  }
-];
-
+  const faqData = [
+    {
+      question: '1. ¿Cuáles son los métodos de pago aceptados?',
+      answer: 'Aceptamos pagos a través de SINPE Móvil y Transferencia Bancaria. Una vez que finalices tu pedido, se abrirá una ventana de WhatsApp donde nuestro equipo coordinará contigo los detalles del pago y la confirmación del envío de manera segura y personalizada.'
+    },
+    {
+      question: '2. ¿Cuál es el tiempo de entrega estimado?',
+      answer: 'Para envíos dentro de la GAM, trabajamos con Mensajería Fonseca para garantizar una entrega rápida, usualmente en las siguientes 24 horas. Dependiendo de la demanda, el plazo puede extenderse a un máximo de 48 horas. Tu entrega es nuestra prioridad y está 100% garantizada.'
+    },
+    {
+      question: '3. ¿La perfumería es original?',
+      answer: 'Absolutamente. Garantizamos que todos nuestros productos son 100% originales, nuevos y se entregan sellados en su empaque de fábrica. La autenticidad es el pilar de nuestra marca.'
+    },
+    {
+      question: '4. ¿Realizan envíos fuera de la GAM?',
+      answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envío se cancela contra entrega directamente en la sucursal. Te proporcionaremos el número de guía oficial para que puedas rastrear tu paquete en todo momento.'
+    },
+    {
+      question: '5. ¿Ofrecen precios especiales para ventas al por mayor?',
+      answer: (
+        <>
+          <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 2 }}>
+            Definitivamente. Nuestro modelo de negocio está diseñado para potenciar a los revendedores. Para acceder a nuestras listas de precios mayoristas y recibir asesoría personalizada, por favor contáctanos directamente.
+          </Typography>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<WhatsAppIcon />}
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              bgcolor: '#25D366',
+              '&:hover': {
+                bgcolor: '#1EBE57',
+              },
+              fontWeight: 'bold',
+            }}
+          >
+            Consultar por WhatsApp
+          </Button>
+        </>
+      )
+    }
+  ];
 
   if (loadingSpecificProduct) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        {/* Contenedor para aplicar el efecto de sombra/resplandor */}
         <Box sx={{ position: 'relative', display: 'inline-flex', filter: 'drop-shadow(0 0 6px rgba(255, 215, 0, 0.7))' }}>
-          {/* Círculo de fondo (la pista) */}
           <CircularProgress
             variant="determinate"
             sx={{
-              color: 'rgba(255, 215, 0, 0.25)', // Pista de un color amarillo muy tenue
+              color: 'rgba(255, 215, 0, 0.25)',
             }}
             size={40}
             thickness={4}
             value={100}
           />
-          {/* Círculo de progreso animado */}
           <CircularProgress
             variant="indeterminate"
             disableShrink
             sx={{
-              color: '#FFD700', // Color dorado principal
+              color: '#FFD700',
               animationDuration: '600ms',
               position: 'absolute',
               left: 0,
               '& .MuiCircularProgress-circle': {
-                strokeLinecap: 'round', // Bordes redondeados para un look más suave
+                strokeLinecap: 'round',
               },
             }}
             size={40}
@@ -336,6 +542,7 @@ const faqData = [
   }
 
   const isOutOfStock = product.countInStock <= 0;
+  const baseProductName = extractBaseProductName(product.name, product.code);
 
   const contentSectionStyle = {
     my: 5, p: { xs: 2.5, sm: 3.5 }, bgcolor: 'background.paper', borderRadius: 3,
@@ -348,45 +555,32 @@ const faqData = [
   const genderMap = { 'men': 'Hombre', 'women': 'Mujer', 'unisex': 'Unisex', 'children': 'Niños', 'elderly': 'Ancianos', 'other': 'Otro' };
   const getTranslatedGender = (gender) => genderMap[gender.toLowerCase()] || gender;
 
-const formatProductNameMultiLine = (name, maxLength) => {
-  // If the name is already short enough, return it as is.
-  if (name.length <= maxLength) {
-    return name;
-  }
+  const formatProductNameMultiLine = (name, maxLength) => {
+    if (name.length <= maxLength) {
+      return name;
+    }
 
-  const lines = [];
-  let remainingText = name;
+    const lines = [];
+    let remainingText = name;
 
-  // Loop as long as the remaining text is longer than the max line length
-  while (remainingText.length > maxLength) {
-    // Find the last space within the allowed length for the current line.
-    let breakPoint = remainingText.substring(0, maxLength).lastIndexOf(' ');
-    
-    // If no space is found (one very long word), we have to break the word.
-    // Otherwise, we break at the last space found.
-    let splitIndex = (breakPoint === -1) ? maxLength : breakPoint;
+    while (remainingText.length > maxLength) {
+      let breakPoint = remainingText.substring(0, maxLength).lastIndexOf(' ');
+      let splitIndex = (breakPoint === -1) ? maxLength : breakPoint;
 
-    // Add the new line to our array.
-    lines.push(remainingText.substring(0, splitIndex));
-    
-    // Update the remaining text for the next loop iteration.
-    remainingText = remainingText.substring(splitIndex).trim();
-  }
+      lines.push(remainingText.substring(0, splitIndex));
+      remainingText = remainingText.substring(splitIndex).trim();
+    }
 
-  // Add the final, shorter piece of text as the last line.
-  lines.push(remainingText);
-
-  // Join all the generated lines with a newline character.
-  return lines.join('\n');
-};
+    lines.push(remainingText);
+    return lines.join('\n');
+  };
 
   return (
     <>
       <Helmet>
-        <title>{product ? `${product.name} - Look & Smell` : 'Detalle de Producto'}</title>
-        <meta name="description" content={product ? `Compra ${product.name}, perfumería fina en Costa Rica. ${product.description.substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
-        {/* Open Graph Tags (para compartir en redes sociales) */}
-        <meta property="og:title" content={product ? product.name : 'Look & Smell'} />
+        <title>{product ? `${baseProductName} - Look & Smell` : 'Detalle de Producto'}</title>
+        <meta name="description" content={product ? `Compra ${baseProductName}, perfumería fina en Costa Rica. ${product.description.substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
+        <meta property="og:title" content={product ? baseProductName : 'Look & Smell'} />
         <meta property="og:description" content={product ? product.description.substring(0, 120) : 'Tu tienda de confianza para perfumería.'} />
         <meta property="og:image" content={product?.imageUrls?.[0]?.secure_url} />
       </Helmet>
@@ -394,7 +588,7 @@ const formatProductNameMultiLine = (name, maxLength) => {
       <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
         <Box sx={{ mb: 3 }}>
           <Button
-            variant="contained" color="secondary" startIcon={<ArrowBackIcon />}
+            variant="contained" startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/products')}
             sx={{ 
             borderRadius: 8, 
@@ -402,10 +596,11 @@ const formatProductNameMultiLine = (name, maxLength) => {
             py: 1.5,
             boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
             transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+            background: '#263C5C',
             '&:hover': {
               transform: 'translateY(-3px)',
               boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
-              backgroundColor: '#FFD740',
+              backgroundColor: '#0a2650ff',
             },
             '&:active': {
               transform: 'translateY(0)',
@@ -420,61 +615,96 @@ const formatProductNameMultiLine = (name, maxLength) => {
 
         <Grid container spacing={5}>
           <Grid item xs={12} md={6}>
-            <ProductImageCarousel imageUrls={product.imageUrls} productName={product.name} />
+            <ProductImageCarousel imageUrls={product.imageUrls} productName={baseProductName} />
           </Grid>
           <Grid item xs={12} md={6}>
             <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: theme.shadows[1] }}>
               <Typography
-  variant="h3"
-  component="h1"
-  gutterBottom
-  sx={{
-    fontWeight: 700,
-    color: 'primary.main',
-    fontSize: { xs: '2rem', md: '2.5rem' },
-    // 👇 Add this CSS property to respect the newline character
-    whiteSpace: 'pre-line',
-  }}
->
-  {/* Call the function to format the name */}
-  {formatProductNameMultiLine(product.name, 22)}
-</Typography>
+                variant="h3"
+                component="h1"
+                gutterBottom
+                sx={{
+                  fontWeight: 700,
+                  color: 'primary.main',
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {formatProductNameMultiLine(baseProductName, 22)}
+              </Typography>
               <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>{product.brand || 'Sin descripción disponible.'}</Typography>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>{displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}</Typography>
-              <Typography variant="body1" color={isOutOfStock ? 'error.main' : 'text.primary'} sx={{ mb: 2, fontWeight: 600 }}>Stock Disponible: {product.countInStock} {isOutOfStock && '(Agotado)'}</Typography>
+              
+              {/* Dynamic attribute selection */}
+              {attributeOptions.map((attribute, index) => {
+                const availableValues = getAvailableOptionsForAttribute(index);
+                if (availableValues.length === 0) return null;
+
+                return (
+                  <Box key={attribute.type} sx={{ mb: 2 }}>
+                    {/* <Typography variant="subtitle2" gutterBottom>
+                      {attribute.type.charAt(0).toUpperCase() + attribute.type.slice(1)}:
+                    </Typography> */}
+                    <ToggleButtonGroup
+                      value={selectedAttributes[attribute.type] || ''}
+                      exclusive
+                      onChange={(e, newValue) => newValue && handleAttributeChange(attribute.type, newValue)}
+                      aria-label={`${attribute.type} selection`}
+                      sx={{ flexWrap: 'wrap', gap: 1 }}
+                    >
+                      {availableValues.map(value => (
+                        <ToggleButton 
+                          key={value} 
+                          value={value}
+                          sx={{ 
+                            textTransform: 'none',
+                            border: '1px solid',
+                            borderColor: selectedAttributes[attribute.type] === value ? 'primary.main' : 'grey.300',
+                            backgroundColor: selectedAttributes[attribute.type] === value ? 'primary.light' : 'white',
+                            color: selectedAttributes[attribute.type] === value ? 'white' : 'text.primary',
+                            '&:hover': {
+                              backgroundColor: selectedAttributes[attribute.type] === value ? 'primary.main' : 'grey.100',
+                            }
+                          }}
+                        >
+                          {value}
+                        </ToggleButton>
+                      ))}
+                    </ToggleButtonGroup>
+                  </Box>
+                );
+              })}
+              
+              <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
+                {priceWithTax !== null ? formatPrice(priceWithTax) : 'Precio no disponible'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                IVA incluido
+              </Typography>
+              <Typography variant="body1" color={isOutOfStock ? 'error.main' : 'text.primary'} sx={{ mb: 2, fontWeight: 600 }}>
+                Stock Disponible: {product.countInStock} {isOutOfStock && '(Agotado)'}
+              </Typography>
 
               <Box display="flex" alignItems="center" mb={3}>
-                {isMobile ? (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <IconButton onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1 || cartLoading || isOutOfStock}><RemoveCircleOutlineIcon /></IconButton>
-                    <Typography sx={{ width: '2ch', textAlign: 'center' }}>{quantity}</Typography>
-                    <IconButton onClick={() => setQuantity(q => Math.min(product.countInStock, q + 1))} disabled={quantity >= product.countInStock || cartLoading || isOutOfStock}><AddCircleOutlineIcon /></IconButton>
-                  </Box>
-                ) : (
-                  // <TextField
-                  //   type="number" label="Cantidad" value={quantity}
-                  //   onChange={(e) => setQuantity(Math.max(1, Math.min(product.countInStock, parseInt(e.target.value) || 1)))}
-                  //   inputProps={{ min: 1, max: product.countInStock }}
-                  //   size="medium" sx={{ width: 120, mr: 2 }}
-                  //   disabled={cartLoading || isOutOfStock}
-                  // />
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <IconButton onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1 || cartLoading || isOutOfStock}><RemoveCircleOutlineIcon /></IconButton>
-                    <Typography sx={{ width: '2ch', textAlign: 'center' }}>{quantity}</Typography>
-                    <IconButton onClick={() => setQuantity(q => Math.min(product.countInStock, q + 1))} disabled={quantity >= product.countInStock || cartLoading || isOutOfStock}><AddCircleOutlineIcon /></IconButton>
-                  </Box>
-                )}
+                <Box display="flex" alignItems="center" gap={1}>
+                  <IconButton onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1 || cartLoading || isOutOfStock}>
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
+                  <Typography sx={{ width: '2ch', textAlign: 'center' }}>{quantity}</Typography>
+                  <IconButton onClick={() => setQuantity(q => Math.min(product.countInStock, q + 1))} disabled={quantity >= product.countInStock || cartLoading || isOutOfStock}>
+                    <AddCircleOutlineIcon />
+                  </IconButton>
+                </Box>
                 <Button
                   variant="contained" color="primary" startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
                   onClick={handleAddToCart}
                   disabled={cartLoading || isOutOfStock || quantity > product.countInStock || displayPrice <= 0}
                   sx={{
                     borderRadius: 8, textTransform: 'none', px: { xs: 2, sm: 4 }, py: 1.5, ml: 1,
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+                    background: '#bb4343ff',
                     boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, color: 'white',
                     '&:hover': {
-                      background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, ${theme.palette.primary.main} 90%)`,
+                      background: '#ff0000ff',
                       boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`, transform: 'translateY(-2px)',
                     },
                     '&:active': { transform: 'translateY(0)' },
@@ -487,7 +717,7 @@ const formatProductNameMultiLine = (name, maxLength) => {
           </Grid>
         </Grid>
 
-        <Box sx={contentSectionStyle}>
+         <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Descripción del Producto</Typography>
           <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.7 }}>{product.description || 'No hay descripción detallada disponible para este producto.'}</Typography>
 
@@ -678,27 +908,36 @@ const formatProductNameMultiLine = (name, maxLength) => {
         </Card>
 
 
-        {relatedProducts.length > 0 && (
-          <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
-            <Typography variant="h5" component="h2" gutterBottom sx={{ ...sectionTitleStyle, textAlign: 'center' }}>Productos Relacionados</Typography>
-            <Grid container spacing={4} justifyContent="center">
-              {relatedProducts.map((p) => (
-                <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
-                  <ProductCard
-                    product={p}
-                    onAddToCart={(qty) => handleRelatedProductAddToCart(p, 1)}
-                    isAdding={addingProductId === p._id}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        )}
-        {relatedProducts.length === 0 && !loadingSpecificProduct && (
-          <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">No se encontraron productos relacionados.</Typography>
-          </Box>
-        )}
+     {relatedProducts.length > 0 && (
+  <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
+    <Typography variant="h5" component="h2" gutterBottom sx={{ ...sectionTitleStyle, textAlign: 'center' }}>
+      Productos Relacionados
+    </Typography>
+    <Grid container spacing={4} justifyContent="center">
+      {relatedProducts.map((p) => (
+        <Grid item key={p._id} xs={12} sm={6} md={6} lg={6}>
+          <ProductCard
+            product={{
+              ...p,
+              name: p.baseName || p.name,
+              variantCount: p.variantCount
+            }}
+            onAddToCart={() => handleRelatedProductAddToCart(p, 1)}
+            isAdding={addingProductId === p._id}
+          />
+        </Grid>
+      ))}
+    </Grid>
+  </Box>
+)}
+{relatedProducts.length === 0 && !loadingSpecificProduct && (
+  <Box sx={{ ...contentSectionStyle, textAlign: 'center' }}>
+    <Typography variant="body1" color="text.secondary">
+      No se encontraron productos relacionados.
+    </Typography>
+  </Box>
+)}
+
       </Container>
     </>
   );

@@ -13,7 +13,7 @@ export const formatPrice = (price) => {
   }
 
   // Redondea el número para eliminar los decimales.
-  const roundedPrice = Math.round(price);
+  const roundedPrice = Math.ceil(price / 100) * 100;
   
   // Convierte a string y usa una expresión regular para añadir los puntos como separadores de miles.
   const formattedString = roundedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");

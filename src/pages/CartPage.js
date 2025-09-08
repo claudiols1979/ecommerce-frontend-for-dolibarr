@@ -13,7 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../utils/formatters';
-
+import { calculatePriceWithTax } from '../utils/taxCalculations';
 
 const CartPage = () => {
   const theme = useTheme(); 
@@ -23,7 +23,13 @@ const CartPage = () => {
 
   const [confirmClearCartOpen, setConfirmClearCartOpen] = useState(false); 
 
-  const totalCartPrice = cartItems.reduce((acc, item) => acc + (item.quantity * item.priceAtSale), 0);
+  // Calcular el total del carrito con IVA incluido
+  const totalCartPrice = cartItems.reduce((acc, item) => {
+    const priceWithTax = item.product ? 
+      calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
+      item.priceAtSale;
+    return acc + (item.quantity * priceWithTax);
+  }, 0);
 
   useEffect(() => {
     if (!loading && cartItems.length === 0) {
@@ -38,8 +44,7 @@ const CartPage = () => {
       return;
     }
 
-    // --- CORRECCIÓN CLAVE: Calcular el stock total disponible ---
-    // El stock total es lo que queda en la DB (countInStock) más lo que el usuario ya tiene en el carrito.
+    // Calcular el stock total disponible
     const totalAvailableStock = (item.product?.countInStock || 0) + item.quantity;
     if (totalAvailableStock === undefined) {
         toast.error("No se pudo verificar el stock del producto.");
@@ -49,7 +54,7 @@ const CartPage = () => {
     let newQuantity;
     if (changeType === 'increment') {
       newQuantity = item.quantity + 1;
-      // Validar contra el stock total, no contra el stock restante
+      // Validar contra el stock total
       if (newQuantity > totalAvailableStock) {
           toast.warn(`No puedes agregar más. Stock máximo: ${totalAvailableStock} unidades.`);
           return;
@@ -115,8 +120,8 @@ const CartPage = () => {
         >
           <Typography variant="h6" sx={{ mb: { xs: 2, sm: 0 } }}>Tu carrito está vacío. ¡Añade algunos productos!</Typography>
           <Button 
-            variant="contained" color="primary" onClick={() => navigate('/products')}
-            sx={{ backgroundColor: theme.palette.primary.main, color: 'white', '&:hover': { backgroundColor: theme.palette.primary.dark } }}
+            variant="contained" onClick={() => navigate('/products')}
+            sx={{ backgroundColor: '#bb4343ff', '&:hover': { backgroundColor: '#ff0000ff' } }}
           >
             Ir a Productos
           </Button>
@@ -127,8 +132,14 @@ const CartPage = () => {
             <Card sx={{ borderRadius: 3, boxShadow: 5, p: { xs: 2, sm: 3 } }}>
               <CardContent>
                 {cartItems.map((item) => {
-                  // --- CORRECCIÓN CLAVE: Calcular el stock total disponible por ítem ---
+                  // Calcular precio con IVA para este producto
+                  const priceWithTax = item.product ? 
+                    calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
+                    item.priceAtSale;
+                  
+                  // Calcular el stock total disponible por ítem
                   const totalAvailableStock = (item.product?.countInStock || 0) + item.quantity;
+                  
                   return (
                     <Box
                       key={item.product?._id || item._id} 
@@ -147,7 +158,10 @@ const CartPage = () => {
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{item.name}</Typography>
                         <Typography variant="body2" color="text.secondary">Código: {item.code}</Typography>
                         <Typography variant="body2" color="text.secondary">Volumen: {item.product?.volume || 'N/A'}</Typography>
-                        <Typography variant="body2" color="text.secondary">Precio Unitario: <Typography component="span" sx={{ fontWeight: 600 }}>{formatPrice(item.priceAtSale)}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Precio Unitario: <Typography component="span" sx={{ fontWeight: 600 }}>{formatPrice(priceWithTax)}</Typography>
+                          <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>IVA incluido</Typography>
+                        </Typography>
                       </Box>
                       
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 2, sm: 0 } }}>
@@ -161,7 +175,6 @@ const CartPage = () => {
                           onClick={() => handleQuantityChange(item, 'increment')} 
                           color="primary" 
                           size="small"
-                          // --- LÓGICA DE DESHABILITACIÓN CORREGIDA ---
                           disabled={item.quantity >= totalAvailableStock}
                           sx={{ border: `1px solid ${theme.palette.primary.main}`, borderRadius: '50%' }}
                         >
@@ -170,7 +183,7 @@ const CartPage = () => {
                       </Box>
 
                       <Typography variant="body1" sx={{ minWidth: { xs: 'auto', sm: 100 }, textAlign: { xs: 'center', sm: 'right' }, fontWeight: 700, mt: { xs: 2, sm: 0 } }}>
-                        {formatPrice(item.quantity * (item.priceAtSale))}
+                        {formatPrice(item.quantity * priceWithTax)}
                       </Typography>
                       <IconButton onClick={() => handleRemoveItem(item)} color="error" aria-label="remove item" sx={{ mt: { xs: 2, sm: 0 }, ml: { xs: 0, sm: 2 } }}>
                         <DeleteIcon /> 

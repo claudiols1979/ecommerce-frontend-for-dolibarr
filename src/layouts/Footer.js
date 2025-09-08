@@ -26,7 +26,7 @@ const Footer = () => {
         py: { xs: 4, sm: 6 }, // Aumentamos el padding vertical para más altura
         px: 2,
         mt: 'auto',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(38, 60, 92, 0.9)',
         color: 'grey.500',
       }}
     >
@@ -36,7 +36,7 @@ const Footer = () => {
           <Grid item xs={12} sm={4} md={3}>
             <NavBranding />
             <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
-              Tu esencia, tu estilo.
+              Productos 100% originales.
             </Typography>
             <Box>
               <MuiLink href="https://www.facebook.com/profile.php?id=61576158096800" target="_blank" rel="noopener noreferrer">
@@ -78,7 +78,7 @@ const Footer = () => {
         <Divider sx={{ my: 4, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
 
         <Typography variant="body2" sx={{ textAlign: 'center' }}>
-          &copy; {new Date().getFullYear()} Look & Smell - Perfumería CR. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Tienda en linea (demo) - Software Factory CR. Todos los derechos reservados.
         </Typography>
       </Container>
     </Box>

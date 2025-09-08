@@ -1,12 +1,18 @@
 import React from 'react';
-import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress } from '@mui/material';
+import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, CircularProgress, Chip } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from 'contexts/OrderContext';
 import { useAuth } from 'contexts/AuthContext';
-import { toast } from 'react-toastify'; // Importamos toast para el caso de que el precio no esté disponible
+import { toast } from 'react-toastify';
 
-const ProductCard = ({ product }) => {
+// Helper function to extract base product name (without variant details)
+const extractBaseProductName = (name) => {
+  // This regex removes color and size information from the end of the name
+  return name.replace(/\s+(Azul|Rojo|Verde|L|M|S|XL)$/gi, '').trim();
+};
+
+const ProductCard = ({ product, onAddToCart, isAdding }) => {
   const navigate = useNavigate();
   // Mantenemos los hooks porque el Card es autosuficiente
   const { addItemToCart, loading: cartLoading } = useOrders();
@@ -50,6 +56,16 @@ const ProductCard = ({ product }) => {
     // El toast de éxito ya lo muestra el contexto, como bien indicaste.
   };
 
+  // Format price function
+  const formatPrice = (price) => {
+    return `₡${price.toLocaleString('es-CR')}`;
+  };
+
+  // Navigate to product details using the product code instead of ID
+  const handleViewDetails = () => {
+    navigate(`/product/${product._id}`);
+  };
+
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardMedia
@@ -57,17 +73,29 @@ const ProductCard = ({ product }) => {
         height="180"
         image={product.imageUrls?.[0]?.secure_url || 'https://placehold.co/600x400/E0E0E0/FFFFFF?text=No+Image'}
         alt={product.name}
-        sx={{ objectFit: 'contain', p: 2 }}
+        sx={{ objectFit: 'contain', p: 2, cursor: 'pointer' }}
+        onClick={handleViewDetails}
       />
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
         <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 600 }}>
-          {product.name}
+          {extractBaseProductName(product.name)}
         </Typography>
+        
+        {/* Show variant count if this product has variants */}
+        {product.variantCount > 1 && (
+          <Chip 
+            label={`${product.variantCount} variantes disponibles`} 
+            size="small" 
+            color="secondary" 
+            sx={{ mb: 1 }}
+          />
+        )}
+        
         <Typography variant="body2" color="text.secondary" sx={{ minHeight: 40 }}>
           {product.shortDescription || (product.description ? product.description.substring(0, 70) + '...' : 'No description available.')}
         </Typography>
         <Typography variant="h6" color="primary" sx={{ mt: 2, fontWeight: 700 }}>
-          {displayPrice !== null ? `{formatPrice(displayPrice)}` : 'Precio no disponible'}
+          {displayPrice !== null ? formatPrice(displayPrice) : 'Precio no disponible'}
         </Typography>
         {isOutOfStock && (
           <Typography variant="body2" color="error" sx={{ mt: 1, fontWeight: 600 }}>
@@ -76,16 +104,16 @@ const ProductCard = ({ product }) => {
         )}
       </CardContent>
       <CardActions sx={{ p: 2, pt: 0 }}>
-        <Button size="small" onClick={() => navigate(`/products/${product._id}`)} variant="outlined">
+        <Button size="small" onClick={handleViewDetails} variant="outlined">
           Ver Detalles
         </Button>
         <Button
           size="small"
           variant="contained"
           color="primary"
-          onClick={handleAddToCart}
-          startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
-          disabled={cartLoading || isOutOfStock || displayPrice === null}
+          onClick={onAddToCart || handleAddToCart}
+          startIcon={isAdding || cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
+          disabled={isAdding || cartLoading || isOutOfStock || displayPrice === null}
           sx={{ ml: 1 }}
         >
           {isOutOfStock ? 'Sin Stock' : 'Añadir'}

@@ -7,6 +7,7 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../../utils/formatters';
+import { calculatePriceWithTax } from '../../utils/taxCalculations';
 
 const ProductCard = ({ product, onAddToCart, isAdding }) => {
   const navigate = useNavigate();
@@ -21,13 +22,16 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
     return product.resellerPrices.cat1;
   }, [product, user, isAuthenticated]);
 
-  // --- LÓGICA DE PRECIO TACHADO RESTAURADA ---
+  // CALCULAR PRECIO CON IVA
+  const priceWithTax = displayPrice !== null ? 
+    calculatePriceWithTax(displayPrice, product.iva) : null;
+
+  // --- LÓGICA DE PRECIO TACHADO ---
   const originalPrice = React.useMemo(() => {
-    if (!displayPrice || !product.promotionalLabels || product.promotionalLabels.length === 0) {
+    if (!priceWithTax || !product.promotionalLabels || product.promotionalLabels.length === 0) {
       return null;
     }
     
-    // La lógica busca la etiqueta original que contiene '% OFF'
     const discountLabel = product.promotionalLabels.find(label => label.name.includes('% OFF'));
     
     if (discountLabel) {
@@ -35,7 +39,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
       if (percentageMatch) {
         const percentage = parseInt(percentageMatch[0]);
         if (!isNaN(percentage)) {
-          return displayPrice / (1 - (percentage / 100));
+          return priceWithTax * (1 + (percentage / 100));
         }
       }
     }
@@ -63,6 +67,10 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
   };
 
   const isOutOfStock = product.countInStock <= 0;
+
+  const handleViewDetails = () => {
+    navigate(`/products/${product._id}`);
+  };
 
   return (
     <Card sx={{ 
@@ -117,37 +125,53 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           borderRadius: '12px 12px 0 0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
           cursor: 'pointer'
         }}
-        onClick={() => navigate(`/products/${product._id}`)}
+        onClick={handleViewDetails}
       />
      
       <CardContent sx={{ flexGrow: 1, p: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <Typography 
-          gutterBottom variant="h6" component={RouterLink} to={`/products/${product._id}`}
+          gutterBottom variant="h6" 
+          onClick={handleViewDetails}
           sx={{ 
             fontWeight: 700, minHeight: 40, overflow: 'hidden', textOverflow: 'ellipsis', 
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             fontSize: '0.95rem', color: 'primary.main', textDecoration: 'none',
+            cursor: 'pointer',
             '&:hover': { textDecoration: 'underline' }
           }}
         >
           {product.name}
         </Typography>
 
-                  {/* --- SECCIÓN DE CALIFICACIÓN --- */}
-          {product.numReviews > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', my: 0.5 }}>
-              <Rating
-                name="read-only"
-                value={product.averageRating || 0}
-                precision={0.5}
-                readOnly
-                size="small"
-              />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                ({product.numReviews})
-              </Typography>
-            </Box>
-          )}
+        {/* Show variant count if this product has variants */}
+        {product.variantCount > 1 && (
+          <Chip 
+            label={`${product.variantCount} variantes`} 
+            size="small" 
+            color="secondary" 
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering the card's onClick
+              handleViewDetails();
+            }}
+            sx={{ mb: 1, fontSize: '0.65rem', height: '20px' }}
+          />
+        )}
+
+        {/* --- SECCIÓN DE CALIFICACIÓN --- */}
+        {product.numReviews > 0 && (
+          <Box sx={{ display: 'flex', alignItems: 'center', my: 0.5 }}>
+            <Rating
+              name="read-only"
+              value={product.averageRating || 0}
+              precision={0.5}
+              readOnly
+              size="small"
+            />
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              ({product.numReviews})
+            </Typography>
+          </Box>
+        )}
 
         {product.promotionalLabels && product.promotionalLabels.length > 1 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 1 }}>
@@ -179,11 +203,14 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           {product.shortDescription || (product.description ? product.description.substring(0, 60) + '...' : 'No description available.')}
         </Typography>
         
-        {/* --- JSX DE PRECIOS RESTAURADO --- */}
+        {/* --- JSX DE PRECIOS --- */}
         <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 800, lineHeight: 1.2 }}> 
-                    {displayPrice !== null ? (formatPrice(displayPrice)) : 'Precio no disponible'}
+                  {priceWithTax !== null ? formatPrice(priceWithTax) : 'Precio no disponible'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  IVA incluido
                 </Typography>
                 {originalPrice && (
                     <Typography variant="body2" sx={{ color: 'text.secondary', textDecoration: 'line-through', lineHeight: 1.1 }}>
@@ -201,11 +228,22 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
       <CardActions sx={{ p: 1.5, pt: 1, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.grey[100]}` }}>
         <Button
           size="small"
-          onClick={() => navigate(`/products/${product._id}`)}
-          variant="outlined"
-          color="secondary" 
+          onClick={handleViewDetails}
+          variant="outlined"           
           startIcon={<VisibilityIcon />}
-          sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.75rem', py: 0.5 }}
+          sx={{ 
+          borderRadius: 2, 
+          textTransform: 'none', 
+          fontSize: '0.75rem', 
+          py: 0.5, 
+          backgroundColor: '#ffffffff', 
+          color: 'black',
+          '&:hover': { 
+            backgroundColor: '#263C5C',
+            color: '#ffffffff',
+            border: '1px solid #263C5C'
+          } 
+        }}
         >
           Ver
         </Button>
@@ -221,11 +259,11 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
               sx={{ 
                 ml: 1, borderRadius: 2, textTransform: 'none',
                 fontSize: '0.75rem', py: 0.5, 
-                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+                background: `linear-gradient(45deg, #bb4343ff 30%, #bb4343ff 90%)`,
                 boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, 
                 color: 'white', 
                 '&:hover': {
-                  background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, ${theme.palette.primary.main} 90%)`,
+                  background: `linear-gradient(45deg, #ff0000ff 30%, #ff0000ff 90%)`,
                   boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
                   transform: 'translateY(-2px)', 
                 },

@@ -23,9 +23,7 @@ const ProductsPage = () => {
   const navigate = useNavigate();
 
   // --- LÓGICA DE BÚSQUEDA MODIFICADA ---
-  // 'searchTerm' ahora solo guarda el valor del input.
   const [searchTerm, setSearchTerm] = useState(() => new URLSearchParams(location.search).get('search') || '');
-  // 'submittedSearchTerm' guarda el valor que realmente se busca.
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState(() => new URLSearchParams(location.search).get('search') || '');
 
   const [selectedGender, setSelectedGender] = useState('');
@@ -33,6 +31,7 @@ const ProductsPage = () => {
   const [sortOrder, setSortOrder] = useState('updatedAt_desc');
   const [page, setPage] = useState(1);
   const [addingProductId, setAddingProductId] = useState(null);
+  const [groupedProducts, setGroupedProducts] = useState([]);
 
   const availableGenders = [
     { value: 'men', label: 'Hombre' }, { value: 'women', label: 'Mujer' },
@@ -40,11 +39,109 @@ const ProductsPage = () => {
     { value: 'elderly', label: 'Ancianos' }, { value: 'other', label: 'Otro' },
   ];
 
+  // Helper functions para manejar variantes - SIN HARDCORES
+  const getBaseCode = (code) => {
+    const firstUnderscoreIndex = code.indexOf('_');
+    return firstUnderscoreIndex === -1 ? code : code.substring(0, firstUnderscoreIndex);
+  };
+
+  const getAttributes = (code) => {
+    const firstUnderscoreIndex = code.indexOf('_');
+    if (firstUnderscoreIndex === -1) return [];
+    
+    const attributesPart = code.substring(firstUnderscoreIndex + 1);
+    return attributesPart.split('_');
+  };
+
+  // Helper function to extract base name based on attribute count
+  const extractBaseNameFromAttributes = (productName, productCode) => {
+    // Contar número de atributos en el código
+    const attributeCount = (productCode.match(/_/g) || []).length;
+    
+    if (attributeCount === 0) {
+      return productName; // No hay atributos, devolver nombre completo
+    }
+    
+    // Dividir el nombre en palabras
+    const words = productName.split(' ');
+    
+    // Remover la cantidad de palabras igual al número de atributos
+    if (words.length > attributeCount) {
+      return words.slice(0, words.length - attributeCount).join(' ');
+    }
+    
+    return productName; // Si tiene menos palabras que atributos, devolver completo
+  };
+
+  // Function to group products by their base product
+  const groupProductsByBase = (products) => {
+    const groups = {};
+    
+    products.forEach(product => {
+      const baseCode = getBaseCode(product.code);
+      
+      if (!groups[baseCode]) {
+        groups[baseCode] = [];
+      }
+      
+      groups[baseCode].push({
+        ...product,
+        attributes: getAttributes(product.code)
+      });
+    });
+    
+    return groups;
+  };
+
+  // Function to select one random variant from each product group
+  const selectRandomVariantFromEachGroup = (groupedProducts) => {
+    const displayProducts = [];
+    
+    for (const baseCode in groupedProducts) {
+      const variants = groupedProducts[baseCode];
+      
+      if (variants.length === 1) {
+        const baseName = extractBaseNameFromAttributes(variants[0].name, variants[0].code);
+        displayProducts.push({
+          ...variants[0],
+          baseCode: baseCode,
+          baseName: baseName,
+          variantCount: 1
+        });
+      } else {
+        const randomIndex = Math.floor(Math.random() * variants.length);
+        const selectedVariant = variants[randomIndex];
+        
+        const baseName = extractBaseNameFromAttributes(selectedVariant.name, selectedVariant.code);
+        
+        displayProducts.push({
+          ...selectedVariant,
+          baseCode: baseCode,
+          baseName: baseName,
+          variantCount: variants.length
+        });
+      }
+    }
+    
+    return displayProducts;
+  };
+
   // El useEffect principal ahora depende de 'submittedSearchTerm' para la búsqueda.
   useEffect(() => {
     const limit = 20;
     fetchProducts(page, limit, sortOrder, submittedSearchTerm, selectedGender, priceRange[0], priceRange[1]);
   }, [page, sortOrder, submittedSearchTerm, selectedGender, priceRange, fetchProducts]);
+
+  // Process products when they change - SOLO cuando tenemos productos
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const grouped = groupProductsByBase(products);
+      const displayProducts = selectRandomVariantFromEachGroup(grouped);
+      setGroupedProducts(displayProducts);
+    } else {
+      setGroupedProducts([]); // Limpiar productos agrupados si no hay productos
+    }
+  }, [products]);
 
   // La lógica del scroll infinito se mantiene intacta.
   const handleScroll = useCallback(() => {
@@ -119,11 +216,6 @@ const ProductsPage = () => {
     setSelectedGender(event.target.value);
   };
 
-  // const handlePriceRangeChange = (event, newValue) => {
-  //   setPage(1);
-  //   setPriceRange(newValue);
-  // };
-
   const handleSortChange = (event) => {
     setPage(1);
     setSortOrder(event.target.value);
@@ -132,21 +224,13 @@ const ProductsPage = () => {
   const handleClearSearch = () => {
     setSearchTerm('');
     setSubmittedSearchTerm('');
+    setSelectedGender('');
     setPage(1);
     navigate('/products', { replace: true });
   };
 
-  const valueLabelFormat = (value) => `₡${value}`;
-
-  const displayedProducts = (() => {
-    // Si no hay un género seleccionado, no filtramos el stock.
-    if (!selectedGender) {
-      return products;
-    }
-
-    // Si el usuario seleccionó un género, filtramos solo los que tienen stock.
-    return products.filter(product => product.countInStock > 0);
-  })();
+  // Mostrar mensaje cuando no hay productos después de aplicar filtros
+  const shouldShowNoProductsMessage = !loading && products.length === 0 && (submittedSearchTerm || selectedGender);
 
   return (
     <>
@@ -155,25 +239,21 @@ const ProductsPage = () => {
         <meta name="description" content="Explora nuestro catálogo completo de perfumes, cosméticos y sets de regalo." />
       </Helmet>
 
-      <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 700, color: 'primary.main' }}>
-          Todos Nuestros Productos
-        </Typography>
-
+      <Container maxWidth="xl" sx={{ my: 1, flexGrow: 1 }}>
         <Paper
           elevation={8}
           sx={{
           p: { xs: 2, sm: 3 },
           mb: 4,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, rgba(48,48,48,0.95) 60%, rgba(253, 218, 13,0.6) 100%)',
+          background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 60%, rgba(233, 229, 209, 0.6) 100%)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 215, 0, 0.2)',
           boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
         }}
         >
           <Grid container spacing={3} alignItems="center" justifyContent="center">
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={8} md={6}>
               <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TextField
                   label="Buscar por Nombre"
@@ -185,12 +265,12 @@ const ProductsPage = () => {
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: '8px', color: 'white',
-                      '& fieldset': { borderColor: 'rgba(255, 215, 0, 0.3)' },
-                      '&:hover fieldset': { borderColor: '#FFD700' },
-                      '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+                      '& fieldset': { borderColor: 'rgba(232, 229, 214, 0.3)' },
+                      '&:hover fieldset': { borderColor: '#ffffffff' },
+                      '&.Mui-focused fieldset': { borderColor: '#ffffffff' },
                     },
                     '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-                    '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
+                    '& .MuiInputLabel-root.Mui-focused': { color: '#ffffffff' },
                   }}
                 />
                 <Button
@@ -199,7 +279,7 @@ const ProductsPage = () => {
                   sx={{
                     height: '40px', minWidth: '40px', p: 0,
                     borderRadius: '8px', color: 'common.black',
-                    backgroundColor: '#FFD700', '&:hover': { backgroundColor: '#FFC700' },
+                    backgroundColor: '#ffffffff', '&:hover': { backgroundColor: '#c85813ff' },
                   }}
                 >
                   <SearchIcon />
@@ -215,13 +295,13 @@ const ProductsPage = () => {
                   value={selectedGender}
                   label="Filtrar por Género"
                   onChange={handleGenderChange}
-                  displayEmpty // <-- ESTA ES LA ÚNICA LÍNEA AÑADIDA
+                  displayEmpty
                   sx={{
                     borderRadius: '8px',
                     color: 'white',
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(240, 230, 230, 1)' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' },
                     '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' },
                   }}
                   MenuProps={{
@@ -238,18 +318,49 @@ const ProductsPage = () => {
                 </Select>
               </FormControl>
             </Grid>
-            {/* <Grid item xs={12} sm={6} md={3}><Typography gutterBottom sx={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>Rango de Precios</Typography><Slider value={priceRange} onChange={handlePriceRangeChange} valueLabelDisplay="auto" getAriaValueText={(value) => `₡${value}`} min={0} max={300000} step={1000} sx={{ color: '#FFD700', '& .MuiSlider-thumb': { backgroundColor: '#FFD700', boxShadow: '0 0 10px rgba(255, 215, 0, 0.7)' }, '& .MuiSlider-track': { border: 'none' }, '& .MuiSlider-rail': { opacity: 0.5, backgroundColor: '#bfbfbf' }, '& .MuiSlider-markLabel': { color: 'rgba(255, 255, 255, 0.5)' } }} /></Grid> */}
-            <Grid item xs={12} sm={6} md={3}><FormControl fullWidth size="small"><InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel><Select value={sortOrder} label="Ordenar por" onChange={handleSortChange} sx={{ borderRadius: '8px', color: 'white', '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 215, 0, 0.3)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' }, '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' }, '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' }, }} MenuProps={{ PaperProps: { sx: { bgcolor: '#1E1E1E', color: 'white' } } }}><MenuItem value="updatedAt_desc">Más Recientes</MenuItem><MenuItem value="createdAt_asc">Más Antiguos</MenuItem><MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem><MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem><MenuItem value="name_asc">Nombre: A-Z</MenuItem><MenuItem value="name_desc">Nombre: Z-A</MenuItem></Select></FormControl></Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
+                <Select 
+                  value={sortOrder} 
+                  label="Ordenar por" 
+                  onChange={handleSortChange} 
+                  sx={{ 
+                    borderRadius: '8px', 
+                    color: 'white', 
+                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 1)' }, 
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' }, 
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' }, 
+                    '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' }, 
+                  }} 
+                  MenuProps={{ 
+                    PaperProps: { 
+                      sx: { 
+                        bgcolor: '#1E1E1E', 
+                        color: 'white' 
+                      } 
+                    } 
+                  }}
+                >
+                  <MenuItem value="updatedAt_desc">Más Recientes</MenuItem>
+                  <MenuItem value="createdAt_asc">Más Antiguos</MenuItem>
+                  <MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem>
+                  <MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem>
+                  <MenuItem value="name_asc">Nombre: A-Z</MenuItem>
+                  <MenuItem value="name_desc">Nombre: Z-A</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
         </Paper>
+        
 
         {submittedSearchTerm && (
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Button
-              variant="contained"
-              color="secondary"
+              variant="contained"              
               onClick={handleClearSearch}
-              sx={{ fontWeight: 'bold',textTransform: 'uppercase' }}
+              sx={{ fontWeight: 'bold',backgroundColor: '#bb4343ff', '&:hover': { backgroundColor: '#ff0000ff' } }}
             >
               Mostrar Todos los Productos
             </Button>
@@ -260,15 +371,25 @@ const ProductsPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>
         ) : error ? (
           <Alert severity="error">{error.message}</Alert>
-        ) : products.length === 0 ? (
-          <Alert severity="info" sx={{ p: 3 }}>No se encontraron productos con los filtros seleccionados.</Alert>
+        ) : shouldShowNoProductsMessage ? (
+          <Alert severity="info" sx={{ p: 3 }}>
+            No se encontraron productos {submittedSearchTerm ? `con el término "${submittedSearchTerm}"` : ''} 
+            {submittedSearchTerm && selectedGender ? ' y ' : ''}
+            {selectedGender ? `para el género "${availableGenders.find(g => g.value === selectedGender)?.label}"` : ''}.
+          </Alert>
+        ) : groupedProducts.length === 0 ? (
+          <Alert severity="info" sx={{ p: 3 }}>No hay productos disponibles en este momento.</Alert>
         ) : (
           <>
             <Grid container spacing={4} justifyContent="center">
-              {displayedProducts.map((product) => (
+              {groupedProducts.map((product) => (
                 <Grid item key={product._id} xs={12} sm={6} md={4} lg={3}>
                   <ProductCard
-                    product={product}
+                    product={{
+                      ...product,
+                      name: product.baseName, // Usar el baseName extraído
+                      variantCount: product.variantCount
+                    }}
                     onAddToCart={() => handleAddToCart(product)}
                     isAdding={addingProductId === product._id}
                   />
