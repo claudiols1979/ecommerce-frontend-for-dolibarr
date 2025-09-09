@@ -257,11 +257,10 @@ const initiateTilopayPayment = useCallback(async (shippingDetails) => {
         const isGAM = ["San José", "Alajuela", "Cartago", "Heredia"].includes(shippingDetails.province);
         const shippingCost = isGAM ? 3000 : 0;
 
-        // Total final con IVA y envío
+        // Total final con IVA y envío        
         const finalTotal = totalWithTax + shippingCost;
 
-        // ¡APLICAR EL REDONDEO HACIA ARRIBA! (igual que formatPrice)
-        const roundedTotal = Math.ceil(finalTotal / 100) * 100;
+        const roundedTotal = parseFloat(finalTotal.toFixed(2));
 
         // Llama al endpoint del backend para iniciar el pago
         const response = await api.post('/api/orders/cart/create-payment', { 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Container, Box, Typography, Button, Grid, Card, TextField,
-    CircularProgress, Alert, Dialog, DialogTitle, DialogContent, DialogActions,
-    Divider, List, ListItem, ListItemText, Paper, FormControl, Select, MenuItem, useTheme, InputLabel
+    Container, Box, Typography, Button, Grid, TextField,
+    CircularProgress, Divider, List, ListItem, Paper, FormControl, 
+    Select, MenuItem, useTheme, InputLabel, alpha
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useOrders } from '../contexts/OrderContext';
@@ -12,6 +12,10 @@ import { toast } from 'react-toastify';
 import { formatPrice } from '../utils/formatters';
 import { calculatePriceWithTax } from '../utils/taxCalculations';
 import RateReviewIcon from '@mui/icons-material/RateReview';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 const CheckoutPage = () => {
     const { cartItems, loading, initiateTilopayPayment } = useOrders();
@@ -24,7 +28,7 @@ const CheckoutPage = () => {
         email: '',
         phone: '',
         address: '',
-        city: '', // Campo de ciudad añadido
+        city: '',
     });
 
     const [orderPlaced, setOrderPlaced] = useState(false);
@@ -32,8 +36,30 @@ const CheckoutPage = () => {
     const [selectedProvince, setSelectedProvince] = useState('');
     const [shippingCost, setShippingCost] = useState(0);
     const [shippingMessage, setShippingMessage] = useState('');
+    const [provinceTouched, setProvinceTouched] = useState(false);
 
-    // Calcular el total del carrito con IVA incluido
+    const [touchedFields, setTouchedFields] = useState({
+    name: false,
+    email: false,
+    phone: false,
+    address: false,
+    city: false,
+    province: false
+});
+
+// Función para manejar cuando un campo pierde el focus (se toca)
+const handleFieldBlur = (fieldName) => {
+    setTouchedFields(prev => ({
+        ...prev,
+        [fieldName]: true
+    }));
+};
+
+// Función para verificar si un campo debe mostrar error
+const shouldShowError = (fieldName, value) => {
+    return touchedFields[fieldName] && !value;
+};
+
     const totalCartPrice = cartItems.reduce((acc, item) => {
         const priceWithTax = item.product ? 
             calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
@@ -52,7 +78,7 @@ const CheckoutPage = () => {
             setShippingMessage('');
         } else if (selectedProvince && !gamProvinces.includes(selectedProvince)) {
             setShippingCost(0);
-            setShippingMessage("Pago contra entrega");
+            setShippingMessage("Pago contra entrega - Envío gratuito");
         } else {
             setShippingCost(0);
             setShippingMessage('');
@@ -65,7 +91,6 @@ const CheckoutPage = () => {
         }
     }, [cartItems, loading, navigate, orderPlaced]);
 
-    // Llenar los datos de envío iniciales del perfil del usuario
     useEffect(() => {
         if (user) {
             setShippingDetails(prev => ({
@@ -74,7 +99,6 @@ const CheckoutPage = () => {
                 email: user.email || prev.email,
                 phone: user.phoneNumber || prev.phone,
                 address: user.address || prev.address,
-                // No prellenamos 'city', se asume que el usuario la llenará.
             }));
         }
     }, [user]);
@@ -84,8 +108,12 @@ const CheckoutPage = () => {
         setShippingDetails(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleProvinceChange = (e) => {
+        setSelectedProvince(e.target.value);
+        setProvinceTouched(true);
+    };
+
     const handleInitiatePayment = async () => {
-        // Validación de campos
         if (!user) {
             toast.error("Debes iniciar sesión para finalizar el pedido.");
             return;
@@ -101,9 +129,7 @@ const CheckoutPage = () => {
             return;
         }
         
-        // --- Nueva lógica para iniciar el pago ---
         try {
-            // Combina los datos de envío y la provincia seleccionada
             const finalShippingDetails = {
                 ...shippingDetails,
                 province: selectedProvince
@@ -112,7 +138,6 @@ const CheckoutPage = () => {
             const paymentUrl = await initiateTilopayPayment(finalShippingDetails);
 
             if (paymentUrl) {
-                // Redirige al usuario a la URL de pago de Tilopay
                 window.location.href = paymentUrl;
             }
         } catch (err) {
@@ -123,193 +148,476 @@ const CheckoutPage = () => {
 
     if (orderPlaced) {
         return (
-            <Container maxWidth="md" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-                <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-                    <CheckCircleOutlineIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 700 }}>
-                        ¡Pedido Realizado con Éxito!
+            <Container maxWidth="sm" sx={{ 
+                py: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '80vh'
+            }}>
+                <Paper elevation={0} sx={{ 
+                    p: 6, 
+                    textAlign: 'center',
+                    background: 'transparent'
+                }}>
+                    <CheckCircleOutlineIcon sx={{ 
+                        fontSize: 80, 
+                        color: 'success.main', 
+                        mb: 3,
+                        opacity: 0.9
+                    }} />
+                    <Typography variant="h4" gutterBottom sx={{ 
+                        fontWeight: 400,
+                        color: 'text.primary',
+                        mb: 2,
+                        letterSpacing: '-0.5px'
+                    }}>
+                        Pedido confirmado
                     </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                        Su pedido ha sido procesado y el pago ha sido iniciado.
+                    <Typography variant="body1" sx={{ 
+                        color: 'text.secondary',
+                        mb: 4,
+                        fontSize: '1.1rem',
+                        lineHeight: 1.6
+                    }}>
+                        Su pedido ha sido procesado exitosamente. 
+                        Será redirigido al portal de pago seguro.
                     </Typography>
-                    {/* Esta sección puede ser actualizada para mostrar detalles del pago */}
+                    
                     {placedOrderDetails && (
-                        <Box sx={{ mb: 3 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>ID de Pedido: {placedOrderDetails._id}</Typography>
-                            <Typography variant="body1">Total: {formatPrice(placedOrderDetails.totalPrice)}</Typography>
-                        </Box>
-                    )}
-                    <Button variant="outlined" color="secondary" onClick={() => navigate('/profile')} sx={{ mt: 2, ml: { xs: 0, sm: 2 }, px: 4, py: 1.5, borderRadius: 2 }}>
-                        Ver Mis Pedidos
-                    </Button>
-                    {placedOrderDetails && placedOrderDetails.items.length > 0 && (
-                        <Box sx={{ mt: 4, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                                ¡Gracias por tu compra! Ayúdanos a mejorar dejando tu opinión:
+                        <Box sx={{ 
+                            mb: 4,
+                            p: 3,
+                            backgroundColor: alpha(theme.palette.success.main, 0.05),
+                            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                            borderRadius: 2
+                        }}>
+                            <Typography variant="body2" sx={{ 
+                                fontWeight: 500,
+                                color: 'text.primary',
+                                mb: 1
+                            }}>
+                                ID de pedido: {placedOrderDetails._id}
                             </Typography>
-                            <List>
-                                {placedOrderDetails.items.map(item => (
-                                    <ListItem key={item.product} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: `1px solid ${theme.palette.grey[200]}` }}>
-                                        <Typography variant="body1">{item.name}</Typography>
-                                        <Button
-                                            variant="contained"
-                                            color="secondary"
-                                            size="small"
-                                            startIcon={<RateReviewIcon />}
-                                            onClick={() => navigate(`/products/${item.product}`)}
-                                            sx={{ textTransform: 'none', fontWeight: 'bold' }}
-                                        >
-                                            Dejar Reseña
-                                        </Button>
-                                    </ListItem>
-                                ))}
-                            </List>
+                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                Total: {formatPrice(placedOrderDetails.totalPrice)}
+                            </Typography>
                         </Box>
                     )}
+                    
+                    <Button 
+                        variant="outlined"
+                        onClick={() => navigate('/profile')} 
+                        sx={{ 
+                            px: 5, 
+                            py: 1.5, 
+                            borderRadius: 1,
+                            borderWidth: 2,
+                            '&:hover': {
+                                borderWidth: 2
+                            }
+                        }}
+                    >
+                        Ver historial de pedidos
+                    </Button>
                 </Paper>
             </Container>
         );
     }
 
     return (
-        <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                Checkout
-            </Typography>
+        <Container maxWidth="xl" sx={{ 
+            py: 6,
+            minHeight: '100vh'
+        }}>
+            <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+                <Typography variant="h1" sx={{ 
+                    fontSize: '2.5rem',
+                    fontWeight: 400,
+                    color: 'text.primary',
+                    mb: 6,
+                    textAlign: 'center',
+                    letterSpacing: '-0.5px'
+                }}>
+                    Finalizar compra
+                </Typography>
 
-            <Grid container spacing={4}>
-                {/* Shipping Details Form */}
-                <Grid item xs={12} md={7}>
-                    <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, boxShadow: 3 }}>
-                        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Información de Envío</Typography>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Nombre Completo"
-                                    name="name"
-                                    value={shippingDetails.name}
-                                    onChange={handleShippingChange}
-                                    fullWidth required
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Correo Electrónico"
-                                    name="email"
-                                    type="email"
-                                    value={shippingDetails.email}
-                                    onChange={handleShippingChange}
-                                    fullWidth required
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Número de Teléfono"
-                                    name="phone"
-                                    value={shippingDetails.phone}
-                                    onChange={handleShippingChange}
-                                    fullWidth required
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth required>
-                                    <InputLabel id="province-select-label">Provincia</InputLabel>
-                                    <Select
-                                        labelId="province-select-label"
-                                        value={selectedProvince}
-                                        label="Provincia"
-                                        onChange={(e) => setSelectedProvince(e.target.value)}
-                                        displayEmpty
-                                    >
-                                        <MenuItem value="">
-                                            <em>Seleccione una provincia...</em>
-                                        </MenuItem>
-                                        {provinces.map((prov) => (
-                                            <MenuItem key={prov} value={prov}>{prov}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Dirección (Calle, número, etc.)"
-                                    name="address"
-                                    value={shippingDetails.address}
-                                    onChange={handleShippingChange}
-                                    fullWidth required
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Ciudad"
-                                    name="city"
-                                    value={shippingDetails.city}
-                                    onChange={handleShippingChange}
-                                    fullWidth required
-                                />
-                            </Grid>
-                        </Grid>
-                    </Card>
-
-                    <Card sx={{ p: { xs: 2, sm: 3 }, mt: 4, borderRadius: 2, boxShadow: 3 }}>
-                        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Método de Pago</Typography>
-                        <Typography variant="h6" color="text.secondary">Será redirigido a una página segura para ingresar los detalles de su tarjeta.</Typography>
-                        <Typography variant="body1" color="text.secondary">Costo de Envío: {shippingMessage || formatPrice(shippingCost)}</Typography>
-                    </Card>
-                </Grid>
-
-                {/* Order Summary */}
-                <Grid item xs={12} md={5}>
-                    <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, boxShadow: 3 }}>
-                        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>Resumen del Pedido</Typography>
-                        <List>
-                            {cartItems.map((item) => {
-                                // Calcular precio con IVA para este producto
-                                const priceWithTax = item.product ? 
-                                    calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
-                                    item.priceAtSale;
-                                
-                                return (
-                                    <ListItem key={item.product._id} disablePadding sx={{ mb: 1 }}>
-                                        <ListItemText
-                                            primary={`${item.name} x ${item.quantity}`}
-                                            secondary={
-                                                <>
-                                                    Código: {item.code}
-                                                    <br />
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {formatPrice(priceWithTax)} c/u (IVA incluido)
+                <Grid container spacing={6}>
+                    {/* Order Summary - LEFT SIDE */}
+                    <Grid item xs={12} lg={5}>
+                        <Box sx={{ 
+                            position: 'sticky',
+                            top: 24
+                        }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                <ReceiptIcon sx={{ 
+                                    color: 'primary.main', 
+                                    mr: 2,
+                                    fontSize: 28
+                                }} />
+                                <Typography variant="h5" sx={{ 
+                                    fontWeight: 600,
+                                    color: 'text.primary'
+                                }}>
+                                    Resumen del pedido
+                                </Typography>
+                            </Box>
+                            
+                            <Paper elevation={3} sx={{ 
+                                p: 4,
+                                borderRadius: 3,
+                                backgroundColor: 'white',
+                                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                            }}>
+                                <List sx={{ mb: 2 }}>
+                                    {cartItems.map((item) => {
+                                        const priceWithTax = item.product ? 
+                                            calculatePriceWithTax(item.priceAtSale, item.product.iva) : 
+                                            item.priceAtSale;
+                                        
+                                        return (
+                                            <ListItem key={item.product._id} disablePadding sx={{ 
+                                                py: 2,
+                                                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.2)}`
+                                            }}>
+                                                <Box sx={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'space-between', 
+                                                    alignItems: 'flex-start',
+                                                    width: '100%' 
+                                                }}>
+                                                    <Box sx={{ flex: 1 }}>
+                                                        <Typography variant="body1" sx={{ 
+                                                            fontWeight: 600,
+                                                            color: 'text.primary',
+                                                            mb: 0.5
+                                                        }}>
+                                                            {item.name}
+                                                        </Typography>
+                                                        <Typography variant="caption" sx={{ 
+                                                            color: 'text.secondary',
+                                                            display: 'block'
+                                                        }}>
+                                                            Cantidad: {item.quantity} • {formatPrice(priceWithTax)} c/u
+                                                        </Typography>
+                                                    </Box>
+                                                    <Typography variant="body1" sx={{ 
+                                                        fontWeight: 700,
+                                                        color: 'text.primary'
+                                                    }}>
+                                                        {formatPrice(item.quantity * priceWithTax)}
                                                     </Typography>
-                                                </>
-                                            }
-                                            sx={{ flexGrow: 1 }}
-                                        />
-                                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                            {formatPrice(item.quantity * priceWithTax)}
+                                                </Box>
+                                            </ListItem>
+                                        );
+                                    })}
+                                </List>
+                                
+                                <Divider sx={{ my: 3 }} />
+                                
+                                {/* Shipping Cost Info */}
+                                <Box sx={{ 
+                                    mb: 3,
+                                    p: 2,
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.03),
+                                    borderRadius: 2,
+                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                                }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                        <LocalShippingIcon sx={{ 
+                                            fontSize: 20, 
+                                            color: 'primary.main', 
+                                            mr: 1 
+                                        }} />
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            Costo de envío
                                         </Typography>
-                                    </ListItem>
-                                );
-                            })}
-                        </List>
-                        <Divider sx={{ my: 2 }} />
-                        <Box display="flex" justifyContent="space-between" mb={1}>
-                            <Typography variant="body1">Subtotal:</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>{formatPrice(totalCartPrice)}</Typography>
+                                    </Box>
+                                    
+                                    {!selectedProvince ? (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                            <WarningAmberIcon sx={{ 
+                                                fontSize: 16, 
+                                                color: 'warning.main', 
+                                                mr: 1 
+                                            }} />
+                                            <Typography variant="caption" sx={{ color: 'warning.main' }}>
+                                                Selecciona tu provincia para calcular el envío
+                                            </Typography>
+                                        </Box>
+                                    ) : gamProvinces.includes(selectedProvince) ? (
+                                        <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                                            {formatPrice(3000)} - Entrega en 24-48 horas
+                                        </Typography>
+                                    ) : (
+                                        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
+                                            ¡Envío gratuito! - Pago contra entrega
+                                        </Typography>
+                                    )}
+                                </Box>
+                                
+                                <Box sx={{ mb: 3 }}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center',
+                                        mb: 2
+                                    }}>
+                                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                                            Subtotal
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                            {formatPrice(totalCartPrice)}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center',
+                                        mb: 2
+                                    }}>
+                                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                                            Envío
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ 
+                                            fontWeight: 600,
+                                            color: selectedProvince && !gamProvinces.includes(selectedProvince) ? 'success.main' : 'text.primary'
+                                        }}>
+                                            {selectedProvince ? (gamProvinces.includes(selectedProvince) ? formatPrice(3000) : 'Gratis') : 'Por calcular'}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                
+                                <Divider sx={{ my: 2 }} />
+                                
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    mb: 4
+                                }}>
+                                    <Typography variant="h5" sx={{ 
+                                        fontWeight: 700,
+                                        color: 'text.primary'
+                                    }}>
+                                        Total
+                                    </Typography>
+                                    <Typography variant="h5" sx={{ 
+                                        fontWeight: 700,
+                                        color: 'primary.main'
+                                    }}>
+                                        {selectedProvince ? formatPrice(finalTotalPrice) : formatPrice(totalCartPrice)}
+                                    </Typography>
+                                </Box>
+                            </Paper>
                         </Box>
-                        <Box display="flex" justifyContent="space-between" mb={2}>
-                            <Typography variant="body1">Costo de Envío:</Typography>
-                            <Typography variant="body1" color={shippingMessage ? "text.secondary" : "inherit"} sx={{ fontWeight: 600 }}>
-                                {shippingMessage ? shippingMessage : formatPrice(shippingCost)}
-                            </Typography>
+                    </Grid>
+
+                    {/* Shipping Details Form - RIGHT SIDE */}
+                    <Grid item xs={12} lg={7}>
+                        <Box sx={{ mb: 5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                <LocalShippingIcon sx={{ 
+                                    color: 'primary.main', 
+                                    mr: 2,
+                                    fontSize: 28
+                                }} />
+                                <Typography variant="h5" sx={{ 
+                                    fontWeight: 600,
+                                    color: 'text.primary'
+                                }}>
+                                    Información de envío
+                                </Typography>
+                            </Box>
+                            
+                            <Paper elevation={3} sx={{ 
+                                p: 4,
+                                borderRadius: 3,
+                                backgroundColor: 'white',
+                                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                            }}>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Nombre completo"
+                                            name="name"
+                                            value={shippingDetails.name}
+                                            onChange={handleShippingChange}
+                                            onBlur={() => handleFieldBlur('name')}
+                                            error={shouldShowError('name', shippingDetails.name)}
+                                            helperText={shouldShowError('name', shippingDetails.name) ? "Este campo es requerido" : ""}
+                                            fullWidth 
+                                            required
+                                            variant="outlined"
+                                            size="medium"
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Correo electrónico"
+                                            name="email"
+                                            type="email"
+                                            value={shippingDetails.email}
+                                            onChange={handleShippingChange}
+                                            onBlur={() => handleFieldBlur('name')}
+                                            error={shouldShowError('name', shippingDetails.email)}
+                                            helperText={shouldShowError('name', shippingDetails.email) ? "Este campo es requerido" : ""}
+                                            fullWidth 
+                                            required
+                                            variant="outlined"
+                                            size="medium"
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            label="Teléfono"
+                                            name="phone"
+                                            value={shippingDetails.phone}
+                                            onChange={handleShippingChange}
+                                            onBlur={() => handleFieldBlur('name')}
+                                            error={shouldShowError('name', shippingDetails.phone)}
+                                            helperText={shouldShowError('name', shippingDetails.phone) ? "Este campo es requerido" : ""}
+                                            fullWidth 
+                                            required
+                                            variant="outlined"
+                                            size="medium"
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <FormControl 
+                                        fullWidth 
+                                        required 
+                                        size="medium" 
+                                        sx={{ mb: 2 }}
+                                        error={shouldShowError('province', selectedProvince)}
+                                    >
+                                        <InputLabel sx={{ 
+                                            backgroundColor: 'white',
+                                            px: 1
+                                        }}>
+                                            Provincia *
+                                        </InputLabel>
+                                        <Select
+                                            value={selectedProvince}
+                                            label="Provincia *"
+                                            onChange={handleProvinceChange}
+                                            onBlur={() => handleFieldBlur('province')}
+                                            displayEmpty
+                                            sx={{
+                                                '& .MuiSelect-select': {
+                                                    padding: '16.5px 14px'
+                                                }
+                                            }}
+                                        >
+                                            <MenuItem value="">
+                                                <em>Seleccionar provincia</em>
+                                            </MenuItem>
+                                            {provinces.map((prov) => (
+                                                <MenuItem key={prov} value={prov} sx={{ py: 1.5 }}>
+                                                    {prov}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                        {shouldShowError('province', selectedProvince) && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                                                Por favor selecciona tu provincia
+                                            </Typography>
+                                        )}
+                                    </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Dirección completa"
+                                            name="address"
+                                            value={shippingDetails.address}
+                                            onChange={handleShippingChange}
+                                            onBlur={() => handleFieldBlur('name')}
+                                            error={shouldShowError('name', shippingDetails.address)}
+                                            helperText={shouldShowError('name', shippingDetails.address) ? "Este campo es requerido" : ""}
+                                            fullWidth 
+                                            required
+                                            variant="outlined"
+                                            size="medium"
+                                            placeholder="Calle, número, urbanización, punto de referencia, etc."
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Ciudad"
+                                            name="city"
+                                            value={shippingDetails.city}
+                                            onChange={handleShippingChange}
+                                            onBlur={() => handleFieldBlur('name')}
+                                            error={shouldShowError('name', shippingDetails.city)}
+                                            helperText={shouldShowError('name', shippingDetails.city) ? "Este campo es requerido" : ""}
+                                            fullWidth 
+                                            required
+                                            variant="outlined"
+                                            size="medium"
+                                            sx={{ mb: 2 }}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </Paper>
                         </Box>
-                        <Box display="flex" justifyContent="space-between" sx={{ borderTop: '1px solid #eee', pt: 2, mt: 2 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>Total Final:</Typography>
-                            <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>{formatPrice(finalTotalPrice)}</Typography>
+
+                        <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                <PaymentIcon sx={{ 
+                                    color: 'primary.main', 
+                                    mr: 2,
+                                    fontSize: 28
+                                }} />
+                                <Typography variant="h5" sx={{ 
+                                    fontWeight: 600,
+                                    color: 'text.primary'
+                                }}>
+                                    Método de pago
+                                </Typography>
+                            </Box>
+                            
+                            <Paper elevation={3} sx={{ 
+                                p: 4,
+                                borderRadius: 3,
+                                backgroundColor: 'white',
+                                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                            }}>
+                                <Box sx={{ 
+                                    p: 3, 
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.03),
+                                    border: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                                    borderRadius: 2
+                                }}>
+                                    <Typography variant="h6" sx={{ 
+                                        fontWeight: 600,
+                                        color: 'primary.main',
+                                        mb: 2,
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}>
+                                        <PaymentIcon sx={{ mr: 1.5, fontSize: 24 }} />
+                                        Tarjeta de crédito/débito
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ 
+                                        color: 'text.secondary',
+                                        mb: 2,
+                                        lineHeight: 1.6
+                                    }}>
+                                        Será redirigido a una plataforma de pago segura para completar su transacción. 
+                                        Todos los datos están protegidos con encriptación SSL.
+                                    </Typography>
+                                </Box>
+                            </Paper>
                         </Box>
+
                         <Button
                             variant="contained"
-                            sx={{ mt: 3, p: 1.5 }}
                             fullWidth
+                            size="large"
                             onClick={handleInitiatePayment}
                             disabled={
                                 cartItems.length === 0 ||
@@ -321,12 +629,40 @@ const CheckoutPage = () => {
                                 !shippingDetails.city ||
                                 !selectedProvince
                             }
+                            sx={{
+                                mt: 4,
+                                py: 2,
+                                backgroundColor: '#f3e300ff',
+                                color: 'black',
+                                borderRadius: 2,
+                                fontWeight: 600,
+                                fontSize: '1.1rem',
+                                '&:hover': {
+                                    backgroundColor: '#cdc00fff',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 8px 20px rgba(38, 60, 92, 0.3)'
+                                },
+                                '&:disabled': {
+                                    backgroundColor: 'grey.300',
+                                    color: 'grey.500',
+                                    transform: 'none'
+                                }
+                            }}
                         >
-                            Pagar con Tarjeta de Crédito
+                            {loading ? (
+                                <CircularProgress size={24} sx={{ color: 'black' }} />
+                            ) : (
+                                'Proceder al pago seguro'
+                            )}
+                            <PaymentIcon sx={{ 
+                                    color: 'black', 
+                                    ml: 2,
+                                    fontSize: 28
+                                }} />
                         </Button>
-                    </Card>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Box>
         </Container>
     );
 };

@@ -37,9 +37,7 @@ const PaymentRedirectPage = () => {
         const handleFinalizePayment = async () => {
             try {
                 const response = await axios.get(`${API_URL}/api/orders/cart/payment-redirect-handler${location.search}`);
-                const data = response.data;
-
-                console.log('data de tilo: ', data);
+                const data = response.data;                
 
                 if (data.success) {
                     setStatus('success');
