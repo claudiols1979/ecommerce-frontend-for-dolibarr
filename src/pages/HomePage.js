@@ -221,9 +221,9 @@ const HomePage = () => {
         <meta property="og:type" content="website" />
       </Helmet>
 
-      <Container maxWidth="xl" sx={{ my: 1 }}>
+      {/* <Container maxWidth="xl" sx={{ my: 1 }}>
         <ProductFilters onFilterSubmit={handleFilterAndNavigate} />
-      </Container>
+      </Container> */}
 
       <Container maxWidth="xl" sx={{ my: 4, flexGrow: 1 }}>   
         {/* Hero Carousel */}
@@ -249,7 +249,7 @@ const HomePage = () => {
         </Box>
 
         {/* Search Section */}
-        <Paper
+        {/* <Paper
           elevation={8}
           sx={{
             p: { xs: 2, sm: 3 },
@@ -305,7 +305,7 @@ const HomePage = () => {
               Buscar
             </Button>
           </Box>
-        </Paper>
+        </Paper> */}
 
         {/* Explore All Products Button */}
         <Box sx={{ textAlign: 'center', my: 6 }}>

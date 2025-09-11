@@ -10,6 +10,7 @@ import { OrderProvider } from './contexts/OrderContext';
 import { ProductProvider } from './contexts/ProductContext';
 import { ReviewProvider } from './contexts/ReviewContext';
 import { DepartmentalProvider } from './contexts/DepartmentalContext';
+import { SearchProvider } from './contexts/searchContext';
 import { ToastContainer } from 'react-toastify';
 import { HelmetProvider } from 'react-helmet-async';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,7 +27,9 @@ root.render(
             <OrderProvider>
               <ReviewProvider>
                   <DepartmentalProvider>
+                    <SearchProvider>
                     <App />
+                    </SearchProvider>
                   </DepartmentalProvider>
               </ReviewProvider>
               <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />

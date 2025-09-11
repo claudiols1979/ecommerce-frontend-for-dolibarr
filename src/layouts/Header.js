@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, Button, IconButton, Badge, Box, useMediaQuery, useTheme, Drawer, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { 
+  AppBar, Toolbar, Typography, Button, IconButton, Badge, Box, 
+  useMediaQuery, useTheme, Drawer, List, ListItem, ListItemText, 
+  Divider, InputBase, Paper, alpha 
+} from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom'; // Import useLocation
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
@@ -15,10 +21,13 @@ const Header = () => {
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const location = useLocation(); // Hook para obtener la ruta actual
+  const location = useLocation();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -37,8 +46,45 @@ const Header = () => {
   const handleMenuNavigate = (path) => {
     navigate(path);
     handleMobileMenuClose();
+  };
+
+  // const handleSearch = (e) => {
+  //   e.preventDefault();
+  //   if (searchTerm.trim()) {
+  //     navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+  //     setSearchTerm('');
+  //     setSearchOpen(false);
+  //   }
+  // };
+
+  const handleSearch = (e) => {
+  e.preventDefault();
+  if (searchTerm.trim()) {
+    // Si ya estamos en /products, forzar recarga con replace
+    if (location.pathname === '/products') {
+      navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`, { 
+        replace: true 
+      });
+    } else {
+      // Si estamos en otra página, navegar normalmente
+      navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+    }
+    setSearchTerm('');
+    setSearchOpen(false);
   }
-  
+};
+
+  const handleSearchToggle = () => {
+    setSearchOpen(!searchOpen);
+    if (searchOpen) {
+      setSearchTerm('');
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+  };
+
   // --- FUNCIÓN DE ESTILO PARA LOS BOTONES DEL MENÚ ---
   const getNavButtonStyle = (path) => {
     const isActive = location.pathname === path;
@@ -47,7 +93,7 @@ const Header = () => {
       fontWeight: isActive ? 900 : 600,
       color: '#Fff',
       borderBottom: isActive ? `3px solid #fff` : '3px solid transparent',
-      borderRadius: 0, // Para que el borde sea una línea recta
+      borderRadius: 0,
       paddingBottom: '4px',
       transition: 'border-bottom 0.2s ease-in-out',
       '&:hover': {
@@ -56,26 +102,25 @@ const Header = () => {
     };
   };
   
-    // --- FUNCIÓN DE ESTILO PARA LOS ITEMS DEL MENÚ MÓVIL ---
+  // --- FUNCIÓN DE ESTILO PARA LOS ITEMS DEL MENÚ MÓVIL ---
   const getMobileNavStyle = (path) => {
     const isActive = location.pathname === path;
     return {
-        fontWeight: 700,
-        backgroundColor: isActive ? theme.palette.action.selected : 'transparent',
-        borderRadius: '8px',
-        '& .MuiListItemText-primary': {
-            fontWeight: isActive ? 'bold' : 'normal',
-        }
+      fontWeight: 700,
+      backgroundColor: isActive ? theme.palette.action.selected : 'transparent',
+      borderRadius: '8px',
+      '& .MuiListItemText-primary': {
+        fontWeight: isActive ? 'bold' : 'normal',
+      }
     };
   };
 
   const drawerContent = (
     <Box
-      sx={{ width: 225, height: '100%', p: 2, backgroundColor: 'rgba(38, 60, 92, 0.9)', }}
+      sx={{ width: 225, height: '100%', p: 2, backgroundColor: 'rgba(38, 60, 92, 0.9)' }}
       role="presentation"
       onClick={handleMobileMenuClose}
       onKeyDown={handleMobileMenuClose}
-      
     >
       <Typography variant="h6" sx={{ mb: 6 }}></Typography>
       <Divider />
@@ -113,25 +158,81 @@ const Header = () => {
         backgroundColor: 'rgba(38, 60, 92, 0.9)', 
         backgroundImage: `linear-gradient(to bottom, transparent, ${amber[0]})`,
         boxShadow: 0,
-
-        }}> 
+      }}> 
       <Toolbar sx={{ justifyContent: 'space-between', flexWrap: 'wrap', py: { xs: 1, sm: 0 } }}>
-        {/* <Typography
-          variant="h6"
-          component={RouterLink}
-          to="/"
-          sx={{
-            flexGrow: 1, textDecoration: 'none', color: 'inherit',
-            fontWeight: 700, letterSpacing: '0.05em',
-            fontSize: { xs: '1.2rem', sm: '1.5rem' }
-          }}
-        >
-          <AuthBranding />
-        </Typography> */}
         <NavBranding />
 
+        {/* Search Bar para desktop */}
+        {!isMobile && !searchOpen && (
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            flex: 1, 
+            maxWidth: 400, 
+            mx: 3,
+            transition: 'all 0.3s ease'
+          }}>
+            <Paper
+              component="form"
+              onSubmit={handleSearch}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                backgroundColor: alpha(theme.palette.common.white, 0.15),
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.common.white, 0.25),
+                },
+                borderRadius: 2,
+                overflow: 'hidden',
+              }}
+            >
+              <InputBase
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{
+                  ml: 2,
+                  flex: 1,
+                  color: 'white',
+                  '&::placeholder': {
+                    color: alpha(theme.palette.common.white, 0.7),
+                  },
+                }}
+                inputProps={{ 'aria-label': 'buscar productos' }}
+              />
+              {searchTerm && (
+                <IconButton
+                  size="small"
+                  onClick={handleClearSearch}
+                  sx={{ color: 'white' }}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              )}
+              <IconButton
+                type="submit"
+                sx={{ p: 1, color: 'white' }}
+                aria-label="buscar"
+              >
+                <SearchIcon />
+              </IconButton>
+            </Paper>
+          </Box>
+        )}
+
         {isMobile ? (
-          <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* Botón de búsqueda para móviles */}
+            <IconButton
+              color="inherit"
+              onClick={handleSearchToggle}
+              sx={{ mr: 1, color: '#fff' }}
+              aria-label="buscar"
+            >
+              <SearchIcon />
+            </IconButton>
+
             <IconButton
               component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#fff' }}
               aria-label={`cart with ${cartItemCount} items`}
@@ -185,6 +286,66 @@ const Header = () => {
           </Box>
         )}
       </Toolbar>
+
+      {/* Search Bar expandible para móviles */}
+      {isMobile && searchOpen && (
+        <Box sx={{ p: 2, backgroundColor: '#263C5C' }}>
+          <Paper
+            component="form"
+            onSubmit={handleSearch}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              width: '100%',
+              backgroundColor: alpha(theme.palette.common.white, 0.15),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.common.white, 0.25),
+              },
+              borderRadius: 2,
+              overflow: 'hidden',
+            }}
+          >
+            <InputBase
+              placeholder="Buscar productos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+              sx={{
+                ml: 2,
+                flex: 1,
+                color: 'white',
+                '&::placeholder': {
+                  color: alpha(theme.palette.common.white, 0.7),
+                },
+              }}
+              inputProps={{ 'aria-label': 'buscar productos' }}
+            />
+            {searchTerm && (
+              <IconButton
+                size="small"
+                onClick={handleClearSearch}
+                sx={{ color: 'white' }}
+              >
+                <ClearIcon fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton
+              type="submit"
+              sx={{ p: 1, color: 'white' }}
+              aria-label="buscar"
+            >
+              <SearchIcon />
+            </IconButton>
+            <IconButton
+              onClick={handleSearchToggle}
+              sx={{ p: 1, color: 'white' }}
+              aria-label="cerrar búsqueda"
+            >
+              <ClearIcon />
+            </IconButton>
+          </Paper>
+        </Box>
+      )}
     </AppBar>
   );
 };

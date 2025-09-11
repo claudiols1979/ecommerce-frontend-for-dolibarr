@@ -138,6 +138,33 @@ const ProductsPage = () => {
     return displayProducts;
   };
 
+  // En tu ProductsPage.js, agrega este useEffect después de los otros useEffects
+useEffect(() => {
+  // Este efecto se ejecuta cuando cambia location.search (parámetros de URL)
+  const searchParams = new URLSearchParams(location.search);
+  const searchTermFromUrl = searchParams.get('search') || '';
+  
+  console.log('🔍 URL search parameter changed:', searchTermFromUrl);
+  
+  // Solo procesar si estamos en modo estándar (no departamental)
+  if (!isDepartmentalMode && searchTermFromUrl !== submittedSearchTerm) {
+    console.log('🔄 Actualizando búsqueda desde URL');
+    setSearchTerm(searchTermFromUrl);
+    setSubmittedSearchTerm(searchTermFromUrl);
+    
+    // Forzar recarga de productos con el nuevo término de búsqueda
+    fetchProducts(
+      1, // Siempre empezar desde página 1
+      20,
+      sortOrder,
+      searchTermFromUrl,
+      selectedGender,
+      priceRange[0],
+      priceRange[1]
+    );
+  }
+}, [location.search, isDepartmentalMode]); // Se ejecuta cuando cambian los parámetros de URL
+
   // --- EFFECT PARA MODO DEPARTAMENTAL ---
   useEffect(() => {
     if (isDepartmentalMode) {
