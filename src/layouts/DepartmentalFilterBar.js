@@ -472,6 +472,8 @@ const DepartmentalFilterBar = () => {
             onClick={clearAllFilters}
             startIcon={<ClearIcon />}
             sx={{ 
+              fontSize: 18,
+              fontWeight: 500,
               color: '#ffffffff',
               '&:hover': {
                 backgroundColor: 'rgba(93, 43, 202, 0.1)'

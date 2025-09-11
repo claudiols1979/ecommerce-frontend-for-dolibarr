@@ -1380,8 +1380,39 @@ const formatArrayValue = (value) => {
                   onChange={(e) => setNewComment(e.target.value)}
                   disabled={!canReview} // Se deshabilita si no puede reseñar
                 />
-                <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={!canReview || reviewsLoading}>
+                {/* <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={!canReview || reviewsLoading}>
                   Enviar Reseña
+                </Button> */}
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  disabled={!canReview || reviewsLoading}
+                  sx={{
+                    mt: 2,
+                    backgroundColor: '#4CAF50',
+                    '&:hover': {
+                      backgroundColor: '#45a049',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: '#cccccc',
+                      color: '#666666'
+                    },
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    transition: 'all 0.2s ease-in-out',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  {reviewsLoading ? 'Enviando...' : 'Enviar Reseña'}
                 </Button>
               </Box>
             )}
