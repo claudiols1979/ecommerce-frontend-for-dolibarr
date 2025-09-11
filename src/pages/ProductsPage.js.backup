@@ -1,9 +1,8 @@
-// components/ProductsPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Box, Typography, Button, Grid, CircularProgress, Alert,
   TextField, FormControl, InputLabel, Select, MenuItem,
-  Paper
+  Paper, InputAdornment
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -41,7 +40,7 @@ const ProductsPage = () => {
   const error = isDepartmentalMode ? departmentalError : standardError;
   const hasMore = isDepartmentalMode ? departmentalHasMore : (currentPage < totalPages);
 
-  // --- LÓGICA DE BÚSQUEDA EXISTENTE ---
+  // --- LÓGICA DE BÚSQUEDA EXISTENTE (se mantiene igual) ---
   const [searchTerm, setSearchTerm] = useState(() => new URLSearchParams(location.search).get('search') || '');
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState(() => new URLSearchParams(location.search).get('search') || '');
   const [selectedGender, setSelectedGender] = useState('');
@@ -57,7 +56,7 @@ const ProductsPage = () => {
     { value: 'elderly', label: 'Ancianos' }, { value: 'other', label: 'Otro' },
   ];
 
-  // --- FUNCIONES DE AGRUPAMIENTO ---
+  // --- FUNCIONES DE AGRUPAMIENTO (se mantienen igual) ---
   const getBaseCode = (code) => {
     const firstUnderscoreIndex = code.indexOf('_');
     return firstUnderscoreIndex === -1 ? code : code.substring(0, firstUnderscoreIndex);
@@ -138,42 +137,23 @@ const ProductsPage = () => {
     return displayProducts;
   };
 
-  // --- EFFECT PARA MODO DEPARTAMENTAL ---
-  useEffect(() => {
-    if (isDepartmentalMode) {
-      console.log('🔄 Modo departamental activado con filtros:', currentFilters);
-      setPage(1); // Resetear a página 1 cuando cambian los filtros
-    }
-  }, [isDepartmentalMode, currentFilters]);
-
-  // --- EFFECT PRINCIPAL SEPARADO POR MODO ---
+  // --- EFFECT PRINCIPAL MODIFICADO ---
   useEffect(() => {
     const limit = 20;
     
     if (isDepartmentalMode) {
-      // Modo departamental
-      console.log('📦 Fetching productos departamentales, página:', page);
+      // Modo departamental: usar fetchDepartmentalProducts con paginación
       fetchDepartmentalProducts(currentFilters, page, limit);
     } else {
-      // Modo estándar
-      console.log('📦 Fetching productos estándar, página:', page);
+      // Modo estándar: usar fetchProducts existente
       fetchProducts(page, limit, sortOrder, submittedSearchTerm, selectedGender, priceRange[0], priceRange[1]);
     }
-  }, [page, isDepartmentalMode]); // Solo dependencias esenciales
+  }, [page, sortOrder, submittedSearchTerm, selectedGender, priceRange, 
+      isDepartmentalMode, currentFilters, fetchProducts, fetchDepartmentalProducts]);
 
-  // --- EFFECT SEPARADO PARA BÚSQUEDA ESTÁNDAR ---
-  useEffect(() => {
-    if (!isDepartmentalMode) {
-      console.log('🔍 Actualizando búsqueda estándar');
-      setPage(1);
-      fetchProducts(1, 20, sortOrder, submittedSearchTerm, selectedGender, priceRange[0], priceRange[1]);
-    }
-  }, [sortOrder, submittedSearchTerm, selectedGender, priceRange, isDepartmentalMode, fetchProducts]);
-
-  // --- EFFECT PARA AGRUPAMIENTO ---
+  // --- EFFECT PARA AGRUPAMIENTO (igual pero ahora funciona con ambos modos) ---
   useEffect(() => {
     if (products && products.length > 0) {
-      console.log('📊 Agrupando productos:', products.length);
       const grouped = groupProductsByBase(products);
       const displayProducts = selectRandomVariantFromEachGroup(grouped);
       setGroupedProducts(displayProducts);
@@ -197,7 +177,7 @@ const ProductsPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // --- HANDLERS EXISTENTES ---
+  // --- HANDLERS EXISTENTES (se mantienen igual) ---
   const handleAddToCart = useCallback(async (product) => {
     if (typeof addItemToCart !== 'function') {
       toast.error("La funcionalidad para añadir al carrito no está disponible.");
@@ -242,14 +222,17 @@ const ProductsPage = () => {
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
+    setPage(1);
     setSubmittedSearchTerm(searchTerm);
   };
 
   const handleGenderChange = (event) => {
+    setPage(1);
     setSelectedGender(event.target.value);
   };
 
   const handleSortChange = (event) => {
+    setPage(1);
     setSortOrder(event.target.value);
   };
 
@@ -257,12 +240,8 @@ const ProductsPage = () => {
     setSearchTerm('');
     setSubmittedSearchTerm('');
     setSelectedGender('');
-    navigate('/products', { replace: true });
-  };
-
-  const handleClearDepartmentalFilters = () => {
-    navigate('/products', { replace: true });
     setPage(1);
+    navigate('/products', { replace: true });
   };
 
   // --- LÓGICA DE VISUALIZACIÓN MEJORADA ---
@@ -305,7 +284,7 @@ const ProductsPage = () => {
       </Helmet>
 
       <Container maxWidth="xl" sx={{ my: 1, flexGrow: 1 }}>
-        {/* <Paper
+        <Paper
           elevation={8}
           sx={{
             p: { xs: 2, sm: 3 },
@@ -354,7 +333,7 @@ const ProductsPage = () => {
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth size="small" variant="outlined">
-                <InputLabel id="gender-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
+                <InputLabel id="gender-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Género</InputLabel>
                 <Select
                   labelId="gender-select-label"
                   value={selectedGender}
@@ -385,7 +364,7 @@ const ProductsPage = () => {
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth size="small">
-                <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
+                <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Ordenar por</InputLabel>
                 <Select 
                   value={sortOrder} 
                   label="Ordenar por" 
@@ -417,14 +396,18 @@ const ProductsPage = () => {
               </FormControl>
             </Grid>
           </Grid>
-        </Paper> */}
+        </Paper>
 
         {/* MOSTRAR BOTÓN DE LIMPIAR FILTROS DEPARTAMENTALES SI ESTÁN ACTIVOS */}
-        {/* {isDepartmentalMode && (
+        {isDepartmentalMode && (
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Button
               variant="contained"
-              onClick={handleClearDepartmentalFilters}
+              onClick={() => {
+                // Limpiar filters departamentales navegando a /products
+                navigate('/products', { replace: true });
+                setPage(1);
+              }}
               sx={{ 
                 fontWeight: 'bold',
                 backgroundColor: '#bb4343ff', 
@@ -434,7 +417,7 @@ const ProductsPage = () => {
               Limpiar Filtros Departamentales
             </Button>
           </Box>
-        )} */}
+        )}
 
         {submittedSearchTerm && !isDepartmentalMode && (
           <Box sx={{ textAlign: 'center', mb: 4 }}>

@@ -20,6 +20,7 @@ import NewPasswordPage from './pages/NewPasswordPage';
 import PrivacyPolicies from './pages/PrivacyPolicies';
 import TermsConditions from './pages/TermsConditions';
 import PaymentRedirectPage from './pages/PaymentRedirectPage';
+import DepartmentalFilterBar from './layouts/DepartmentalFilterBar';
 
 // PrivateRoute component
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -43,6 +44,7 @@ const MainContent = styled('main')(({ theme }) => ({
 const MainLayout = ({ children }) => (
     <AppContainer>
         <Header />
+        <DepartmentalFilterBar />
         <MainContent>
             {children}
         </MainContent>

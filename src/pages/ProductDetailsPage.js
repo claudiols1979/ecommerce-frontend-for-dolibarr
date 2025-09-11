@@ -3,7 +3,11 @@ import {
   Container, Box, Typography, Button, Grid, CircularProgress, Alert, Card, CardContent,
   TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery,
   Accordion, AccordionSummary, AccordionDetails, Rating, List, ListItem, Avatar, ListItemText,
-  ToggleButtonGroup, ToggleButton
+  ToggleButtonGroup, ToggleButton, Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -600,6 +604,26 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
     return lines.join('\n');
   };
 
+  const formatDimensions = (dimensions) => {
+  if (!dimensions) return 'N/A';
+  
+  // Si es un objeto, convertirlo a string
+  if (typeof dimensions === 'object') {
+    const { width, height, depth } = dimensions;
+    return `${width || ''} × ${height || ''} × ${depth || ''}`.trim();
+  }
+  
+  // Si ya es un string, devolverlo tal cual
+  return dimensions;
+};
+
+// Función para formatear valores de array
+const formatArrayValue = (value) => {
+  if (!value) return 'N/A';
+  if (Array.isArray(value)) return value.join(', ');
+  return value;
+};
+
   return (
     <>
       <Helmet>
@@ -829,7 +853,7 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
           </CardContent>
         </Card>
         </Box>
-        <Box sx={contentSectionStyle}>
+        {/* <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Especificaciones</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Categoría:</Typography> {product.category || 'N/A'}</Typography></Grid>
@@ -838,7 +862,395 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
             {product.gender && (<Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Género:</Typography> {getTranslatedGender(product.gender)}</Typography></Grid>)}
             {product.volume && (<Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Volumen:</Typography> {product.volume}</Typography></Grid>)}
           </Grid>
-        </Box>
+        </Box> */}
+
+
+<Box sx={{
+  p: 3,
+  borderRadius: 2,
+  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+  backgroundColor: 'background.paper',
+  mb: 4
+}}>
+  <Typography 
+    variant="h5" 
+    component="h2" 
+    gutterBottom 
+    sx={{ 
+      fontWeight: 600, 
+      color: 'primary.main',
+      mb: 3,
+      pb: 1,
+      borderBottom: '2px solid',
+      borderColor: 'primary.light'
+    }}
+  >
+    Especificaciones
+  </Typography>
+  
+  <TableContainer 
+    component={Paper} 
+    elevation={0}
+    sx={{ 
+      borderRadius: 2,
+      border: '1px solid',
+      borderColor: 'grey.200',
+      overflow: 'hidden'
+    }}
+  >
+    <Table sx={{ minWidth: 650 }} aria-label="Especificaciones del producto">
+      <TableBody>
+        {/* Código */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              width: '40%',
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Código
+          </TableCell>
+          <TableCell sx={{ color: product.code ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.code || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Volumen */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Volumen
+          </TableCell>
+          <TableCell sx={{ color: product.volume ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.volume || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Género */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Género
+          </TableCell>
+          <TableCell sx={{ color: product.gender ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.gender || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Colores */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Colores
+          </TableCell>
+          <TableCell sx={{ color: product.colors?.length ? 'text.primary' : 'grey.500', py: 2 }}>
+            {formatArrayValue(product.colors)}
+          </TableCell>
+        </TableRow>
+        
+        {/* Tallas */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Tamaños
+          </TableCell>
+          <TableCell sx={{ color: product.sizes?.length ? 'text.primary' : 'grey.500', py: 2 }}>
+            {formatArrayValue(product.sizes)}
+          </TableCell>
+        </TableRow>
+        
+        {/* Materiales */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Materiales
+          </TableCell>
+          <TableCell sx={{ color: product.materials?.length ? 'text.primary' : 'grey.500', py: 2 }}>
+            {formatArrayValue(product.materials)}
+          </TableCell>
+        </TableRow>
+        
+        {/* Rango de edad */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Rango de edad
+          </TableCell>
+          <TableCell sx={{ color: product.ageRange ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.ageRange || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Características */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Características
+          </TableCell>
+          <TableCell sx={{ color: product.features?.length ? 'text.primary' : 'grey.500', py: 2 }}>
+            {formatArrayValue(product.features)}
+          </TableCell>
+        </TableRow>
+        
+        {/* Voltaje */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Voltaje
+          </TableCell>
+          <TableCell sx={{ color: product.voltage ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.voltage || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Garantía */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Garantía
+          </TableCell>
+          <TableCell sx={{ color: product.warranty ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.warranty || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Incluye baterías */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Incluye baterías
+          </TableCell>
+          <TableCell sx={{ color: product.includesBatteries !== undefined ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.includesBatteries !== undefined ? (product.includesBatteries ? 'Sí' : 'No') : 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Tipo de batería */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Tipo de batería
+          </TableCell>
+          <TableCell sx={{ color: product.batteryType ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.batteryType || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Dimensiones */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Dimensiones
+          </TableCell>
+          <TableCell sx={{ color: product.dimensions ? 'text.primary' : 'grey.500', py: 2 }}>
+            {formatDimensions(product.dimensions)}
+          </TableCell>
+        </TableRow>
+        
+        {/* Peso */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Peso
+          </TableCell>
+          <TableCell sx={{ color: product.weight ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.weight || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Ubicación recomendada */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Ubicación recomendada
+          </TableCell>
+          <TableCell sx={{ color: product.recommendedLocation ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.recommendedLocation || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Categoría */}
+        <TableRow>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Categoría
+          </TableCell>
+          <TableCell sx={{ color: product.category ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.category || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        {/* Marca */}
+        <TableRow sx={{ backgroundColor: 'grey.50' }}>
+          <TableCell 
+            component="th" 
+            scope="row"
+            sx={{ 
+              fontWeight: 600,
+              color: 'text.secondary',
+              borderRight: '1px solid',
+              borderColor: 'grey.200',
+              py: 2
+            }}
+          >
+            Marca
+          </TableCell>
+          <TableCell sx={{ color: product.brand ? 'text.primary' : 'grey.500', py: 2 }}>
+            {product.brand || 'N/A'}
+          </TableCell>
+        </TableRow>
+        
+        
+       
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Box>
+
+
+
+       
 
         {product.tags && product.tags.length > 0 && (
           <Box sx={contentSectionStyle}>
