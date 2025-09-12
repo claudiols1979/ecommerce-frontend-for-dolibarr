@@ -126,7 +126,7 @@ const TermsAndConditionsPage = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Typography variant="body2" sx={{ color: '#263C5C' }}>
-                  Todo el contenido presente en esta plataforma, incluyendo imágenes, textos, logos y diseño, es propiedad de Look & Smell. Queda prohibida su reproducción, distribución o uso no autorizado sin nuestro consentimiento explícito por escrito.
+                  Todo el contenido presente en esta plataforma, incluyendo imágenes, textos, logos y diseño, es propiedad de Software Factory CR. Queda prohibida su reproducción, distribución o uso no autorizado sin nuestro consentimiento explícito por escrito.
                 </Typography>
               </AccordionDetails>
             </Accordion>
