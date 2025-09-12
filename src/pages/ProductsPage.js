@@ -327,7 +327,7 @@ useEffect(() => {
   return (
     <>
       <Helmet>
-        <title>Catálogo de Productos - Look & Smell</title>
+        <title>Catálogo de Productos - Software Factory ERP</title>
         <meta name="description" content="Explora nuestro catálogo completo de perfumes, cosméticos y sets de regalo." />
       </Helmet>
 

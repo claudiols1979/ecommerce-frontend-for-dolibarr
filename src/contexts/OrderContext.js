@@ -255,12 +255,18 @@ const initiateTilopayPayment = useCallback(async (shippingDetails) => {
 
         // Calcular costo de envío (ejemplo: 3000 colones para GAM)
         const isGAM = ["San José", "Alajuela", "Cartago", "Heredia"].includes(shippingDetails.province);
-        const shippingCost = isGAM ? 3000 : 0;
+        const shippingCostBase = 3000
+        const shippingCostTax = 3000 * 0.13
+        const shippingCostSubTotal = shippingCostBase + shippingCostTax
+        const shippingCost = isGAM ? shippingCostSubTotal : 0;
+        console.log("shipptingCost: ", shippingCost)
 
         // Total final con IVA y envío        
         const finalTotal = totalWithTax + shippingCost;
+        console.log("finalTotal: ", finalTotal)
 
         const roundedTotal = parseFloat(finalTotal.toFixed(2));
+        console.log("roundedTotal: ", roundedTotal)
 
         // Llama al endpoint del backend para iniciar el pago
         const response = await api.post('/api/orders/cart/create-payment', { 

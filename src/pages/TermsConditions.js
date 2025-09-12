@@ -36,7 +36,7 @@ const TermsAndConditionsPage = () => {
   return (
     <>
       <Helmet>
-        <title>Términos y Condiciones - Look & Smell</title>
+        <title>Términos y Condiciones - Software Factory ERP</title>
         <meta name="description" content="Lee los términos y condiciones para el uso de la plataforma de revendedores de Look & Smell en Costa Rica. Reglas sobre cuentas, pedidos, precios y envíos." />
       </Helmet>
       

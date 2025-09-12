@@ -212,7 +212,7 @@ const HomePage = () => {
   return (
     <>
       <Helmet>
-        <title>Look & Smell - Perfumería y Cosméticos para Revendedores en Costa Rica</title>
+        <title>Software Factory ERP</title>
         <meta name="description" content="Descubre el catálogo de perfumes y cosméticos en Look & Smell. Accede a precios exclusivos. Envíos a toda Costa Rica." />
         <meta property="og:title" content="Look & Smell - Perfumería Fina en Costa Rica" />
         <meta property="og:description" content="Tu socio de confianza en perfumería y cosméticos. Calidad, variedad y los mejores precios en Costa Rica." />

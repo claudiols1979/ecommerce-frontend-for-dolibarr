@@ -31,7 +31,7 @@ const AuthBranding = () => {
           justifyContent: 'center'
         }}
       >
-        Tienda
+        Software 
         <Typography
           component="span"
           variant="h3" // Ligeramente más pequeño
@@ -43,9 +43,9 @@ const AuthBranding = () => {
             color: '#263C5C', // Un color secundario sutil
           }}
         >
-          en
+          Factory
         </Typography>
-        Linea
+        
       </Typography>
 
       {/* Un subtítulo o eslogan opcional */}
@@ -53,7 +53,7 @@ const AuthBranding = () => {
         variant="body2"         
         sx={{ mt: 1, letterSpacing: '0.05em', color: '#263C5C' }}
       >
-        (Demo)
+        ERP
       </Typography>
     </Box>
   );

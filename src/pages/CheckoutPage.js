@@ -74,7 +74,10 @@ const shouldShowError = (fieldName, value) => {
 
     useEffect(() => {
         if (gamProvinces.includes(selectedProvince)) {
-            setShippingCost(3000);
+            const baseShippingCost = 3000;
+            const shippingTax = baseShippingCost * 0.13; // 13% de impuesto
+            const totalShippingCost = baseShippingCost + shippingTax;
+            setShippingCost(totalShippingCost);
             setShippingMessage('');
         } else if (selectedProvince && !gamProvinces.includes(selectedProvince)) {
             setShippingCost(0);
@@ -316,7 +319,7 @@ const shouldShowError = (fieldName, value) => {
                                 <Divider sx={{ my: 3 }} />
                                 
                                 {/* Shipping Cost Info */}
-                                <Box sx={{ 
+                               <Box sx={{ 
                                     mb: 3,
                                     p: 2,
                                     backgroundColor: alpha(theme.palette.primary.main, 0.03),
@@ -346,12 +349,20 @@ const shouldShowError = (fieldName, value) => {
                                             </Typography>
                                         </Box>
                                     ) : gamProvinces.includes(selectedProvince) ? (
-                                        <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                                            {formatPrice(3000)} - Entrega en 24-48 horas
-                                        </Typography>
+                                        <Box>
+                                            <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                                                Envío base: {formatPrice(3000)}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                                                Impuesto (13%): {formatPrice(3000 * 0.13)}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, mt: 1 }}>
+                                                Total envío: {formatPrice(shippingCost)} - Entrega en 24-48 horas
+                                            </Typography>
+                                        </Box>
                                     ) : (
                                         <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
-                                            ¡Envío gratuito! - Pago contra entrega
+                                            ¡Envío! - Pago contra entrega
                                         </Typography>
                                     )}
                                 </Box>
@@ -383,7 +394,7 @@ const shouldShowError = (fieldName, value) => {
                                             fontWeight: 600,
                                             color: selectedProvince && !gamProvinces.includes(selectedProvince) ? 'success.main' : 'text.primary'
                                         }}>
-                                            {selectedProvince ? (gamProvinces.includes(selectedProvince) ? formatPrice(3000) : 'Gratis') : 'Por calcular'}
+                                            {selectedProvince ? (gamProvinces.includes(selectedProvince) ? formatPrice(shippingCost) : 'Pago contra entrega') : 'Por calcular'}
                                         </Typography>
                                     </Box>
                                 </Box>

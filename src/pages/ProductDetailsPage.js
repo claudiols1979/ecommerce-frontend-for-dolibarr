@@ -627,7 +627,7 @@ const formatArrayValue = (value) => {
   return (
     <>
       <Helmet>
-        <title>{product ? `${baseProductName} - Look & Smell` : 'Detalle de Producto'}</title>
+        <title>{product ? `${baseProductName} - Software Factory ERP` : 'Detalle de Producto'}</title>
         <meta name="description" content={product ? `Compra ${baseProductName}, perfumería fina en Costa Rica. ${product.description.substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
         <meta property="og:title" content={product ? baseProductName : 'Look & Smell'} />
         <meta property="og:description" content={product ? product.description.substring(0, 120) : 'Tu tienda de confianza para perfumería.'} />
@@ -1405,7 +1405,7 @@ const formatArrayValue = (value) => {
             <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>
               Calificaciones y Reseñas
             </Typography>
-            {product.numReviews > 0 && (
+            {reviews.length > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
                 <Typography variant="h4" sx={{ mr: 2, fontWeight: 'bold' }}>
                   {product.averageRating.toFixed(1)}

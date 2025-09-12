@@ -62,7 +62,7 @@ const RegisterPage = () => {
     return null;
   }
 
-  // Estilos consistentes con LoginPage
+  // Updated styles to match PrivacyPolicyPage
   const primaryButtonStyle = {
     p: 1.5,
     mb: 2,
@@ -70,13 +70,13 @@ const RegisterPage = () => {
     fontWeight: 'bold',
     fontSize: '1rem',
     borderRadius: '8px',
-    color: 'common.black',
-    backgroundColor: '#FFD700',
-    boxShadow: '0 4px 15px 0 rgba(255, 215, 0, 0.4)',
+    color: 'white',
+    backgroundColor: '#263C5C',
+    boxShadow: '0 4px 15px 0 rgba(38, 60, 92, 0.3)',
     transition: 'all 0.3s ease',
     '&:hover': {
-      backgroundColor: '#FFC700',
-      boxShadow: '0 6px 20px 0 rgba(255, 215, 0, 0.5)',
+      backgroundColor: '#1E2F48',
+      boxShadow: '0 6px 20px 0 rgba(38, 60, 92, 0.4)',
       transform: 'translateY(-2px)',
     },
   };
@@ -84,69 +84,204 @@ const RegisterPage = () => {
   const textFieldStyle = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
-      '& .MuiInputBase-input': { color: 'white' },
-      '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
-      '&:hover fieldset': { borderColor: '#FFD700' },
-      '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+      backgroundColor: 'rgba(255, 255, 255, 1)',
+      '& fieldset': {
+        borderColor: 'rgba(148, 145, 145, 1)',
+      },
+      '&:hover fieldset': {
+        borderColor: '#263C5C',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#263C5C',
+      },
     },
-    '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
+    '& .MuiInputLabel-root': {
+      color: 'rgba(0, 0, 0, 0.7)',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#263C5C',
+    },
   };
 
   return (
     <Box sx={{
       minHeight: '100vh',
       width: '100%',
-      background: 'linear-gradient(135deg, #121212 30%, #282828 90%)',
+      background: 'white',
+      py: { xs: 4, md: 8 },
+      px: 2,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      p: 2,
     }}>
       <Container maxWidth="sm">
         <Card sx={{ 
-          p: { xs: 2, sm: 3 }, 
-          borderRadius: 4, 
-          boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
+          p: { xs: 3, sm: 4 },
+          borderRadius: 4,
+          backgroundColor: 'rgba(255, 255, 255, 1)',
+          boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 1)'
         }}>
           <CardContent>
             <AuthBranding />
-            <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4, fontWeight: 600, color: 'white' }}>
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              gutterBottom 
+              sx={{ 
+                textAlign: 'center', 
+                mb: 4, 
+                fontWeight: 600, 
+                color: '#263C5C' 
+              }}
+            >
               Crear Cuenta Nueva
             </Typography>
             <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
               <Grid container spacing={2} justifyContent="center">
                 <Grid item xs={12} sm={6}>
-                  <TextField required fullWidth id="firstName" label="Nombre" name="firstName" autoComplete="given-name" value={firstName} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <PersonOutlineOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    id="firstName" 
+                    label="Nombre" 
+                    name="firstName" 
+                    autoComplete="given-name" 
+                    value={firstName} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <PersonOutlineOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField required fullWidth id="lastName" label="Apellido" name="lastName" autoComplete="family-name" value={lastName} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <PersonOutlineOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    id="lastName" 
+                    label="Apellido" 
+                    name="lastName" 
+                    autoComplete="family-name" 
+                    value={lastName} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <PersonOutlineOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField required fullWidth id="email" label="Correo Electrónico" name="email" autoComplete="email" value={email} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <EmailOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    id="email" 
+                    label="Correo Electrónico" 
+                    name="email" 
+                    autoComplete="email" 
+                    value={email} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <EmailOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField required fullWidth name="password" label="Contraseña" type="password" id="password" autoComplete="new-password" value={password} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    name="password" 
+                    label="Contraseña" 
+                    type="password" 
+                    id="password" 
+                    autoComplete="new-password" 
+                    value={password} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField required fullWidth name="confirmPassword" label="Confirmar Contraseña" type="password" id="confirmPassword" value={confirmPassword} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    name="confirmPassword" 
+                    label="Confirmar Contraseña" 
+                    type="password" 
+                    id="confirmPassword" 
+                    value={confirmPassword} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField required fullWidth name="phoneNumber" label="Número de Teléfono" type="tel" id="phoneNumber" autoComplete="tel" value={phoneNumber} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <PhoneOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    name="phoneNumber" 
+                    label="Número de Teléfono" 
+                    type="tel" 
+                    id="phoneNumber" 
+                    autoComplete="tel" 
+                    value={phoneNumber} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <PhoneOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField required fullWidth name="address" label="Dirección de Envío" id="address" autoComplete="shipping address-line1" value={address} onChange={onChange} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <HomeOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
+                  <TextField 
+                    required 
+                    fullWidth 
+                    name="address" 
+                    label="Dirección de Envío" 
+                    id="address" 
+                    autoComplete="shipping address-line1" 
+                    value={address} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <HomeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
                 </Grid>
               </Grid>
-              <Button type="submit" fullWidth variant="contained" sx={primaryButtonStyle} disabled={loading}>
-                {loading ? <CircularProgress size={24} sx={{ color: 'black' }} /> : 'Crear Cuenta'}
+              <Button 
+                type="submit" 
+                fullWidth 
+                variant="contained" 
+                sx={primaryButtonStyle} 
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Crear Cuenta'}
               </Button>
-              <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
+              <Typography 
+                variant="body2" 
+                align="center" 
+                sx={{ color: 'text.secondary' }}
+              >
                 ¿Ya tienes una cuenta?{' '}
-                <MuiLink component={RouterLink} to="/login" underline="hover" sx={{ fontWeight: 'bold', color: '#FFD700' }}>
+                <MuiLink 
+                  component={RouterLink} 
+                  to="/login" 
+                  underline="hover" 
+                  sx={{ fontWeight: 'bold', color: '#263C5C' }}
+                >
                   Inicia sesión aquí
                 </MuiLink>
               </Typography>

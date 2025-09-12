@@ -135,6 +135,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Agrega esta función para actualizar el usuario
+  const updateUser = useCallback((updatedUserData) => {
+    setUser(prevUser => {
+      if (!prevUser) return prevUser;
+      
+      const updatedUser = {
+        ...prevUser,
+        ...updatedUserData,
+        // Mantén el token intacto
+        token: prevUser.token
+      };
+      
+      // Actualiza también localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      return updatedUser;
+    });
+  }, []);
+
   const value = { 
     user, 
     api, 
@@ -146,6 +165,7 @@ export const AuthProvider = ({ children }) => {
     loginWithEmail,
     forgotPassword,
     resetPassword,
+    updateUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

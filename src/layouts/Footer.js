@@ -39,12 +39,12 @@ const Footer = () => {
               Productos 100% originales.
             </Typography>
             <Box>
-              <MuiLink href="https://www.facebook.com/profile.php?id=61576158096800" target="_blank" rel="noopener noreferrer">
+              <MuiLink href="#" target="_self" rel="noopener noreferrer">
                 <IconButton aria-label="Facebook" sx={{ color: 'grey.400', '&:hover': { color: 'common.white' } }}>
                   <FacebookIcon />
                 </IconButton>
               </MuiLink>
-              <MuiLink href="https://www.instagram.com/look_and_smell_cr" target="_blank" rel="noopener noreferrer">
+              <MuiLink href="#" target="_self" rel="noopener noreferrer">
                 <IconButton aria-label="Instagram" sx={{ color: 'grey.400', '&:hover': { color: 'common.white' } }}>
                   <InstagramIcon />
                 </IconButton>

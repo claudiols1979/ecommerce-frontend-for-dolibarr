@@ -6,27 +6,24 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import AuthBranding from '../components/common/AuthBranding'; // Importa tu componente de branding
+import AuthBranding from '../components/common/AuthBranding';
 
 // Iconos para los campos de texto
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-// --- NUEVOS ICONOS PARA LA VISIBILIDAD DE LA CONTRASEÑA ---
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 
-
 const LoginPage = () => {
   const [resellerCode, setResellerCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState(0); 
-   // --- NUEVO ESTADO PARA LA VISIBILIDAD DE LA CONTRASEÑA ---
+  const [tab, setTab] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   
   const { login, loginWithEmail, user } = useAuth();
@@ -64,7 +61,6 @@ const LoginPage = () => {
     setLoading(false);
   };
 
-    // --- NUEVOS HANDLERS PARA EL ICONO DE VISIBILIDAD ---
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
@@ -74,7 +70,7 @@ const LoginPage = () => {
     return null;
   }
 
-  // Estilo para los botones principales
+  // Updated styles to match PrivacyPolicyPage
   const primaryButtonStyle = {
     p: 1.5,
     mb: 2,
@@ -82,13 +78,13 @@ const LoginPage = () => {
     fontWeight: 'bold',
     fontSize: '1rem',
     borderRadius: '8px',
-    color: 'common.black',
-    backgroundColor: '#FFD700', // Un dorado vibrante
-    boxShadow: '0 4px 15px 0 rgba(255, 215, 0, 0.4)',
+    color: 'white',
+    backgroundColor: '#263C5C',
+    boxShadow: '0 4px 15px 0 rgba(38, 60, 92, 0.3)',
     transition: 'all 0.3s ease',
     '&:hover': {
-      backgroundColor: '#FFC700',
-      boxShadow: '0 6px 20px 0 rgba(255, 215, 0, 0.5)',
+      backgroundColor: '#1E2F48',
+      boxShadow: '0 6px 20px 0 rgba(38, 60, 92, 0.4)',
       transform: 'translateY(-2px)',
     },
   };
@@ -96,60 +92,71 @@ const LoginPage = () => {
   const textFieldStyle = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
-      '& .MuiInputBase-input': {
-        color: 'white', 
-      },
+      backgroundColor: 'rgba(255, 255, 255, 1)',
       '& fieldset': {
-        borderColor: 'rgba(255, 255, 255, 0.23)',
+        borderColor: 'rgba(148, 145, 145, 1)',
       },
       '&:hover fieldset': {
-        borderColor: '#FFD700',
+        borderColor: '#263C5C',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#FFD700',
+        borderColor: '#263C5C',
       },
     },
     '& .MuiInputLabel-root': {
-      color: 'rgba(255, 255, 255, 0.7)',
+      color: 'rgba(0, 0, 0, 0.7)',
     },
     '& .MuiInputLabel-root.Mui-focused': {
-      color: '#FFD700',
+      color: '#263C5C',
     },
+  };
+
+  const tabStyle = {
+    '& .MuiTab-root': { 
+      color: 'rgba(0, 0, 0, 0.7)', 
+      fontWeight: 600 
+    },
+    '& .Mui-selected': { 
+      color: '#263C5C' 
+    },
+    '& .MuiTabs-indicator': { 
+      backgroundColor: '#263C5C' 
+    }
   };
 
   return (
     <Box sx={{
       minHeight: '100vh',
       width: '100%',
-      background: 'linear-gradient(135deg, #121212 30%, #282828 90%)',
+      background: 'white',
+      py: { xs: 4, md: 8 },
+      px: 2,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      p: 2,
     }}>
       <Container maxWidth="xs">
         <Card sx={{ 
-          p: { xs: 2, sm: 3 }, 
-          borderRadius: 4, 
-          boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
+          p: { xs: 3, sm: 4 },
+          borderRadius: 4,
+          backgroundColor: 'rgba(255, 255, 255, 1)',
+          boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 1)'
         }}>
           <CardContent>   
             <AuthBranding />      
             
-            <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.2)', mb: 3 }}>
+            <Box sx={{ 
+              borderBottom: 1, 
+              borderColor: 'rgba(0, 0, 0, 0.1)', 
+              mb: 3 
+            }}>
               <Tabs 
                 value={tab} 
                 onChange={handleTabChange} 
                 centered
                 textColor="inherit"
-                sx={{
-                    '& .MuiTab-root': { color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 },
-                    '& .Mui-selected': { color: '#FFD700' },
-                    '& .MuiTabs-indicator': { backgroundColor: '#FFD700' }
-                }}
+                sx={tabStyle}
               >
                 <Tab label="Con Correo" />
                 <Tab label="Con Código" />
@@ -158,16 +165,38 @@ const LoginPage = () => {
 
             {tab === 0 && (
               <Box component="form" onSubmit={handleEmailSubmit} noValidate>
-                <TextField margin="normal" required fullWidth id="email" label="Correo Electrónico" name="email" autoComplete="email" autoFocus value={email} onChange={(e) => setEmail(e.target.value)} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <EmailOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
-                {/* <TextField margin="normal" required fullWidth name="password" label="Contraseña" type="password" id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} /> */}
+                <TextField 
+                  margin="normal" 
+                  required 
+                  fullWidth 
+                  id="email" 
+                  label="Correo Electrónico" 
+                  name="email" 
+                  autoComplete="email" 
+                  autoFocus 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  variant="outlined" 
+                  sx={textFieldStyle} 
+                  InputProps={{ 
+                    startAdornment: <EmailOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                  }} 
+                />
                 <TextField
-                  margin="normal" required fullWidth name="password" label="Contraseña"
-                  type={showPassword ? 'text' : 'password'} // Dinámico
-                  id="password" autoComplete="current-password"
-                  value={password} onChange={(e) => setPassword(e.target.value)}
-                  variant="outlined" sx={textFieldStyle}
+                  margin="normal" 
+                  required 
+                  fullWidth 
+                  name="password" 
+                  label="Contraseña"
+                  type={showPassword ? 'text' : 'password'}
+                  id="password" 
+                  autoComplete="current-password"
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined" 
+                  sx={textFieldStyle}
                   InputProps={{
-                    startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} />,
+                    startAdornment: <LockOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} />,
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
@@ -175,7 +204,7 @@ const LoginPage = () => {
                           onClick={handleClickShowPassword}
                           onMouseDown={handleMouseDownPassword}
                           edge="end"
-                          sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                          sx={{ color: 'rgba(0, 0, 0, 0.7)' }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
@@ -183,15 +212,42 @@ const LoginPage = () => {
                     )
                   }}
                 />
-                <MuiLink component={RouterLink} to="/forgot-password" variant="body2" sx={{ display: 'block', textAlign: 'right', mt: 1, mb: 2, color: 'text.secondary', '&:hover': { color: '#FFD700' } }}>
+                <MuiLink 
+                  component={RouterLink} 
+                  to="/forgot-password" 
+                  variant="body2" 
+                  sx={{ 
+                    display: 'block', 
+                    textAlign: 'right', 
+                    mt: 1, 
+                    mb: 2, 
+                    color: 'text.secondary', 
+                    '&:hover': { color: '#263C5C' } 
+                  }}
+                >
                   ¿Olvidaste tu contraseña?
                 </MuiLink>
-                <Button type="submit" fullWidth variant="contained" sx={primaryButtonStyle} disabled={loading || !email || !password}>
-                  {loading ? <CircularProgress size={24} sx={{ color: 'black' }} /> : 'Iniciar Sesión'}
+                <Button 
+                  type="submit" 
+                  fullWidth 
+                  variant="contained" 
+                  sx={primaryButtonStyle} 
+                  disabled={loading || !email || !password}
+                >
+                  {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Iniciar Sesión'}
                 </Button>
-                <Typography variant="body2" align="center" sx={{ mt: 2, color: 'text.secondary' }}>
+                <Typography 
+                  variant="body2" 
+                  align="center" 
+                  sx={{ mt: 2, color: 'text.secondary' }}
+                >
                   ¿No tienes cuenta?{' '}
-                  <MuiLink component={RouterLink} to="/register" underline="hover" sx={{ fontWeight: 'bold', color: '#FFD700' }}>
+                  <MuiLink 
+                    component={RouterLink} 
+                    to="/register" 
+                    underline="hover" 
+                    sx={{ fontWeight: 'bold', color: '#263C5C' }}
+                  >
                     Regístrate aquí
                   </MuiLink>
                 </Typography>
@@ -200,16 +256,47 @@ const LoginPage = () => {
 
             {tab === 1 && (
               <Box component="form" onSubmit={handleCodeSubmit} noValidate>
-                <TextField margin="normal" required fullWidth id="resellerCode" label="Código de acceso" name="resellerCode" autoComplete="off" autoFocus value={resellerCode} onChange={(e) => setResellerCode(e.target.value)} variant="outlined" sx={textFieldStyle} InputProps={{ startAdornment: <VpnKeyOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }} />
-                <Button type="submit" fullWidth variant="contained" sx={primaryButtonStyle} disabled={loading || !resellerCode}>
-                  {loading ? <CircularProgress size={24} sx={{ color: 'black' }} /> : 'Ingresar con Código'}
+                <TextField 
+                  margin="normal" 
+                  required 
+                  fullWidth 
+                  id="resellerCode" 
+                  label="Código de acceso" 
+                  name="resellerCode" 
+                  autoComplete="off" 
+                  autoFocus 
+                  value={resellerCode} 
+                  onChange={(e) => setResellerCode(e.target.value)} 
+                  variant="outlined" 
+                  sx={textFieldStyle} 
+                  InputProps={{ 
+                    startAdornment: <VpnKeyOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                  }} 
+                />
+                <Button 
+                  type="submit" 
+                  fullWidth 
+                  variant="contained" 
+                  sx={primaryButtonStyle} 
+                  disabled={loading || !resellerCode}
+                >
+                  {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Ingresar con Código'}
                 </Button>
-                {/* --- MODIFIED: Replaced Grid with a single centered Typography component --- */}
-                <Typography variant="body2" align="center" sx={{ mt: 3, color: 'text.secondary' }}>
-                    ¿Necesitas un código?{' '}
-                    <MuiLink href={whatsappUrl} target="_blank" rel="noopener noreferrer" underline="hover" sx={{ fontWeight: 'bold', color: '#FFD700' }}>
-                        Contacta a tu administrador.
-                    </MuiLink>
+                <Typography 
+                  variant="body2" 
+                  align="center" 
+                  sx={{ mt: 3, color: 'text.secondary' }}
+                >
+                  ¿Necesitas un código?{' '}
+                  <MuiLink 
+                    href={whatsappUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    underline="hover" 
+                    sx={{ fontWeight: 'bold', color: '#263C5C' }}
+                  >
+                    Contacta a tu administrador.
+                  </MuiLink>
                 </Typography>
               </Box>
             )}

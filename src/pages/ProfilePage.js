@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { 
   Container, Box, Typography, Button, Grid, CircularProgress, Alert, 
   Card, CardContent, Divider, List, ListItem, ListItemText,
-  Accordion, AccordionSummary, AccordionDetails, useTheme, 
+  Accordion, AccordionSummary, AccordionDetails, useTheme,
+  TextField, Dialog, DialogActions, DialogContent, DialogTitle, IconButton
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useOrders } from '../contexts/OrderContext';
+import { useUpdateInfo } from '../contexts/UpdateInfoContext'; // Import the new context
 
 // Importaciones de iconos de Material-UI
 import EmailIcon from '@mui/icons-material/Email';
@@ -21,36 +23,43 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import InfoIcon from '@mui/icons-material/Info';
 import PersonIcon from '@mui/icons-material/Person'; 
 import RateReviewIcon from '@mui/icons-material/RateReview';
+import EditIcon from '@mui/icons-material/Edit';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, error: authError } = useAuth(); 
   const { myOrders, loading: ordersLoading, error: ordersError, fetchMyOrders } = useOrders(); 
+  const { loading: updateLoading, error: updateError, success: updateSuccess, updateResellerProfile, clearMessages } = useUpdateInfo(); // Use the update context
 
-  
   const theme = useTheme(); 
-
   const [localLoading, setLocalLoading] = useState(true);  
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    address: '',
+    resellerCategory: ''
+  });
 
-useEffect(() => {
-  // 1. Fetch the user's orders as soon as the page loads.
-  if (fetchMyOrders) {
-    fetchMyOrders();
-    // console.log("order today: ", myOrders)
-  }
-
-  // 2. Set up an interval to call the function again every 30 seconds.
-  const intervalId = setInterval(() => {
+  useEffect(() => {
+    // 1. Fetch the user's orders as soon as the page loads.
     if (fetchMyOrders) {
-      console.log("Auto-refreshing user's orders on HomePage...");
       fetchMyOrders();
     }
-  }, 30000); // 30000 milliseconds = 30 seconds
 
-  // 3. Clean up by stopping the interval when the user navigates away.
-  // This is very important to prevent memory leaks.
-  return () => clearInterval(intervalId);
-}, [fetchMyOrders]);
+    // 2. Set up an interval to call the function again every 30 seconds.
+    const intervalId = setInterval(() => {
+      if (fetchMyOrders) {
+        console.log("Auto-refreshing user's orders on HomePage...");
+        fetchMyOrders();
+      }
+    }, 30000); // 30000 milliseconds = 30 seconds
+
+    // 3. Clean up by stopping the interval when the user navigates away.
+    return () => clearInterval(intervalId);
+  }, [fetchMyOrders]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -62,6 +71,17 @@ useEffect(() => {
       fetchMyOrders(); 
     }
   }, [user, authLoading, navigate, fetchMyOrders]);
+
+  useEffect(() => {
+    if (updateSuccess) {
+      // Close the dialog and clear messages after a successful update
+      setTimeout(() => {
+        setEditDialogOpen(false);
+        clearMessages();
+        // You might want to refresh user data here
+      }, 1500);
+    }
+  }, [updateSuccess, clearMessages]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -84,7 +104,7 @@ useEffect(() => {
     return 'Fecha inválida';
   };
 
-  // Mapa para traducir estados de pedidos a español - AHORA INCLUYE 'expired'
+  // Mapa para traducir estados de pedidos a español
   const orderStatusMap = {
     pending: 'Pendiente',
     placed: 'Realizado',
@@ -92,7 +112,7 @@ useEffect(() => {
     shipped: 'Enviado',
     delivered: 'Entregado',
     cancelled: 'Cancelado',
-    expired: 'Expirado', // <-- AÑADIDO: Estado 'expired'
+    expired: 'Expirado',
   };
 
   // Función para obtener el estado traducido
@@ -101,14 +121,40 @@ useEffect(() => {
     return translated ? translated : status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  // if (localLoading || authLoading || ordersLoading) {
-  //   return (
-  //     <Container maxWidth="xl" sx={{ my: 4, textAlign: 'center', flexGrow: 1 }}>
-  //       <CircularProgress color="primary" size={60} />
-  //       <Typography variant="h5" sx={{ mt: 3, color: 'text.primary' }}>Cargando perfil y pedidos...</Typography>
-  //     </Container>
-  //   );
-  // }
+  const handleEditClick = () => {
+    setEditFormData({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || '',
+      address: user.address || '',
+      resellerCategory: user.resellerCategory || ''
+    });
+    setEditDialogOpen(true);
+    clearMessages();
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateResellerProfile(user._id, editFormData);
+    } catch (error) {
+      // Error is handled in the context
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setEditDialogOpen(false);
+    clearMessages();
+  };
 
   if (authError || ordersError) {
     return (
@@ -156,12 +202,149 @@ useEffect(() => {
 
   return (
     <Container maxWidth="lg" sx={{ my: { xs: 4, sm: 6 }, flexGrow: 1, position: 'relative' }}>
-      
+      {/* Edit Profile Dialog */}
+      <Dialog open={editDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ 
+          bgcolor: '#263C5C', 
+          color: 'white', 
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <EditIcon sx={{ mr: 1 }} />
+          Editar Información Personal
+        </DialogTitle>
+        <form onSubmit={handleEditSubmit}>
+          <DialogContent sx={{ pt: 3 }}>
+            {updateError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {updateError}
+              </Alert>
+            )}
+            {updateSuccess && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Perfil actualizado exitosamente!
+              </Alert>
+            )}
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Nombre"
+                  name="firstName"
+                  value={editFormData.firstName}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Apellido"
+                  name="lastName"
+                  value={editFormData.lastName}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label="Correo Electrónico"
+                  name="email"
+                  type="email"
+                  value={editFormData.email}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Teléfono"
+                  name="phoneNumber"
+                  value={editFormData.phoneNumber}
+                  onChange={handleEditFormChange}                  
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Dirección"
+                  name="address"
+                  multiline
+                  rows={3}
+                  value={editFormData.address}
+                  onChange={handleEditFormChange}                  
+                />
+              </Grid>
+              {user.role === 'Revendedor' && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    disabled
+                    label="Categoría de Revendedor"
+                    name="resellerCategory"
+                    value={editFormData.resellerCategory}
+                    onChange={handleEditFormChange}
+                    select
+                    SelectProps={{ native: true }}
+                  >
+                    <option value=""></option>
+                    <option value="cat1">Categoría 1</option>
+                    <option value="cat2">Categoría 2</option>
+                    <option value="cat3">Categoría 3</option>
+                    <option value="cat4">Categoría 4</option>
+                    <option value="cat5">Categoría 5</option>
+                  </TextField>
+                </Grid>
+              )}
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={handleCloseDialog} color="secondary">
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              variant="contained" 
+              disabled={updateLoading}
+              sx={{ minWidth: 100, backgroundColor: '#263C5C' }}
+            >
+              {updateLoading ? <CircularProgress size={24} /> : 'Guardar'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* Información del Usuario/Revendedor - Ocupa todo el ancho */}
-      <Card sx={{ ...cardStyle, mb: { xs: 3, sm: 4 } }}> 
+      <Card sx={{ ...cardStyle, mb: { xs: 3, sm: 4 }, position: 'relative' }}> 
+        <IconButton 
+          sx={{ 
+            position: 'absolute', 
+            top: 16, 
+            right: 16, 
+            bgcolor: theme.palette.primary.main,
+            color: 'white',
+            '&:hover': {
+              bgcolor: theme.palette.primary.dark,
+            }
+          }}
+          onClick={handleEditClick}
+        >
+          <EditIcon />
+        </IconButton>
+        
         <CardContent sx={{ p: { xs: 3, sm: 5 } }}> 
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 3, pb: 1, borderBottom: `2px solid ${theme.palette.primary.light}` }}>
+          <Typography variant="h5" component="h2" gutterBottom sx={{ 
+            fontWeight: 700, 
+            color: theme.palette.text.primary, 
+            mb: 3, 
+            pb: 1, 
+            borderBottom: `2px solid ${theme.palette.primary.light}`,
+            pr: 4 // Add padding to prevent overlap with edit button
+          }}>
             Información Personal
           </Typography>
           <List disablePadding>
@@ -169,7 +352,7 @@ useEffect(() => {
               <ListItemText 
                 primary={
                   <Typography variant="body1" color="text.secondary">
-                        <PersonIcon sx={iconStyle} /> Nombre Completo: <Typography component="span" fontWeight="medium" color="text.primary">{user.firstName} {user.lastName}</Typography>
+                    <PersonIcon sx={iconStyle} /> Nombre Completo: <Typography component="span" fontWeight="medium" color="text.primary">{user.firstName} {user.lastName}</Typography>
                   </Typography>
                 } 
               />
@@ -194,7 +377,7 @@ useEffect(() => {
                 />
               </ListItem>
             )}
-            {(user.address ) && ( // Muestra la dirección completa si está disponible
+            {(user.address ) && (
               <ListItem disableGutters sx={{ py: 1 }}>
                 <ListItemText 
                   primary={
@@ -215,8 +398,18 @@ useEffect(() => {
                 Información de Usuario
               </Typography>
               <List disablePadding>        
+                {user.resellerCategory && (
+                  <ListItem disableGutters sx={{ py: 0.5 }}>
+                    <ListItemText 
+                      primary={
+                        <Typography variant="body1" color="text.secondary">
+                          <CategoryIcon sx={iconStyle} /> Categoría: <Typography component="span" fontWeight="medium" color="text.primary">{user.resellerCategory}</Typography>
+                        </Typography>
+                      } 
+                    />
+                  </ListItem>
+                )}
                 
-
                 <ListItem disableGutters sx={{ py: 0.5 }}>
                   <ListItemText 
                     primary={
@@ -232,6 +425,7 @@ useEffect(() => {
         </CardContent>
       </Card>
 
+      {/* Rest of the component remains the same */}
       {/* Mis Pedidos Recientes - Ocupa todo el ancho y está centrado */}
       <Card sx={cardStyle}>
         <CardContent sx={{ p: { xs: 3, sm: 5 } }}> 
@@ -317,7 +511,7 @@ useEffect(() => {
                               order.status === 'shipped' ? theme.palette.secondary.main : 
                               order.status === 'delivered' ? theme.palette.success.main :
                               order.status === 'cancelled' ? theme.palette.error.main :
-                              order.status === 'expired' ? theme.palette.error.dark : // Color específico para 'Expirado'
+                              order.status === 'expired' ? theme.palette.error.dark :
                               theme.palette.grey[500],
                             whiteSpace: 'nowrap', 
                             fontSize: { xs: '0.8rem', sm: '0.9rem' }, 
