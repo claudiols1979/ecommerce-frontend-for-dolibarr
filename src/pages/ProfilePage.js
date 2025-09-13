@@ -200,6 +200,17 @@ const ProfilePage = () => {
 
   const displayOrders = myOrders.slice(0, 10); 
 
+  const getCategoryLabel = (category) => {
+    const categories = {
+      cat1: 'Tienda en Línea',
+      cat2: 'Mayorista Nivel 1',
+      cat3: 'Mayorista Nivel 2',
+      cat4: 'Distribuidor',
+      cat5: 'Distribuidor Premium'
+    };
+    return categories[category] || category;
+  };
+
   return (
     <Container maxWidth="lg" sx={{ my: { xs: 4, sm: 6 }, flexGrow: 1, position: 'relative' }}>
       {/* Edit Profile Dialog */}
@@ -403,7 +414,7 @@ const ProfilePage = () => {
                     <ListItemText 
                       primary={
                         <Typography variant="body1" color="text.secondary">
-                          <CategoryIcon sx={iconStyle} /> Categoría: <Typography component="span" fontWeight="medium" color="text.primary">{user.resellerCategory}</Typography>
+                          <CategoryIcon sx={iconStyle} /> Categoría: <Typography component="span" fontWeight="medium" color="text.primary">{getCategoryLabel(user.resellerCategory)}</Typography>
                         </Typography>
                       } 
                     />
