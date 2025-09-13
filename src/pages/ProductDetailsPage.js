@@ -619,9 +619,18 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
 
 // Función para formatear valores de array
 const formatArrayValue = (value) => {
-  if (!value) return 'N/A';
-  if (Array.isArray(value)) return value.join(', ');
-  return value;
+  if (!value || !Array.isArray(value) || value.length === 0) return 'N/A';
+  
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+      {value.map((feature, index) => (
+        <Box key={index} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+          <Box component="span" sx={{ mr: 1 }}>•</Box>
+          <Box component="span">{feature}</Box>
+        </Box>
+      ))}
+    </Box>
+  );
 };
 
   return (
