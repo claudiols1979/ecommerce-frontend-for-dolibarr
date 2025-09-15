@@ -18,6 +18,7 @@ import {
   IconButton
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
+import CheckIcon from '@mui/icons-material/Check';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -531,7 +532,7 @@ const DepartmentalFilterBar = () => {
             <Button
               size="small"
               onClick={clearAllFilters}
-              startIcon={<ClearIcon />}
+              startIcon={<CheckIcon />}
               sx={{ 
                 fontSize: 18,
                 fontWeight: 500,
@@ -541,7 +542,7 @@ const DepartmentalFilterBar = () => {
                 }
               }}
             >
-              Limpiar filtros
+              Ver todos los productos
             </Button>
           </Box>
         )}

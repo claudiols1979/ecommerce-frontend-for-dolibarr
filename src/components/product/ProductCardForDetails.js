@@ -3,36 +3,16 @@ import { Card, CardMedia, CardContent, CardActions, Typography, Button, Box, Cir
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LoginIcon from '@mui/icons-material/Login';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../../utils/formatters';
 import { calculatePriceWithTax } from '../../utils/taxCalculations';
 
-// Helper function to extract variant attributes from product code
-const extractVariantAttributes = (code) => {
-  if (!code) return { baseCode: '', attributes: [] };
-  const firstUnderscoreIndex = code.indexOf('_');
-  if (firstUnderscoreIndex === -1) {
-    return { baseCode: code, attributes: [] };
-  }
-  const baseCode = code.substring(0, firstUnderscoreIndex);
-  const attributesPart = code.substring(firstUnderscoreIndex + 1);
-  const attributes = attributesPart.split('_');
-  return { baseCode, attributes };
-};
-
 const ProductCard = ({ product, onAddToCart, isAdding }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const theme = useTheme();
-
-  // DETECTAR SI EL PRODUCTO TIENE VARIANTES
-  const hasVariants = React.useMemo(() => {
-    if (!product || !product.code) return false;
-    const variantAttributes = extractVariantAttributes(product.code);
-    return variantAttributes.attributes.length > 0;
-  }, [product]);
 
   const displayPrice = React.useMemo(() => {
     if (!product || !product.resellerPrices) return null;
@@ -65,7 +45,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
     }
     
     return null;
-  }, [priceWithTax, product.promotionalLabels]);
+  }, [displayPrice, product.promotionalLabels]);
 
   const handleAddToCartClick = () => {
     if (!isAuthenticated) {
@@ -79,11 +59,6 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
     }
     if (!displayPrice || displayPrice <= 0) {
       toast.error('No se puede añadir al carrito: Precio no disponible.');
-      return;
-    }
-    if (hasVariants) {
-      // Si tiene variantes, redirigir a la página de detalles
-      handleViewDetails();
       return;
     }
     if (onAddToCart) {
@@ -168,17 +143,17 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           {product.name}
         </Typography>
 
-        {/* Show variant chip if this product has variants */}
-        {hasVariants && (
+        {/* Show variant count if this product has variants */}
+        {product.variantCount > 1 && (
           <Chip 
-            label={`Ver variantes`} 
+            label={`${product.variantCount} variantes`} 
             size="small" 
             color="secondary" 
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagation(); // Prevent triggering the card's onClick
               handleViewDetails();
             }}
-            sx={{ mb: 1, fontSize: '0.65rem', height: '20px', cursor: 'pointer' }}
+            sx={{ mb: 1, fontSize: '0.65rem', height: '20px' }}
           />
         )}
 
@@ -250,106 +225,58 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
             )}
         </Box>
       </CardContent>
-<CardActions sx={{ 
-  p: 1.5, 
-  pt: 1, 
-  justifyContent: hasVariants ? 'center' : 'space-between', // Centrado para variantes
-  borderTop: `1px solid ${theme.palette.grey[100]}` 
-}}>
-  
-  {/* BOTÓN VER - SIEMPRE VISIBLE */}
-  {!hasVariants && (
-  <Button
-    size="small"
-    onClick={handleViewDetails}
-    variant="outlined"           
-    startIcon={<VisibilityIcon />}
-    sx={{ 
-      borderRadius: 2, 
-      textTransform: 'none', 
-      fontSize: '0.75rem', 
-      py: 0.5, 
-      backgroundColor: '#ffffffff', 
-      color: 'black',
-      '&:hover': { 
-        backgroundColor: '#263C5C',
-        color: '#ffffffff',
-        border: '1px solid #263C5C'
-      } 
-    }}
-  >
-    Ver
-  </Button>
-  )}
-  {/* BOTÓN DE AÑADIR/VER OPCIONES - CONDICIONAL */}
-  {!hasVariants ? (
-    <Tooltip title={isOutOfStock ? "Producto agotado" : (isAuthenticated ? "Añadir al carrito" : "Inicia sesión para comprar")}>
-      <span>
+      <CardActions sx={{ p: 1.5, pt: 1, justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.grey[100]}` }}>
         <Button
           size="small"
-          variant="contained"
-          color="primary" 
-          onClick={handleAddToCartClick}
-          startIcon={isAdding ? <CircularProgress size={18} color="inherit" /> : (isAuthenticated ? <ShoppingCartIcon sx={{ fontSize: '1rem' }} /> : <LoginIcon sx={{ fontSize: '1rem' }} />)}
-          disabled={isAdding || isOutOfStock || !displayPrice || displayPrice <= 0}
+          onClick={handleViewDetails}
+          variant="outlined"           
+          startIcon={<VisibilityIcon />}
           sx={{ 
-            borderRadius: 2, 
-            textTransform: 'none',
-            fontSize: '0.75rem', 
-            py: 0.5, 
-            minWidth: '80px',
-            background: `linear-gradient(45deg, #bb4343ff 30%, #bb4343ff 90%)`,
-            boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, 
-            color: 'white', 
-            '&:hover': {
-              background: `linear-gradient(45deg, #ff0000ff 30%, #ff0000ff 90%)`,
-              boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
-              transform: 'translateY(-2px)', 
-            },
-            '&:active': {
-              transform: 'translateY(0)', 
-            },
-            '&:disabled': {
-              background: '#cccccc',
-              color: '#666666',
-            }
-          }}
-        >
-          {isOutOfStock ? 'Agotado' : 'Añadir'}
-        </Button>
-      </span>
-    </Tooltip>
-  ) : (
-    <Tooltip title="Este producto tiene variantes - Haz clic para ver opciones">
-      <Button
-        size="small"
-        variant="contained"
-        color="secondary"
-        onClick={handleViewDetails}
-        sx={{ 
           borderRadius: 2, 
-          textTransform: 'none',
+          textTransform: 'none', 
           fontSize: '0.75rem', 
           py: 0.5, 
-          minWidth: '110px',
-          background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, ${theme.palette.secondary.dark} 90%)`,
-          boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, 
-          color: 'white', 
-          '&:hover': {
-            background: `linear-gradient(45deg, ${theme.palette.secondary.dark} 30%, ${theme.palette.secondary.dark} 90%)`,
-            boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
-            transform: 'translateY(-2px)', 
-          },
-          '&:active': {
-            transform: 'translateY(0)', 
-          },
+          backgroundColor: '#ffffffff', 
+          color: 'black',
+          '&:hover': { 
+            backgroundColor: '#263C5C',
+            color: '#ffffffff',
+            border: '1px solid #263C5C'
+          } 
         }}
-      >
-        Ver Opciones
-      </Button>
-    </Tooltip>
-  )}
-</CardActions>
+        >
+          Ver
+        </Button>
+        <Tooltip title={isOutOfStock ? "Producto agotado" : (isAuthenticated ? "Añadir al carrito" : "Inicia sesión para comprar")}>
+          <span>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary" 
+              onClick={handleAddToCartClick}
+              startIcon={isAdding ? <CircularProgress size={18} color="inherit" /> : (isAuthenticated ? <ShoppingCartIcon sx={{ fontSize: '1rem' }} /> : <LoginIcon sx={{ fontSize: '1rem' }} />)}
+              disabled={isAdding || isOutOfStock || !displayPrice || displayPrice <= 0}
+              sx={{ 
+                ml: 1, borderRadius: 2, textTransform: 'none',
+                fontSize: '0.75rem', py: 0.5, 
+                background: `linear-gradient(45deg, #bb4343ff 30%, #bb4343ff 90%)`,
+                boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, 
+                color: 'white', 
+                '&:hover': {
+                  background: `linear-gradient(45deg, #ff0000ff 30%, #ff0000ff 90%)`,
+                  boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
+                  transform: 'translateY(-2px)', 
+                },
+                '&:active': {
+                  transform: 'translateY(0)', 
+                },
+              }}
+            >
+              {isOutOfStock ? 'Agotado' : 'Añadir'}
+            </Button>
+          </span>
+        </Tooltip>
+      </CardActions>
     </Card>
   );
 };
