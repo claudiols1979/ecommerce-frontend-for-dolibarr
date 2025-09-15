@@ -93,7 +93,6 @@ const ProductDetailsPage = () => {
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [availableOptions, setAvailableOptions] = useState({});
   const [attributeOptions, setAttributeOptions] = useState([]);
-const [currentProductId, setCurrentProductId] = useState(null);
 
   const WHATSAPP_AGENT_NUMBER = '50672317420';
 
@@ -186,224 +185,116 @@ const [currentProductId, setCurrentProductId] = useState(null);
     return productName;
   };
 
-  // Add this function to pre-cache attribute options for all loaded products
-const preCacheProductAttributes = (products) => {
-  const productsWithVariants = products.filter(product => {
-    const attributes = extractVariantAttributes(product.code);
-    return attributes.attributes.length > 0;
-  });
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const fetchProductDetails = async () => {
+      setLoadingSpecificProduct(true);
+      setErrorSpecificProduct(null);
+      try {
+        const token = user?.token;
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+        setProduct(data);
 
-  productsWithVariants.forEach(product => {
-    const currentVariantAttributes = extractVariantAttributes(product.code);
-    const baseCode = currentVariantAttributes.baseCode;
-    
-    // Check if we already have this cached
-    const cacheKey = `attributeOptions_${product._id}`;
-    if (!localStorage.getItem(cacheKey)) {
-      // Find all variants of this product
-      const variants = products.filter(p => {
-        const attr = extractVariantAttributes(p.code);
-        return attr.baseCode === baseCode;
-      });
+        // Find all variants of this product
+        const currentVariantAttributes = extractVariantAttributes(data.code);
 
-      const optionsMap = new Map();
-      const attributeOptionsList = [];
+        if (currentVariantAttributes.attributes.length > 0) {
+          // This is a variant product, find all its siblings
+          const variants = allProductsFromContext.filter(p => {
+            const attr = extractVariantAttributes(p.code);
+            return attr.baseCode === currentVariantAttributes.baseCode;
+          });
 
-      currentVariantAttributes.attributes.forEach((_, index) => {
-        attributeOptionsList.push({
-          type: getAttributeType(index),
-          values: new Set()
-        });
-      });
+          setProductVariants(variants);
 
-      variants.forEach(variant => {
-        if (variant.countInStock > 0) {
-          const attr = extractVariantAttributes(variant.code);
-          attr.attributes.forEach((value, index) => {
-            if (index < attributeOptionsList.length) {
-              attributeOptionsList[index].values.add(value);
+          // Extract available options from variants WITH STOCK ONLY
+          const optionsMap = new Map();
+          const attributeOptionsList = [];
+
+          // Initialize attribute options structure
+          currentVariantAttributes.attributes.forEach((_, index) => {
+            attributeOptionsList.push({
+              type: getAttributeType(index),
+              values: new Set()
+            });
+          });
+
+          variants.forEach(variant => {
+            // ONLY include variants that have available stock
+            if (variant.countInStock > 0) {
+              const attr = extractVariantAttributes(variant.code);
+
+              // Add values to attribute options
+              attr.attributes.forEach((value, index) => {
+                if (index < attributeOptionsList.length) {
+                  attributeOptionsList[index].values.add(value);
+                }
+              });
+
+              // Create option key for filtering
+              const optionKey = attr.attributes.join('|');
+              optionsMap.set(optionKey, variant);
             }
           });
-          const optionKey = attr.attributes.join('|');
-          optionsMap.set(optionKey, variant);
+
+          // Convert Sets to Arrays
+          const finalAttributeOptions = attributeOptionsList.map(opt => ({
+            type: opt.type,
+            values: Array.from(opt.values)
+          }));
+
+          setAttributeOptions(finalAttributeOptions);
+          setAvailableOptions(optionsMap);
+
+          // Set initial selections based on current product
+          const initialSelections = {};
+          currentVariantAttributes.attributes.forEach((value, index) => {
+            initialSelections[getAttributeType(index)] = value;
+          });
+          setSelectedAttributes(initialSelections);
         }
-      });
 
-      const finalAttributeOptions = attributeOptionsList.map(opt => ({
-        type: opt.type,
-        values: Array.from(opt.values)
-      }));
+        // Get reviews for this product
+        fetchReviews(id);
 
-      // Cache the results
-      localStorage.setItem(cacheKey, JSON.stringify({
-        finalAttributeOptions,
-        optionsMap: Array.from(optionsMap.entries()),
-        initialSelections: {},
-        timestamp: Date.now()
-      }));
-    }
-  });
-};
+        if (allProductsFromContext.length > 1) {
+          const filtered = allProductsFromContext.filter(p => p._id !== id);
 
-// useEffect(() => {
-//   if (!user) {
-//     // Clear all product-related localStorage when user logs out
-//     const keysToRemove = [];
-//     for (let i = 0; i < localStorage.length; i++) {
-//       const key = localStorage.key(i);
-//       if (key && key.startsWith('attributeOptions_')) {
-//         keysToRemove.push(key);
-//       }
-//     }
-//     keysToRemove.forEach(key => localStorage.removeItem(key));
-//     setCurrentProductId(null);
-//   }
-// }, [user]);
+          // Aplicar la misma lógica de agrupamiento a los productos relacionados
+          const groupedRelated = groupProductsByBase(filtered);
+          const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
 
-
-
-// Add this useEffect to clear localStorage when navigating to a different product
-useEffect(() => {
-  // Clear previous product's attribute state when switching to a new product
-  if (id && id !== currentProductId) {
-    // Remove the specific key for the previous product only if currentProductId exists
-    if (currentProductId) {
-      localStorage.removeItem(`attributeOptions_${currentProductId}`);
-    }
-    setCurrentProductId(id);
-  }
-}, [id, currentProductId]);
-
-
-
-  
-useEffect(() => {
-  if (id && id !== currentProductId) {
-    // Clear previous product's attribute state when switching to a new product
-    if (currentProductId) {
-      setAttributeOptions([]);
-      setAvailableOptions(new Map());
-      setSelectedAttributes({});
-      setProductVariants([]);
-    }
-    setCurrentProductId(id);
-  }
-}, [id, currentProductId]);
-
-// Then in your useEffect:
-useEffect(() => {
-  window.scrollTo(0, 0);
-  
-  // Define buildAttributeOptionsFromScratch inside the useEffect
-  const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
-    const variants = allProductsFromContext.filter(p => {
-      const attr = extractVariantAttributes(p.code);
-      return attr.baseCode === currentVariantAttributes.baseCode;
-    });
-
-    setProductVariants(variants);
-
-    const optionsMap = new Map();
-    const attributeOptionsList = [];
-
-    currentVariantAttributes.attributes.forEach((_, index) => {
-      attributeOptionsList.push({
-        type: getAttributeType(index),
-        values: new Set()
-      });
-    });
-
-    variants.forEach(variant => {
-      if (variant.countInStock > 0) {
-        const attr = extractVariantAttributes(variant.code);
-        attr.attributes.forEach((value, index) => {
-          if (index < attributeOptionsList.length) {
-            attributeOptionsList[index].values.add(value);
-          }
-        });
-        const optionKey = attr.attributes.join('|');
-        optionsMap.set(optionKey, variant);
-      }
-    });
-
-    const finalAttributeOptions = attributeOptionsList.map(opt => ({
-      type: opt.type,
-      values: Array.from(opt.values)
-    }));
-
-    setAttributeOptions(finalAttributeOptions);
-    setAvailableOptions(optionsMap);
-
-    const initialSelections = {};
-    currentVariantAttributes.attributes.forEach((value, index) => {
-      initialSelections[getAttributeType(index)] = value;
-    });
-    setSelectedAttributes(initialSelections);
-
-    localStorage.setItem(`attributeOptions_${id}`, JSON.stringify({
-      finalAttributeOptions,
-      optionsMap: Array.from(optionsMap.entries()),
-      initialSelections,
-      timestamp: Date.now()
-    }));
-  };
-
-  
-
-  const fetchProductDetails = async () => {
-    setLoadingSpecificProduct(true);
-    setErrorSpecificProduct(null);
-    try {
-      const token = user?.token;
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-      setProduct(data);
-
-      // Find all variants of this product
-      const currentVariantAttributes = extractVariantAttributes(data.code);
-
-      if (currentVariantAttributes.attributes.length > 0) {
-        // Check if we have cached attributeOptions for this product
-        const cachedData = localStorage.getItem(`attributeOptions_${id}`);
-        
-        if (cachedData) {
-          try {
-            const parsedData = JSON.parse(cachedData);
-            setAttributeOptions(parsedData.finalAttributeOptions);
-            setAvailableOptions(new Map(parsedData.optionsMap));
-            setSelectedAttributes(parsedData.initialSelections);
-          } catch (error) {
-            console.error('Error parsing cached data:', error);
-            localStorage.removeItem(`attributeOptions_${id}`);
-            buildAttributeOptionsFromScratch(data, currentVariantAttributes);
-          }
-        } else {
-          buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+          // Tomar solo 3 productos aleatorios
+          const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+          setRelatedProducts(shuffled.slice(0, 3));
         }
+      } catch (err) {
+        setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+      } finally {
+        setLoadingSpecificProduct(false);
       }
-
-      // Get reviews for this product
-      fetchReviews(id);
-
-      if (allProductsFromContext.length > 1) {
-        const filtered = allProductsFromContext.filter(p => p._id !== id);
-        const groupedRelated = groupProductsByBase(filtered);
-        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
-        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
-        setRelatedProducts(shuffled.slice(0, 3));
-      }
-    } catch (err) {
-      setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-    } finally {
-      setLoadingSpecificProduct(false);
+    };
+    if (id) {
+      fetchProductDetails();
     }
-  };
+    setQuantity(1);
+  }, [id, user?.token, allProductsFromContext, fetchReviews]);
 
-  if (id) {
-    fetchProductDetails();
-  }
-  setQuantity(1);
-}, [id, user?.token, allProductsFromContext, fetchReviews]);
+  // Update product when attribute selection changes
+  useEffect(() => {
+    if (Object.keys(selectedAttributes).length > 0 && productVariants.length > 0) {
+      const selectedValues = Object.values(selectedAttributes);
+      const optionKey = selectedValues.join('|');
+
+      const selectedVariant = availableOptions.get(optionKey);
+
+      if (selectedVariant) {
+        setProduct(selectedVariant);
+        setQuantity(1); // Reset quantity when variant changes
+      }
+    }
+  }, [selectedAttributes, productVariants, availableOptions]);
 
   // Handle attribute selection change
   const handleAttributeChange = (attributeType, value) => {
@@ -496,59 +387,43 @@ useEffect(() => {
   const priceWithTax = product && displayPrice !== null ?
     calculatePriceWithTax(displayPrice, product.iva) : null;
 
-const getSelectedVariant = () => {
-  if (attributeOptions.length === 0) return product;
-  
-  const selectedValues = Object.values(selectedAttributes);
-  const optionKey = selectedValues.join('|');
-  
-  return availableOptions.get(optionKey) || product;
-};
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!product) { return; }
+    if (quantity <= 0) {
+      return;
+    }
+    if (quantity > product.countInStock) {
+      return;
+    }
+    const priceToPass = getPriceAtSale(product);
+    if (priceToPass <= 0) {
+      return;
+    }
+    await addItemToCart(product._id, quantity, priceToPass);
+  };
 
-// Update handleAddToCart to use the selected variant
-const handleAddToCart = async () => {
-  if (!user) {
-    navigate('/login');
-    return;
-  }
-  
-  const selectedVariant = getSelectedVariant();
-  
-  if (!selectedVariant) { return; }
-  if (quantity <= 0) { return; }
-  
-  if (quantity > selectedVariant.countInStock) {
-    toast.error(`Solo ${selectedVariant.countInStock} disponibles en stock`);
-    return;
-  }
-  
-  const priceToPass = getPriceAtSale(selectedVariant);
-  if (priceToPass <= 0) {
-    return;
-  }
-  
-  await addItemToCart(selectedVariant._id, quantity, priceToPass);
-};
-
-const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
-  if (typeof addItemToCart !== 'function') {
-    return;
-  }
-  setAddingProductId(relatedProduct._id);
-  const priceToPass = getPriceAtSale(relatedProduct);
-  if (priceToPass <= 0) {
-    setAddingProductId(null);
-    return;
-  }
-  try {
-    await addItemToCart(relatedProduct._id, qty, priceToPass);
-  } catch (err) {
-    console.log(err.message);
-  } finally {
-    setAddingProductId(null);
-  }
-}, [addItemToCart, getPriceAtSale]);
-
+  const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
+    if (typeof addItemToCart !== 'function') {
+      return;
+    }
+    setAddingProductId(relatedProduct._id);
+    const priceToPass = getPriceAtSale(relatedProduct);
+    if (priceToPass <= 0) {
+      setAddingProductId(null);
+      return;
+    }
+    try {
+      await addItemToCart(relatedProduct._id, qty, priceToPass);
+    } catch (err) {
+      console.log(err.message);
+    } finally {
+      setAddingProductId(null);
+    }
+  }, [addItemToCart, getPriceAtSale]);
 
   const handleWhatsAppInquiry = () => {
     if (!product) {

@@ -40,6 +40,22 @@ const loginReseller = async (resellerCode) => {
 // Función para cerrar sesión
 const logout = () => {
   localStorage.removeItem("user"); // Elimina el objeto de usuario completo
+
+  // Remove all attributeOptions from localStorage
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.includes('attributeOptions')) {
+      keysToRemove.push(key);
+    }
+  }
+  
+  // Remove all found attributeOptions keys
+  keysToRemove.forEach(key => {
+    localStorage.removeItem(key);
+  });
+  
+  console.log('User logged out and all attributeOptions removed');
 };
 
 // --- Funciones de Reseteo de Contraseña (reutilizadas) ---
