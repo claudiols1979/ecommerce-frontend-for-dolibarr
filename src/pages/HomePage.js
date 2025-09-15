@@ -106,9 +106,15 @@ const HomePage = () => {
   const [homeSearchTerm, setHomeSearchTerm] = useState('');
   const [groupedProducts, setGroupedProducts] = useState([]);
 
-  useEffect(() => {
-    fetchProducts(1, 20, 'createdAt_desc'); 
-  }, [fetchProducts]);
+  // useEffect(() => {
+  //   fetchProducts(1, 20, 'createdAt_desc'); 
+  // }, [fetchProducts]);
+
+  // Cambiar el useEffect que carga los productos
+useEffect(() => {
+  // En lugar de ordenar por createdAt_desc, usar un orden aleatorio
+  fetchProducts(1, 20, 'random'); 
+}, [fetchProducts]);
 
   // Process products when they change
   useEffect(() => {
