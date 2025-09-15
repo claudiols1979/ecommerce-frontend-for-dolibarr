@@ -43,10 +43,11 @@ const HeroCarousel = () => {
 
   const slides = [
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589232/imageHome_rr1pkn.jpg', // USANDO LA IMAGEN IMPORTADA
+      //image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589232/imageHome_rr1pkn.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1757961934/nike-vaporfly4-ficha-recurso-foto1-bene_l9kien.jpg',
       alt: 'Nueva Colección Primavera',
       title: 'Descubre las nuevas colecciones',
-      description: 'Estilo y frescura para cada gusto. ¡Explora nuestros últimos productos!',
+      description: 'Estilo para cada gusto. ¡Explora nuestros últimos productos!',
       buttonText: 'Ver Productos',
       buttonLink: '/products',
     },

@@ -33,7 +33,8 @@ const DepartmentalFilterBar = () => {
     fetchDepartmentalProducts, 
     fetchTaxonomy, 
     currentFilters,
-    departmentalLoading 
+    departmentalLoading,
+    clearAllFilters: clearAllContextFilters  // Assuming this exists in your context
   } = useDepartmental();
   
   const navigate = useNavigate();
@@ -70,6 +71,13 @@ const DepartmentalFilterBar = () => {
     });
     setActiveFilters(currentFilters);
   }, [currentFilters]);
+
+  // Clear filters when navigating away from products page
+  useEffect(() => {
+    if (location.pathname !== '/products' && hasActiveFilters) {
+      clearAllFilters();
+    }
+  }, [location.pathname]);
 
   // Ajustar estado expandido cuando cambia el tamaño de pantalla
   useEffect(() => {
@@ -150,7 +158,12 @@ const DepartmentalFilterBar = () => {
     setUiFilters(emptyFilters);
     fetchTaxonomy({});
     applyFilters(emptyFilters);
-  }, [fetchTaxonomy, applyFilters]);
+    
+    // Clear filters in context if available
+    if (clearAllContextFilters) {
+      clearAllContextFilters();
+    }
+  }, [fetchTaxonomy, applyFilters, clearAllContextFilters]);
 
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
 
