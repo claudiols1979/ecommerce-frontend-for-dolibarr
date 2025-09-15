@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import {
   Container, Box, Typography, Button, TextField, CircularProgress,
-  Card, CardContent, Link as MuiLink, Alert, useTheme
+  Card, CardContent, Link as MuiLink, Alert, Paper
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AuthBranding from '../components/common/AuthBranding';
-
-// Iconos
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 
 const ForgotPasswordPage = () => {
@@ -18,7 +16,6 @@ const ForgotPasswordPage = () => {
   
   const { forgotPassword } = useAuth();
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -37,7 +34,7 @@ const ForgotPasswordPage = () => {
     setLoading(false);
   };
 
-  // Estilos consistentes con LoginPage
+  // Nuevos estilos que coinciden con PrivacyPolicyPage
   const primaryButtonStyle = {
     p: 1.5,
     mb: 2,
@@ -45,13 +42,13 @@ const ForgotPasswordPage = () => {
     fontWeight: 'bold',
     fontSize: '1rem',
     borderRadius: '8px',
-    color: 'common.black',
-    backgroundColor: '#FFD700',
-    boxShadow: '0 4px 15px 0 rgba(255, 215, 0, 0.4)',
+    color: 'white',
+    backgroundColor: '#263C5C',
+    boxShadow: '0 4px 15px 0 rgba(38, 60, 92, 0.3)',
     transition: 'all 0.3s ease',
     '&:hover': {
-      backgroundColor: '#FFC700',
-      boxShadow: '0 6px 20px 0 rgba(255, 215, 0, 0.5)',
+      backgroundColor: '#1E2F4A',
+      boxShadow: '0 6px 20px 0 rgba(38, 60, 92, 0.4)',
       transform: 'translateY(-2px)',
     },
   };
@@ -59,49 +56,68 @@ const ForgotPasswordPage = () => {
   const textFieldStyle = {
     '& .MuiOutlinedInput-root': {
       borderRadius: '8px',
-      '& .MuiInputBase-input': { color: 'white' },
-      '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
-      '&:hover fieldset': { borderColor: '#FFD700' },
-      '&.Mui-focused fieldset': { borderColor: '#FFD700' },
+      '& .MuiInputBase-input': { color: '#263C5C' },
+      '& fieldset': { borderColor: 'rgba(38, 60, 92, 0.3)' },
+      '&:hover fieldset': { borderColor: '#263C5C' },
+      '&.Mui-focused fieldset': { borderColor: '#263C5C' },
     },
-    '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#FFD700' },
+    '& .MuiInputLabel-root': { color: 'rgba(38, 60, 92, 0.7)' },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#263C5C' },
   };
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      width: '100%',
-      background: 'linear-gradient(135deg, #121212 30%, #282828 90%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      p: 2,
-    }}>
-      <Container maxWidth="xs">
-        <Card sx={{ 
-          p: { xs: 2, sm: 3 }, 
-          borderRadius: 4, 
-          boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
-          <CardContent>
+    <>
+      <Box sx={{
+        minHeight: '100vh',
+        width: '100%',
+        background: 'white',
+        py: { xs: 4, md: 8 },
+        px: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Container maxWidth="sm">
+          <Paper sx={{
+            p: { xs: 3, sm: 4 },
+            borderRadius: 4,
+            backgroundColor: 'rgba(255, 255, 255, 1)',
+            border: '1px solid rgba(38, 60, 92, 0.2)',
+            boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.1)',
+          }}>
             <AuthBranding />
-            <Typography variant="h5" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 1, fontWeight: 600, color: 'white' }}>
+            
+            <Typography variant="h4" component="h1" sx={{ 
+              textAlign: 'center', 
+              mb: 1, 
+              fontWeight: 700, 
+              color: '#263C5C' 
+            }}>
               Restablecer Contraseña
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mb: 3 }}>
-              Ingresa tu correo y te enviaremos un enlace.
+            
+            <Typography variant="body2" sx={{ 
+              textAlign: 'center', 
+              mb: 4, 
+              color: '#263C5C' 
+            }}>
+              Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
             </Typography>
 
             {message ? (
               <Box textAlign="center">
-                <Alert severity="success" sx={{ mb: 3, bgcolor: 'success.dark', color: 'white' }}>{message}</Alert>
+                <Alert severity="success" sx={{ 
+                  mb: 3, 
+                  bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                  color: '#2e7d32',
+                  border: '1px solid #2e7d32',
+                  borderRadius: '8px'
+                }}>
+                  {message}
+                </Alert>
               </Box>
             ) : (
-              <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+              <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
                 <TextField
                   margin="normal"
                   required
@@ -115,8 +131,14 @@ const ForgotPasswordPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   variant="outlined"
                   sx={textFieldStyle}
-                  InputProps={{ startAdornment: <EmailOutlinedIcon sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} /> }}
+                  InputProps={{ 
+                    startAdornment: <EmailOutlinedIcon sx={{ 
+                      mr: 1, 
+                      color: 'rgba(38, 60, 92, 0.7)' 
+                    }} /> 
+                  }}
                 />
+                
                 <Button
                   type="submit"
                   fullWidth
@@ -124,20 +146,37 @@ const ForgotPasswordPage = () => {
                   sx={primaryButtonStyle}
                   disabled={loading}
                 >
-                  {loading ? <CircularProgress size={24} sx={{ color: 'black' }} /> : 'Enviar Enlace'}
+                  {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Enviar Enlace'}
                 </Button>
               </Box>
             )}
 
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <MuiLink component={RouterLink} to="/login" underline="hover" sx={{ color: 'text.secondary', '&:hover': { color: '#FFD700' } }}>
-                Volver a Iniciar Sesión
+            <Box sx={{ 
+              mt: 3, 
+              textAlign: 'center',
+              borderTop: '1px solid rgba(38, 60, 92, 0.1)',
+              pt: 2
+            }}>
+              <MuiLink 
+                component={RouterLink} 
+                to="/login" 
+                underline="hover" 
+                sx={{ 
+                  color: '#263C5C', 
+                  fontWeight: 500,
+                  '&:hover': { 
+                    color: '#1E2F4A',
+                    textDecoration: 'underline'
+                  } 
+                }}
+              >
+                ← Volver a Iniciar Sesión
               </MuiLink>
             </Box>
-          </CardContent>
-        </Card>
-      </Container>
-    </Box>
+          </Paper>
+        </Container>
+      </Box>
+    </>
   );
 };
 

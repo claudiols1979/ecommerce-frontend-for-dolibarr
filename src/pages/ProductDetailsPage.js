@@ -29,6 +29,10 @@ import API_URL from '../config';
 import { formatPrice } from '../utils/formatters';
 import { calculatePriceWithTax } from '../utils/taxCalculations';
 
+
+
+
+
 // Helper function to extract base product name from code
 const extractBaseProductName = (name, code) => {
   if (!code || !code.includes('_')) return name;
@@ -93,7 +97,18 @@ const ProductDetailsPage = () => {
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [availableOptions, setAvailableOptions] = useState({});
   const [attributeOptions, setAttributeOptions] = useState([]);
-const [currentProductId, setCurrentProductId] = useState(null);
+  const [currentProductId, setCurrentProductId] = useState(null);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+  const [loadingAttributes, setLoadingAttributes] = useState(false);
+
+
+  const areAllAttributesSelected = () => {
+    if (!attributeOptions || attributeOptions.length === 0) return true; // Productos simples
+
+    return attributeOptions.every(attribute =>
+      selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
+    );
+  };
 
   const WHATSAPP_AGENT_NUMBER = '50672317420';
 
@@ -186,25 +201,131 @@ const [currentProductId, setCurrentProductId] = useState(null);
     return productName;
   };
 
-  // Add this function to pre-cache attribute options for all loaded products
-const preCacheProductAttributes = (products) => {
-  const productsWithVariants = products.filter(product => {
-    const attributes = extractVariantAttributes(product.code);
-    return attributes.attributes.length > 0;
-  });
+  //   // Add this function to pre-cache attribute options for all loaded products
+  const preCacheProductAttributes = (products) => {
+    const productsWithVariants = products.filter(product => {
+      const attributes = extractVariantAttributes(product.code);
+      return attributes.attributes.length > 0;
+    });
 
-  productsWithVariants.forEach(product => {
-    const currentVariantAttributes = extractVariantAttributes(product.code);
-    const baseCode = currentVariantAttributes.baseCode;
-    
-    // Check if we already have this cached
-    const cacheKey = `attributeOptions_${product._id}`;
-    if (!localStorage.getItem(cacheKey)) {
-      // Find all variants of this product
-      const variants = products.filter(p => {
+    productsWithVariants.forEach(product => {
+      const currentVariantAttributes = extractVariantAttributes(product.code);
+      const baseCode = currentVariantAttributes.baseCode;
+
+      // Check if we already have this cached
+      const cacheKey = `attributeOptions_${product._id}`;
+      if (!localStorage.getItem(cacheKey)) {
+        // Find all variants of this product
+        const variants = products.filter(p => {
+          const attr = extractVariantAttributes(p.code);
+          return attr.baseCode === baseCode;
+        });
+
+        const optionsMap = new Map();
+        const attributeOptionsList = [];
+
+        currentVariantAttributes.attributes.forEach((_, index) => {
+          attributeOptionsList.push({
+            type: getAttributeType(index),
+            values: new Set()
+          });
+        });
+
+        variants.forEach(variant => {
+          if (variant.countInStock > 0) {
+            const attr = extractVariantAttributes(variant.code);
+            attr.attributes.forEach((value, index) => {
+              if (index < attributeOptionsList.length) {
+                attributeOptionsList[index].values.add(value);
+              }
+            });
+            const optionKey = attr.attributes.join('|');
+            optionsMap.set(optionKey, variant);
+          }
+        });
+
+        const finalAttributeOptions = attributeOptionsList.map(opt => ({
+          type: opt.type,
+          values: Array.from(opt.values)
+        }));
+
+        // Cache the results
+        localStorage.setItem(cacheKey, JSON.stringify({
+          finalAttributeOptions,
+          optionsMap: Array.from(optionsMap.entries()),
+          initialSelections: {},
+          timestamp: Date.now()
+        }));
+      }
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      // Limpiar estado cuando el componente se desmonta
+      setAttributeOptions([]);
+      setAvailableOptions(new Map());
+      setSelectedAttributes({});
+      setProductsLoaded(false);
+    };
+  }, []);
+
+
+  // useEffect(() => {
+  //   if (!user) {
+  //     // Clear all product-related localStorage when user logs out
+  //     const keysToRemove = [];
+  //     for (let i = 0; i < localStorage.length; i++) {
+  //       const key = localStorage.key(i);
+  //       if (key && key.startsWith('attributeOptions_')) {
+  //         keysToRemove.push(key);
+  //       }
+  //     }
+  //     keysToRemove.forEach(key => localStorage.removeItem(key));
+  //     setCurrentProductId(null);
+  //   }
+  // }, [user]);
+
+
+
+  // Add this useEffect to clear localStorage when navigating to a different product
+  useEffect(() => {
+    // Clear previous product's attribute state when switching to a new product
+    if (id && id !== currentProductId) {
+      // Remove the specific key for the previous product only if currentProductId exists
+      if (currentProductId) {
+        localStorage.removeItem(`attributeOptions_${currentProductId}`);
+      }
+      setCurrentProductId(id);
+    }
+  }, [id, currentProductId]);
+
+
+  const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
+    // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
+    if (currentVariantAttributes.attributes.length === 0) {
+      setAttributeOptions([]);
+      setAvailableOptions(new Map());
+      setSelectedAttributes({});
+      setLoadingAttributes(false);
+      return;
+    }
+
+    setLoadingAttributes(true);
+
+    try {
+      const variants = allProductsFromContext.filter(p => {
         const attr = extractVariantAttributes(p.code);
-        return attr.baseCode === baseCode;
+        return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
       });
+
+      if (variants.length === 0) {
+        setAttributeOptions([]);
+        setAvailableOptions(new Map());
+        return;
+      }
+
+      variants.sort((a, b) => a.code.localeCompare(b.code));
 
       const optionsMap = new Map();
       const attributeOptionsList = [];
@@ -217,104 +338,6 @@ const preCacheProductAttributes = (products) => {
       });
 
       variants.forEach(variant => {
-        if (variant.countInStock > 0) {
-          const attr = extractVariantAttributes(variant.code);
-          attr.attributes.forEach((value, index) => {
-            if (index < attributeOptionsList.length) {
-              attributeOptionsList[index].values.add(value);
-            }
-          });
-          const optionKey = attr.attributes.join('|');
-          optionsMap.set(optionKey, variant);
-        }
-      });
-
-      const finalAttributeOptions = attributeOptionsList.map(opt => ({
-        type: opt.type,
-        values: Array.from(opt.values)
-      }));
-
-      // Cache the results
-      localStorage.setItem(cacheKey, JSON.stringify({
-        finalAttributeOptions,
-        optionsMap: Array.from(optionsMap.entries()),
-        initialSelections: {},
-        timestamp: Date.now()
-      }));
-    }
-  });
-};
-
-// useEffect(() => {
-//   if (!user) {
-//     // Clear all product-related localStorage when user logs out
-//     const keysToRemove = [];
-//     for (let i = 0; i < localStorage.length; i++) {
-//       const key = localStorage.key(i);
-//       if (key && key.startsWith('attributeOptions_')) {
-//         keysToRemove.push(key);
-//       }
-//     }
-//     keysToRemove.forEach(key => localStorage.removeItem(key));
-//     setCurrentProductId(null);
-//   }
-// }, [user]);
-
-
-
-// Add this useEffect to clear localStorage when navigating to a different product
-useEffect(() => {
-  // Clear previous product's attribute state when switching to a new product
-  if (id && id !== currentProductId) {
-    // Remove the specific key for the previous product only if currentProductId exists
-    if (currentProductId) {
-      localStorage.removeItem(`attributeOptions_${currentProductId}`);
-    }
-    setCurrentProductId(id);
-  }
-}, [id, currentProductId]);
-
-
-
-  
-useEffect(() => {
-  if (id && id !== currentProductId) {
-    // Clear previous product's attribute state when switching to a new product
-    if (currentProductId) {
-      setAttributeOptions([]);
-      setAvailableOptions(new Map());
-      setSelectedAttributes({});
-      setProductVariants([]);
-    }
-    setCurrentProductId(id);
-  }
-}, [id, currentProductId]);
-
-// Then in your useEffect:
-useEffect(() => {
-  window.scrollTo(0, 0);
-  
-  // Define buildAttributeOptionsFromScratch inside the useEffect
-  const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
-    const variants = allProductsFromContext.filter(p => {
-      const attr = extractVariantAttributes(p.code);
-      return attr.baseCode === currentVariantAttributes.baseCode;
-    });
-
-    setProductVariants(variants);
-
-    const optionsMap = new Map();
-    const attributeOptionsList = [];
-
-    currentVariantAttributes.attributes.forEach((_, index) => {
-      attributeOptionsList.push({
-        type: getAttributeType(index),
-        values: new Set()
-      });
-    });
-
-    variants.forEach(variant => {
-      if (variant.countInStock > 0) {
         const attr = extractVariantAttributes(variant.code);
         attr.attributes.forEach((value, index) => {
           if (index < attributeOptionsList.length) {
@@ -323,87 +346,134 @@ useEffect(() => {
         });
         const optionKey = attr.attributes.join('|');
         optionsMap.set(optionKey, variant);
-      }
-    });
+      });
 
-    const finalAttributeOptions = attributeOptionsList.map(opt => ({
-      type: opt.type,
-      values: Array.from(opt.values)
-    }));
+      const finalAttributeOptions = attributeOptionsList.map(opt => ({
+        type: opt.type,
+        values: Array.from(opt.values).sort()
+      }));
 
-    setAttributeOptions(finalAttributeOptions);
-    setAvailableOptions(optionsMap);
+      setAttributeOptions(finalAttributeOptions);
+      setAvailableOptions(optionsMap);
 
-    const initialSelections = {};
-    currentVariantAttributes.attributes.forEach((value, index) => {
-      initialSelections[getAttributeType(index)] = value;
-    });
-    setSelectedAttributes(initialSelections);
+      const initialSelections = {};
+      currentVariantAttributes.attributes.forEach((value, index) => {
+        initialSelections[getAttributeType(index)] = value;
+      });
+      setSelectedAttributes(initialSelections);
 
-    localStorage.setItem(`attributeOptions_${id}`, JSON.stringify({
-      finalAttributeOptions,
-      optionsMap: Array.from(optionsMap.entries()),
-      initialSelections,
-      timestamp: Date.now()
-    }));
-  };
+      const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        finalAttributeOptions,
+        optionsMap: Array.from(optionsMap.entries()),
+        timestamp: Date.now()
+      }));
 
-  
-
-  const fetchProductDetails = async () => {
-    setLoadingSpecificProduct(true);
-    setErrorSpecificProduct(null);
-    try {
-      const token = user?.token;
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-      setProduct(data);
-
-      // Find all variants of this product
-      const currentVariantAttributes = extractVariantAttributes(data.code);
-
-      if (currentVariantAttributes.attributes.length > 0) {
-        // Check if we have cached attributeOptions for this product
-        const cachedData = localStorage.getItem(`attributeOptions_${id}`);
-        
-        if (cachedData) {
-          try {
-            const parsedData = JSON.parse(cachedData);
-            setAttributeOptions(parsedData.finalAttributeOptions);
-            setAvailableOptions(new Map(parsedData.optionsMap));
-            setSelectedAttributes(parsedData.initialSelections);
-          } catch (error) {
-            console.error('Error parsing cached data:', error);
-            localStorage.removeItem(`attributeOptions_${id}`);
-            buildAttributeOptionsFromScratch(data, currentVariantAttributes);
-          }
-        } else {
-          buildAttributeOptionsFromScratch(data, currentVariantAttributes);
-        }
-      }
-
-      // Get reviews for this product
-      fetchReviews(id);
-
-      if (allProductsFromContext.length > 1) {
-        const filtered = allProductsFromContext.filter(p => p._id !== id);
-        const groupedRelated = groupProductsByBase(filtered);
-        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
-        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
-        setRelatedProducts(shuffled.slice(0, 3));
-      }
-    } catch (err) {
-      setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+    } catch (error) {
+      console.error('Error building attribute options:', error);
+      setAttributeOptions([]);
+      setAvailableOptions(new Map());
+      setSelectedAttributes({});
     } finally {
-      setLoadingSpecificProduct(false);
+      setLoadingAttributes(false);
     }
   };
 
-  if (id) {
-    fetchProductDetails();
-  }
-  setQuantity(1);
-}, [id, user?.token, allProductsFromContext, fetchReviews]);
+
+
+
+  useEffect(() => {
+    if (id && id !== currentProductId) {
+      // Clear previous product's attribute state when switching to a new product
+      if (currentProductId) {
+        setAttributeOptions([]);
+        setAvailableOptions(new Map());
+        setSelectedAttributes({});
+        setProductVariants([]);
+      }
+      setCurrentProductId(id);
+    }
+  }, [id, currentProductId]);
+
+  // Then in your useEffect:
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const fetchProductDetails = async () => {
+      setLoadingSpecificProduct(true);
+      setErrorSpecificProduct(null);
+      try {
+        const token = user?.token;
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+        setProduct(data);
+
+        const currentVariantAttributes = extractVariantAttributes(data.code);
+
+        // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
+        if (currentVariantAttributes.attributes.length > 0) {
+          const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+          const cachedData = localStorage.getItem(cacheKey);
+
+          if (cachedData) {
+            try {
+              const parsedData = JSON.parse(cachedData);
+              setAttributeOptions(parsedData.finalAttributeOptions);
+              setAvailableOptions(new Map(parsedData.optionsMap));
+              setSelectedAttributes(parsedData.initialSelections || {});
+            } catch (error) {
+              console.error('Error parsing cached data:', error);
+              localStorage.removeItem(cacheKey);
+              buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+            }
+          } else {
+            buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+          }
+        } else {
+          // PRODUCTO SIMPLE: LIMPIAR ESTADO
+          setAttributeOptions([]);
+          setAvailableOptions(new Map());
+          setSelectedAttributes({});
+          setLoadingAttributes(false);
+        }
+
+        fetchReviews(id);
+
+        if (allProductsFromContext.length > 1) {
+          const filtered = allProductsFromContext.filter(p => p._id !== id);
+          const groupedRelated = groupProductsByBase(filtered);
+          const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
+          const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+          setRelatedProducts(shuffled.slice(0, 3));
+        }
+      } catch (err) {
+        setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+      } finally {
+        setLoadingSpecificProduct(false);
+      }
+    };
+
+
+    if (id) {
+      fetchProductDetails();
+    }
+    setQuantity(1);
+  }, [id, user?.token, allProductsFromContext, fetchReviews, productsLoaded]); // Agrega productsLoaded a las dependencias
+
+
+  // 3. Agrega un useEffect ESPECÍFICO para manejar filtros
+  useEffect(() => {
+    // Si los productos cambian (por filtros) y ya teníamos un producto cargado
+    if (product && allProductsFromContext.length > 0 && productsLoaded) {
+      const currentVariantAttributes = extractVariantAttributes(product.code);
+
+      if (currentVariantAttributes.attributes.length > 0) {
+        // Reconstruir las opciones con los nuevos productos filtrados
+        buildAttributeOptionsFromScratch(product, currentVariantAttributes);
+      }
+    }
+  }, [allProductsFromContext]); // Se ejecuta cuando allProductsFromContext cambia
+
 
   // Handle attribute selection change
   const handleAttributeChange = (attributeType, value) => {
@@ -492,62 +562,74 @@ useEffect(() => {
     setReviewDisabledMessage('Tu comentario (opcional)');
   }, [user, reviews, myOrders, id]);
 
-  const displayPrice = getPriceAtSale(product);
+  const getSelectedVariant = () => {
+    if (attributeOptions.length === 0 || !product) return product;
+
+    const selectedValues = attributeOptions.map(opt =>
+      selectedAttributes[opt.type] || ''
+    );
+
+    // Verificar que todas las selecciones estén completas
+    const allSelected = selectedValues.every(value => value !== '');
+    if (!allSelected) return product;
+
+    const optionKey = selectedValues.join('|');
+    const variant = availableOptions.get(optionKey);
+
+    return variant || product; // Fallback al producto original si no se encuentra
+  };
+
+  const getSelectedVariant1 = getSelectedVariant()
+
+  const displayPrice = getPriceAtSale(getSelectedVariant1);
   const priceWithTax = product && displayPrice !== null ?
-    calculatePriceWithTax(displayPrice, product.iva) : null;
+    calculatePriceWithTax(displayPrice, getSelectedVariant1.iva) : null;
 
-const getSelectedVariant = () => {
-  if (attributeOptions.length === 0) return product;
-  
-  const selectedValues = Object.values(selectedAttributes);
-  const optionKey = selectedValues.join('|');
-  
-  return availableOptions.get(optionKey) || product;
-};
 
-// Update handleAddToCart to use the selected variant
-const handleAddToCart = async () => {
-  if (!user) {
-    navigate('/login');
-    return;
-  }
-  
-  const selectedVariant = getSelectedVariant();
-  
-  if (!selectedVariant) { return; }
-  if (quantity <= 0) { return; }
-  
-  if (quantity > selectedVariant.countInStock) {
-    toast.error(`Solo ${selectedVariant.countInStock} disponibles en stock`);
-    return;
-  }
-  
-  const priceToPass = getPriceAtSale(selectedVariant);
-  if (priceToPass <= 0) {
-    return;
-  }
-  
-  await addItemToCart(selectedVariant._id, quantity, priceToPass);
-};
 
-const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
-  if (typeof addItemToCart !== 'function') {
-    return;
-  }
-  setAddingProductId(relatedProduct._id);
-  const priceToPass = getPriceAtSale(relatedProduct);
-  if (priceToPass <= 0) {
-    setAddingProductId(null);
-    return;
-  }
-  try {
-    await addItemToCart(relatedProduct._id, qty, priceToPass);
-  } catch (err) {
-    console.log(err.message);
-  } finally {
-    setAddingProductId(null);
-  }
-}, [addItemToCart, getPriceAtSale]);
+  // Update handleAddToCart to use the selected variant
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const selectedVariant = getSelectedVariant();
+
+    if (!selectedVariant) { return; }
+    if (quantity <= 0) { return; }
+
+    if (quantity > selectedVariant.countInStock) {
+      toast.error(`Solo ${selectedVariant.countInStock} disponibles en stock`);
+      return;
+    }
+
+    const priceToPass = getPriceAtSale(selectedVariant);
+    if (priceToPass <= 0) {
+      return;
+    }
+
+    await addItemToCart(selectedVariant._id, quantity, priceToPass);
+  };
+
+  const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) => {
+    if (typeof addItemToCart !== 'function') {
+      return;
+    }
+    setAddingProductId(relatedProduct._id);
+    const priceToPass = getPriceAtSale(relatedProduct);
+    if (priceToPass <= 0) {
+      setAddingProductId(null);
+      return;
+    }
+    try {
+      await addItemToCart(relatedProduct._id, qty, priceToPass);
+    } catch (err) {
+      console.log(err.message);
+    } finally {
+      setAddingProductId(null);
+    }
+  }, [addItemToCart, getPriceAtSale]);
 
 
   const handleWhatsAppInquiry = () => {
@@ -695,7 +777,8 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
     );
   }
 
-  const isOutOfStock = product.countInStock <= 0;
+  const selectedVariant = getSelectedVariant();
+  const isOutOfStock = selectedVariant.countInStock <= 0;
   const baseProductName = extractBaseProductName(product.name, product.code);
 
   const contentSectionStyle = {
@@ -798,7 +881,7 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
 
         <Grid container spacing={5}>
           <Grid item xs={12} md={6}>
-            <ProductImageCarousel imageUrls={product.imageUrls} productName={baseProductName} />
+            <ProductImageCarousel imageUrls={getSelectedVariant().imageUrls} productName={baseProductName} />
           </Grid>
           <Grid item xs={12} md={6}>
             <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: theme.shadows[1] }}>
@@ -819,87 +902,97 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
               <Divider sx={{ my: 2 }} />
 
               {/* Dynamic attribute selection */}
-              {attributeOptions && attributeOptions.map((attribute, index) => {
-                const options = getAvailableOptionsForAttribute(index) || [];
-                const isLastAttribute = index === attributeOptions.length - 1;
+              {/* SOLO MOSTRAR ATRIBUTOS SI HAY attributeOptions Y NO ESTÁ CARGANDO */}
+              {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
+                attributeOptions.map((attribute, index) => {
+                  const options = getAvailableOptionsForAttribute(index) || [];
+                  const isLastAttribute = index === attributeOptions.length - 1;
 
-                return (
-                  <Box key={index} sx={{ mb: 3 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        display: 'block',
-                        fontWeight: 'bold',
-                        color: 'grey.800',
-                        mb: 2,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
-                      }}
-                    >
+                  return (
+                    <Box key={index} sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          display: 'block',
+                          fontWeight: 'bold',
+                          color: 'grey.800',
+                          mb: 2,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}
+                      >
 
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {options.map((option, optionIndex) => {
-                        const isSelected = selectedAttributes[attribute.type] === option.value;
-
-                        return (
-                          <Button
-                            key={optionIndex}
-                            variant="outlined"
-                            onClick={() => handleAttributeChange(attribute.type, option.value)}
-                            disabled={isLastAttribute && !option.isAvailable}
-                            sx={{
-                              px: 3,
-                              py: 1.5,
-                              borderRadius: 2,
-                              fontSize: '0.875rem',
-                              fontWeight: 'bold',
-                              minWidth: '60px',
-                              transition: 'all 0.3s ease',
-                              transform: 'scale(1)',
-                              '&:hover': {
-                                transform: 'scale(1.05)',
-                                ...(!isSelected && {
-                                  bgcolor: 'primary.50',
-                                  color: 'primary.700',
-                                  borderColor: 'primary.300',
-                                })
-                              },
-                              '&:active': {
-                                transform: 'scale(0.95)'
-                              },
-                              ...(isSelected && {
-                                bgcolor: '#263C5C', // Color específico solicitado
-                                color: 'white',
-                                borderColor: '#263C5C',
-                                boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {options.map((option, optionIndex) => {
+                          const isSelected = selectedAttributes[attribute.type] === option.value;
+                          return (
+                            <Button
+                              key={optionIndex}
+                              variant="outlined"
+                              onClick={() => handleAttributeChange(attribute.type, option.value)}
+                              disabled={isLastAttribute && !option.isAvailable}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                borderRadius: 2,
+                                fontSize: '0.875rem',
+                                fontWeight: 'bold',
+                                minWidth: '60px',
+                                transition: 'all 0.3s ease',
+                                transform: 'scale(1)',
                                 '&:hover': {
-                                  bgcolor: '#1E2F4A',
-                                  borderColor: '#1E2F4A',
-                                }
-                              }),
-                              ...(!isSelected && {
-                                bgcolor: 'white',
-                                color: 'grey.800',
-                                borderColor: 'grey.300',
-                              }),
-                              ...(isLastAttribute && !option.isAvailable && {
-                                bgcolor: 'grey.100',
-                                color: 'grey.500',
-                                borderColor: 'grey.300',
-                                cursor: 'not-allowed',
-                                opacity: 0.7,
-                              })
-                            }}
-                          >
-                            {option.value}
-                          </Button>
-                        );
-                      })}
+                                  transform: 'scale(1.05)',
+                                  ...(!isSelected && {
+                                    bgcolor: 'primary.50',
+                                    color: 'primary.700',
+                                    borderColor: 'primary.300',
+                                  })
+                                },
+                                '&:active': {
+                                  transform: 'scale(0.95)'
+                                },
+                                ...(isSelected && {
+                                  bgcolor: '#263C5C',
+                                  color: 'white',
+                                  borderColor: '#263C5C',
+                                  boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
+                                  '&:hover': {
+                                    bgcolor: '#1E2F4A',
+                                    borderColor: '#1E2F4A',
+                                  }
+                                }),
+                                ...(!isSelected && {
+                                  bgcolor: 'white',
+                                  color: 'grey.800',
+                                  borderColor: 'grey.300',
+                                }),
+                                ...(isLastAttribute && !option.isAvailable && {
+                                  bgcolor: 'grey.100',
+                                  color: 'grey.500',
+                                  borderColor: 'grey.300',
+                                  cursor: 'not-allowed',
+                                  opacity: 0.7,
+                                })
+                              }}
+                            >
+                              {option.value}
+                            </Button>
+                          );
+                        })}
+                      </Box>
                     </Box>
-                  </Box>
-                );
-              })}
+                  );
+                })
+              ) : loadingAttributes ? (
+                // MOSTRAR LOADING SOLO SI ESTÁ CARGANDO Y ES VARIANTE
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Cargando opciones...
+                  </Typography>
+                  <CircularProgress size={20} />
+                </Box>
+              ) : null}
 
 
               <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
@@ -923,18 +1016,37 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                   </IconButton>
                 </Box>
                 <Button
-                  variant="contained" color="primary" startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
+                  variant="contained"
+                  color="primary"
+                  startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
                   onClick={handleAddToCart}
-                  disabled={cartLoading || isOutOfStock || quantity > product.countInStock || displayPrice <= 0}
+                  disabled={
+                    cartLoading ||
+                    isOutOfStock ||
+                    quantity > product.countInStock ||
+                    displayPrice <= 0 ||
+                    !areAllAttributesSelected() // ← NUEVA CONDICIÓN
+                  }
                   sx={{
-                    borderRadius: 8, textTransform: 'none', px: { xs: 2, sm: 4 }, py: 1.5, ml: 1,
+                    borderRadius: 8,
+                    textTransform: 'none',
+                    px: { xs: 2, sm: 4 },
+                    py: 1.5,
+                    ml: 1,
                     background: '#bb4343ff',
-                    boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`, color: 'white',
+                    boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`,
+                    color: 'white',
                     '&:hover': {
                       background: '#ff0000ff',
-                      boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`, transform: 'translateY(-2px)',
+                      boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
+                      transform: 'translateY(-2px)',
                     },
                     '&:active': { transform: 'translateY(0)' },
+                    // Estilo cuando está disabled por atributos no seleccionados
+                    '&:disabled:not(.Mui-disabled)': {
+                      background: '#cccccc',
+                      color: '#666666',
+                    }
                   }}
                 >
                   Añadir al Carrito
@@ -1072,11 +1184,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Código
                     </TableCell>
                     <TableCell sx={{
-                      color: product.code ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.code ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150 // Ancho mínimo para la celda de datos
                     }}>
-                      {product.code || 'N/A'}
+                      {getSelectedVariant1.code || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1097,11 +1209,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Volumen
                     </TableCell>
                     <TableCell sx={{
-                      color: product.volume ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.volume ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.volume || 'N/A'}
+                      {getSelectedVariant1.volume || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1122,11 +1234,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Género
                     </TableCell>
                     <TableCell sx={{
-                      color: product.gender ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.gender ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.gender || 'N/A'}
+                      {getSelectedVariant1.gender || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1147,11 +1259,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Colores
                     </TableCell>
                     <TableCell sx={{
-                      color: product.colors?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.colors?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(product.colors)}
+                      {formatArrayValue(getSelectedVariant1.colors)}
                     </TableCell>
                   </TableRow>
 
@@ -1172,11 +1284,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Tamaños
                     </TableCell>
                     <TableCell sx={{
-                      color: product.sizes?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.sizes?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(product.sizes)}
+                      {formatArrayValue(getSelectedVariant1.sizes)}
                     </TableCell>
                   </TableRow>
 
@@ -1197,11 +1309,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Materiales
                     </TableCell>
                     <TableCell sx={{
-                      color: product.materials?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.materials?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(product.materials)}
+                      {formatArrayValue(getSelectedVariant1.materials)}
                     </TableCell>
                   </TableRow>
 
@@ -1222,11 +1334,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Rango de edad
                     </TableCell>
                     <TableCell sx={{
-                      color: product.ageRange ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.ageRange ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.ageRange || 'N/A'}
+                      {getSelectedVariant1.ageRange || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1247,11 +1359,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Características
                     </TableCell>
                     <TableCell sx={{
-                      color: product.features?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.features?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(product.features)}
+                      {formatArrayValue(getSelectedVariant1.features)}
                     </TableCell>
                   </TableRow>
 
@@ -1272,11 +1384,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Voltaje
                     </TableCell>
                     <TableCell sx={{
-                      color: product.voltage ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.voltage ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.voltage || 'N/A'}
+                      {getSelectedVariant1.voltage || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1297,11 +1409,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Garantía
                     </TableCell>
                     <TableCell sx={{
-                      color: product.warranty ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.warranty ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.warranty || 'N/A'}
+                      {getSelectedVariant1.warranty || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1322,11 +1434,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Incluye baterías
                     </TableCell>
                     <TableCell sx={{
-                      color: product.includesBatteries !== undefined ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.includesBatteries !== undefined ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.includesBatteries !== undefined ? (product.includesBatteries ? 'Sí' : 'No') : 'N/A'}
+                      {getSelectedVariant1.includesBatteries !== undefined ? (getSelectedVariant1.includesBatteries ? 'Sí' : 'No') : 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1347,11 +1459,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Tipo de batería
                     </TableCell>
                     <TableCell sx={{
-                      color: product.batteryType ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.batteryType ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.batteryType || 'N/A'}
+                      {getSelectedVariant1.batteryType || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1372,11 +1484,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Dimensiones
                     </TableCell>
                     <TableCell sx={{
-                      color: product.dimensions ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.dimensions ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatDimensions(product.dimensions)}
+                      {formatDimensions(getSelectedVariant1.dimensions)}
                     </TableCell>
                   </TableRow>
 
@@ -1397,11 +1509,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Peso
                     </TableCell>
                     <TableCell sx={{
-                      color: product.weight ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.weight ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.weight || 'N/A'}
+                      {getSelectedVariant1.weight || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1422,11 +1534,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Ubicación recomendada
                     </TableCell>
                     <TableCell sx={{
-                      color: product.recommendedLocation ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.recommendedLocation ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.recommendedLocation || 'N/A'}
+                      {getSelectedVariant1.recommendedLocation || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1447,11 +1559,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Categoría
                     </TableCell>
                     <TableCell sx={{
-                      color: product.category ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.category ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.category || 'N/A'}
+                      {getSelectedVariant1.category || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1472,11 +1584,11 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
                       Marca
                     </TableCell>
                     <TableCell sx={{
-                      color: product.brand ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariant1.brand ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {product.brand || 'N/A'}
+                      {getSelectedVariant1.brand || 'N/A'}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -1489,7 +1601,7 @@ const handleRelatedProductAddToCart = useCallback(async (relatedProduct, qty) =>
 
 
 
-        {product.tags && product.tags.length > 0 && (
+        {getSelectedVariant1.tags && getSelectedVariant1.tags.length > 0 && (
           <Box sx={contentSectionStyle}>
             <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Notas Aromáticas</Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
