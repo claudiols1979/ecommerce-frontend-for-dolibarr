@@ -186,16 +186,19 @@ const DepartmentalFilterBar = () => {
       elevation={0}        
       sx={{ 
         p: isSmallScreen ? 2 : 3,
-        borderRadius: 0,
+        borderRadius: 10,
         backgroundColor: 'transparent',
-        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 0%, rgba(233, 229, 209, 0.1) 100%)',
+        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 25%, rgba(184, 183, 178, 0.59) 100%)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid',
+        border: '0px solid',
         borderColor: 'rgba(255, 255, 255, 0.2)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        mt: 1,
         mb: 3, 
+        mr: 2,
+        ml: 2,
         position: 'sticky',
-        top: 50,
+        top: 50,        
         zIndex: 900,
       }}
     >     

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { 
   AppBar, Toolbar, Typography, Button, IconButton, Badge, Box, 
   useMediaQuery, useTheme, Drawer, List, ListItem, ListItemText, 
@@ -15,6 +15,7 @@ import { toast } from 'react-toastify';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import NavBranding from '../components/common/NavBranding';
 import { amber } from '@mui/material/colors';
+import PromotionalBanner from '../components/common/PromotionBanner';
 
 const Header = () => {
   const { cartItems } = useOrders();
@@ -152,6 +153,8 @@ const Header = () => {
   );
 
   return (
+    <Fragment>
+    < PromotionalBanner />
     <AppBar position="sticky" 
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1, 
@@ -347,6 +350,7 @@ const Header = () => {
         </Box>
       )}
     </AppBar>
+    </Fragment>
   );
 };
 

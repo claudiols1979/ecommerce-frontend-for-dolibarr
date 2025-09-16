@@ -52,7 +52,7 @@ const HeroCarousel = () => {
       buttonLink: '/products',
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589040/syed-muhammad-baqir-zaidi-3qNVEa7SN_8-unsplash_jrfvpr.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589040/syed-muhammad-baqir-zaidi-3qNVEa7SN_8-unsplash_jrfvpr.jpg', // USANDO LA IMAGEN IMPORTADA     
       alt: 'Ofertas Exclusivas',
       title: 'Ofertas Exclusivas',
       description: 'Precios especiales que no querrás perder!',
@@ -60,7 +60,7 @@ const HeroCarousel = () => {
       buttonLink: '/products', // O una ruta de ofertas real
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589517/dolce-gabbana-dolce-gabbana-intenso-edp-for-men-710655_v3hkhw.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1757978203/rachit-tank-2cFZ_FB08UM-unsplash_tedlgx.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Calidad Garantizada',
       title: 'Productos 100% originales',
       description: 'Comprometidos con la excelencia en cada artículo.',

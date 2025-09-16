@@ -21,7 +21,7 @@ const PromotionalBanner = () => {
       sx={{
         // Cada instancia del texto ocupa el 50% del contenedor animado
         width: '50%', 
-        color: '#FFD700',
+        color: '#ffffffff',
         fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
@@ -32,19 +32,20 @@ const PromotionalBanner = () => {
       }}
     >
       <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
-      Aprovecha todas nuestras ofertas
+      Aprovecha todas nuestras ofertas de temporada
       <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
     </Typography>
   );
 
   return (
     <Box sx={{
-      background: 'linear-gradient(135deg, rgba(18,18,18,0.95) 60%, rgba(139, 112, 0, 0.95) 100%)',
+      background: 'linear-gradient(135deg, rgba(55, 42, 99, 0.9) 60%, rgba(208, 68, 26, 0.95) 80%, rgba(26, 212, 47, 0.95) 100%)',
       width: '100%',
       py: 1.5,
       overflow: 'hidden',
       whiteSpace: 'whitespace-nowrap',
       boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      mb: 1,
     }}>
       {/* --- CONTENEDOR DE LA ANIMACIÓN --- */}
       <Box
