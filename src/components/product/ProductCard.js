@@ -205,12 +205,23 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
                 key={label._id}
                 label={label.name.replace('OFF', 'Descuento')}
                 size="small"
+                onClick={(e) => e.preventDefault()}
+                component="span"
                 sx={{
                   bgcolor: 'secondary.light',
                   color: 'secondary.contrastText',
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
-                  height: '20px'
+                  height: '20px',   
+                  cursor: 'default', // Cursor normal
+                  '&:hover': {
+                    bgcolor: 'secondary.light', // Mismo color en hover
+                    color: 'secondary.contrastText' // Mismo color de texto
+                  },
+                  '&:focus': {
+                    bgcolor: 'secondary.light', // Mismo color cuando tiene foco
+                    color: 'secondary.contrastText'
+                  }               
                 }}
               />
             ))}

@@ -199,6 +199,7 @@ const ProfilePage = () => {
   };
 
   const displayOrders = myOrders.slice(0, 10); 
+  console.log("myOrders: ", myOrders)
 
   const getCategoryLabel = (category) => {
     const categories = {
@@ -438,176 +439,241 @@ const ProfilePage = () => {
 
       {/* Rest of the component remains the same */}
       {/* Mis Pedidos Recientes - Ocupa todo el ancho y está centrado */}
-      <Card sx={cardStyle}>
-        <CardContent sx={{ p: { xs: 3, sm: 5 } }}> 
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 700, mb: 3, pb: 1, borderBottom: `2px solid ${theme.palette.primary.light}` }}>
-            Mis Pedidos Recientes
-          </Typography>
-          {displayOrders && displayOrders.length > 0 ? (
-            <Box>
-              {displayOrders.map((order) => ( 
-                <Accordion 
-                  key={order._id} 
-                  sx={{ 
-                    mb: 2, 
-                    borderRadius: 2, 
-                    boxShadow: theme.shadows[2], 
-                    '&:before': { display: 'none' }, 
-                    '&.Mui-expanded': { 
-                      margin: 'auto', 
-                      boxShadow: theme.shadows[4], 
-                    },
-                  }}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon sx={{ color: theme.palette.primary.dark }} />} 
-                    aria-controls={`panel-${order._id}-content`}
-                    id={`panel-${order._id}-header`}
-                    sx={{ 
-                      bgcolor: theme.palette.grey[100], 
-                      borderRadius: 'inherit', 
-                      '&.Mui-expanded': { 
-                        bgcolor: theme.palette.grey[200], 
-                        borderBottomLeftRadius: 0, 
-                        borderBottomRightRadius: 0 
-                      },
-                      minHeight: { xs: '68px', sm: '76px' }, 
-                      px: { xs: 2, sm: 3 }, 
-                      py: { xs: 1.5, sm: 2 }, 
-                      transition: 'background-color 0.2s ease-in-out',
-                    }}
-                  >
-                    <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
-                      <Grid item xs={12} sm={3}>
-                        <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
-                          <ShoppingBagIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> ID: 
-                        </Typography>
+<Card sx={cardStyle}>
+  <CardContent sx={{ p: { xs: 3, sm: 5 } }}> 
+    <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 700, mb: 3, pb: 1, borderBottom: `2px solid ${theme.palette.primary.light}` }}>
+      Mis Pedidos Recientes
+    </Typography>
+    {displayOrders && displayOrders.length > 0 ? (
+      <Box>
+        {displayOrders.map((order) => {
+          // Calcular impuestos y envío
+          const GAM_PROVINCES = ["San Jose", "Heredia", "Cartago", "Alajuela"];
+          const isGAM = GAM_PROVINCES.includes(order.customerDetails?.province);
+          
+          // Calcular subtotal con impuestos
+          const itemsWithTax = order.items.map(item => {
+            const priceWithTax = Number(item.priceAtSale || 0) * 1.13;
+            return {
+              ...item,
+              priceWithTax: priceWithTax,
+              subtotalWithTax: priceWithTax * item.quantity
+            };
+          });
+          
+          const subtotal = itemsWithTax.reduce((sum, item) => sum + item.subtotalWithTax, 0);
+          
+          // Calcular envío
+          let shippingCost = 0;
+          let shippingText = "Pago contra entrega";
+          
+          if (isGAM) {
+            shippingCost = 3000 * 1.13; // 3000 colones + IVA
+            shippingText = `₡${Math.round(shippingCost).toLocaleString('es-CR')} (Envío GAM)`;
+          }
+          
+          // Calcular total final
+          const totalWithTaxAndShipping = subtotal + shippingCost;
+          
+          // Función para formatear números sin decimales (redondeando correctamente)
+          const formatPrice = (price) => {
+            return `₡${Math.round(price).toLocaleString('es-CR')}`;
+          };
+          
+          return (
+            <Accordion 
+              key={order._id} 
+              sx={{ 
+                mb: 2, 
+                borderRadius: 2, 
+                boxShadow: theme.shadows[2], 
+                '&:before': { display: 'none' }, 
+                '&.Mui-expanded': { 
+                  margin: 'auto', 
+                  boxShadow: theme.shadows[4], 
+                },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon sx={{ color: theme.palette.primary.dark }} />} 
+                aria-controls={`panel-${order._id}-content`}
+                id={`panel-${order._id}-header`}
+                sx={{ 
+                  bgcolor: theme.palette.grey[100], 
+                  borderRadius: 'inherit', 
+                  '&.Mui-expanded': { 
+                    bgcolor: theme.palette.grey[200], 
+                    borderBottomLeftRadius: 0, 
+                    borderBottomRightRadius: 0 
+                  },
+                  minHeight: { xs: '68px', sm: '76px' }, 
+                  px: { xs: 2, sm: 3 }, 
+                  py: { xs: 1.5, sm: 2 }, 
+                  transition: 'background-color 0.2s ease-in-out',
+                }}
+              >
+                <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
+                  <Grid item xs={12} sm={3}>
+                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
+                      <ShoppingBagIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> ID: 
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium" color="text.primary">
+                      {order._id.substring(order._id.length - 8).toUpperCase()} 
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
+                      <CalendarTodayIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Fecha:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium" color="text.primary">
+                      {formatDate(order.createdAt)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={2}>
+                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
+                      <AttachMoneyIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Total:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium" color="text.primary">
+                      {formatPrice(totalWithTaxAndShipping)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
+                      <InfoIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Estado:
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      fontWeight="medium" 
+                      sx={{
+                        display: 'inline-block',
+                        px: 2, 
+                        py: 0.7, 
+                        borderRadius: 1.5, 
+                        color: 'white',
+                        bgcolor: 
+                          order.status === 'pending' ? theme.palette.warning.main :
+                          order.status === 'placed' ? theme.palette.info.main :
+                          order.status === 'processing' ? theme.palette.primary.main : 
+                          order.status === 'shipped' ? theme.palette.secondary.main : 
+                          order.status === 'delivered' ? theme.palette.success.main :
+                          order.status === 'cancelled' ? theme.palette.error.main :
+                          order.status === 'expired' ? theme.palette.error.dark :
+                          theme.palette.grey[500],
+                        whiteSpace: 'nowrap', 
+                        fontSize: { xs: '0.8rem', sm: '0.9rem' }, 
+                        boxShadow: theme.shadows[1], 
+                      }}
+                    >
+                      {getTranslatedStatus(order.status)} 
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 2.5, pb: 2.5, px: { xs: 2, sm: 3 }, borderTop: `1px solid ${theme.palette.grey[200]}` }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 2, pb: 1, borderBottom: `1px dashed ${theme.palette.grey[200]}` }}>
+                  Detalles del Pedido:
+                </Typography>
+                <List disablePadding>
+                  {itemsWithTax.map((item, itemIndex) => (
+                    <ListItem key={item._id || itemIndex} disableGutters sx={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      alignItems: 'center', 
+                      py: 1.5, 
+                      mb: itemIndex < order.items.length - 1 ? 1 : 0, 
+                      borderBottom: itemIndex < order.items.length - 1 ? `1px dashed ${theme.palette.grey[100]}` : 'none' ,
+                      '&:not(:last-child)': { mb: 1.5 }, 
+                    }}>
+                      {item.product?.imageUrls && item.product.imageUrls.length > 0 && (
+                        <Box sx={{ width: 70, height: 70, mr: { xs: 1.5, sm: 2 }, flexShrink: 0, overflow: 'hidden', borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${theme.palette.grey[200]}`, boxShadow: theme.shadows[1] }}>
+                          <img 
+                            src={item.product.imageUrls[0].secure_url} 
+                            alt={item.name} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                        </Box>
+                      )}
+                      <Box sx={{ flexGrow: 1, minWidth: { xs: 'calc(100% - 85px)', sm: 'auto' } }}>
                         <Typography variant="body1" fontWeight="medium" color="text.primary">
-                          {order._id.substring(order._id.length - 8).toUpperCase()} 
+                          {item.name} ({item.code})
                         </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
-                          <CalendarTodayIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Fecha:
+                        <Typography variant="body2" color="text.secondary">
+                          Cantidad: {item.quantity} x {formatPrice(Number(item.priceAtSale || 0))}
                         </Typography>
-                        <Typography variant="body1" fontWeight="medium" color="text.primary">
-                          {formatDate(order.createdAt)}
+                        <Typography variant="body2" color="text.secondary">
+                          Precio con IVA: {formatPrice(item.priceWithTax)}
                         </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={2}>
-                        <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
-                          <AttachMoneyIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Total:
-                        </Typography>
-                        <Typography variant="body1" fontWeight="medium" color="text.primary">
-                          ₡{Number(order.totalPrice || 0).toFixed(2)}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
-                          <InfoIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Estado:
-                        </Typography>
-                        <Typography 
-                          variant="body1" 
-                          fontWeight="medium" 
+                      </Box>
+                      <Typography variant="body1" fontWeight="bold" color="text.primary" sx={{ ml: { xs: 0, sm: 3 }, mt: { xs: 1, sm: 0 }, minWidth: { xs: '100%', sm: 'auto' }, textAlign: { xs: 'left', sm: 'right' } }}>
+                        Subtotal: {formatPrice(item.subtotalWithTax)}
+                      </Typography>
+                      <Box sx={{ width: '100%', mt: 1.5, display: 'flex', justifyContent: 'flex-start' }}>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          size="small"
+                          startIcon={<RateReviewIcon />}
+                          onClick={() => navigate(`/products/${item.product._id}`)}
                           sx={{
-                            display: 'inline-block',
-                            px: 2, 
-                            py: 0.7, 
-                            borderRadius: 1.5, 
-                            color: 'white',
-                            bgcolor: 
-                              order.status === 'pending' ? theme.palette.warning.main :
-                              order.status === 'placed' ? theme.palette.info.main :
-                              order.status === 'processing' ? theme.palette.primary.main : 
-                              order.status === 'shipped' ? theme.palette.secondary.main : 
-                              order.status === 'delivered' ? theme.palette.success.main :
-                              order.status === 'cancelled' ? theme.palette.error.main :
-                              order.status === 'expired' ? theme.palette.error.dark :
-                              theme.palette.grey[500],
-                            whiteSpace: 'nowrap', 
-                            fontSize: { xs: '0.8rem', sm: '0.9rem' }, 
-                            boxShadow: theme.shadows[1], 
+                            textTransform: 'none',
+                            fontWeight: 'bold',
+                            boxShadow: theme.shadows[2],
+                            '&:hover': {
+                              boxShadow: theme.shadows[4],
+                              transform: 'translateY(-1px)'
+                            }
                           }}
                         >
-                          {getTranslatedStatus(order.status)} 
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </AccordionSummary>
-                  <AccordionDetails sx={{ pt: 2.5, pb: 2.5, px: { xs: 2, sm: 3 }, borderTop: `1px solid ${theme.palette.grey[200]}` }}>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 2, pb: 1, borderBottom: `1px dashed ${theme.palette.grey[200]}` }}>
-                      Detalles del Pedido:
+                          Dejar Reseña
+                        </Button>
+                      </Box>
+                    </ListItem>
+                  ))}
+                  
+                  {/* Mostrar información de envío */}
+                  <ListItem disableGutters sx={{ py: 1.5, borderTop: `1px solid ${theme.palette.grey[200]}` }}>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="body1" fontWeight="medium" color="text.primary">
+                        Costo de envío:
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {order.customerDetails?.province ? `Provincia: ${order.customerDetails.province}` : 'Provincia no especificada'}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight="bold" color="text.primary">
+                      {isGAM ? formatPrice(shippingCost) : shippingText}
                     </Typography>
-                    <List disablePadding>
-                      {order.items.map((item, itemIndex) => (
-                        <ListItem key={item._id || itemIndex} disableGutters sx={{ 
-                          display: 'flex', 
-                          flexWrap: 'wrap', 
-                          alignItems: 'center', 
-                          py: 1.5, 
-                          mb: itemIndex < order.items.length - 1 ? 1 : 0, 
-                          borderBottom: itemIndex < order.items.length - 1 ? `1px dashed ${theme.palette.grey[100]}` : 'none' ,
-                          '&:not(:last-child)': { mb: 1.5 }, 
-                        }}>
-                           {item.product?.imageUrls && item.product.imageUrls.length > 0 && (
-                              <Box sx={{ width: 70, height: 70, mr: { xs: 1.5, sm: 2 }, flexShrink: 0, overflow: 'hidden', borderRadius: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${theme.palette.grey[200]}`, boxShadow: theme.shadows[1] }}>
-                                <img 
-                                  src={item.product.imageUrls[0].secure_url} 
-                                  alt={item.name} 
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                />
-                              </Box>
-                            )}
-                            <Box sx={{ flexGrow: 1, minWidth: { xs: 'calc(100% - 85px)', sm: 'auto' } }}>
-                              <Typography variant="body1" fontWeight="medium" color="text.primary">
-                                {item.name} ({item.code})
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                Cantidad: {item.quantity} x ₡{Number(item.priceAtSale || 0).toFixed(2)}
-                              </Typography>
-                            </Box>
-                            <Typography variant="body1" fontWeight="bold" color="text.primary" sx={{ ml: { xs: 0, sm: 3 }, mt: { xs: 1, sm: 0 }, minWidth: { xs: '100%', sm: 'auto' }, textAlign: { xs: 'left', sm: 'right' } }}>
-                              Subtotal: ₡{(item.quantity * Number(item.priceAtSale || 0)).toFixed(2)}
-                            </Typography>
-                            <Box sx={{ width: '100%', mt: 1.5, display: 'flex', justifyContent: 'flex-start' }}>
-                                  <Button
-                                    variant="contained"
-                                    color="secondary"
-                                    size="small"
-                                    startIcon={<RateReviewIcon />}
-                                    onClick={() => navigate(`/products/${item.product._id}`)}
-                                    sx={{
-                                      textTransform: 'none',
-                                      fontWeight: 'bold',
-                                      boxShadow: theme.shadows[2],
-                                      '&:hover': {
-                                        boxShadow: theme.shadows[4],
-                                        transform: 'translateY(-1px)'
-                                      }
-                                    }}
-                                  >
-                                    Dejar Reseña
-                                  </Button>
-                                </Box>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </Box>
-          ) : (
-            <Box sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                No tienes pedidos realizados aún. ¡Explora nuestros productos para empezar!
-              </Typography>
-              <Button variant="contained" color="primary" onClick={() => navigate('/products')} sx={{ px: 4, py: 1.5, borderRadius: 8, fontWeight: 700, boxShadow: theme.shadows[4] }}>
-                Explorar Productos
-              </Button>
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+                  </ListItem>
+                  
+                  {/* Mostrar total final */}
+                  <ListItem disableGutters sx={{ py: 1.5, borderTop: `2px solid ${theme.palette.primary.main}` }}>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="h6" fontWeight="bold" color="text.primary">
+                        Total final:
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" fontWeight="bold" color="text.primary">
+                      {formatPrice(totalWithTaxAndShipping)}
+                    </Typography>
+                  </ListItem>
+                </List>
+              </AccordionDetails>
+            </Accordion>
+          );
+        })}
+      </Box>
+    ) : (
+      <Box sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          No tienes pedidos realizados aún. ¡Explora nuestros productos para empezar!
+        </Typography>
+        <Button variant="contained" color="primary" onClick={() => navigate('/products')} sx={{ px: 4, py: 1.5, borderRadius: 8, fontWeight: 700, boxShadow: theme.shadows[4] }}>
+          Explorar Productos
+        </Button>
+      </Box>
+    )}
+  </CardContent>
+</Card>
     </Container>
   );
 };

@@ -20,6 +20,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import SearchIcon from '@mui/icons-material/Search';
 import ProductFilters from '../components/common/ProductFilters';
+import PictureGrid from '../components/common/AdGridSystem'
 
 // Helper functions para manejar variantes - SIN HARDCORES
 const getBaseCode = (code) => {
@@ -253,6 +254,9 @@ useEffect(() => {
             ))}
           </Grid>
         </Box>
+
+        {/* ad secion 4 pics in 2x2 frame*/}
+        <PictureGrid />
 
         {/* Search Section */}
         {/* <Paper

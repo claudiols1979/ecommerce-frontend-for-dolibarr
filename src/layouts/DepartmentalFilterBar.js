@@ -53,6 +53,8 @@ const DepartmentalFilterBar = () => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [expanded, setExpanded] = useState(!isSmallScreen); // Expandido por defecto en pantallas grandes
 
+  console.log("Current Filters: ", currentFilters)
+
   // Cargar taxonomía completa solo una vez al montar
   useEffect(() => {
     if (initialLoad) {
@@ -193,7 +195,7 @@ const DepartmentalFilterBar = () => {
         border: '0px solid',
         borderColor: 'rgba(255, 255, 255, 0.2)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-        mt: 1,
+        mt: 2,
         mb: 3, 
         mr: 2,
         ml: 2,

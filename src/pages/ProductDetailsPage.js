@@ -683,47 +683,20 @@ const ProductDetailsPage = () => {
   const faqData = [
     {
       question: '1. ¿Cuáles son los métodos de pago aceptados?',
-      answer: 'Aceptamos pagos a través de SINPE Móvil y Transferencia Bancaria. Una vez que finalices tu pedido, se abrirá una ventana de WhatsApp donde nuestro equipo coordinará contigo los detalles del pago y la confirmación del envío de manera segura y personalizada.'
+      answer: 'Aceptamos pagos a través de tarjeta de crédito o débito. Los pagos se procesan através de TiloPay una pasarela de pago establecida en Costa Rica.'
     },
     {
       question: '2. ¿Cuál es el tiempo de entrega estimado?',
-      answer: 'Para envíos dentro de la GAM, trabajamos con Mensajería Fonseca para garantizar una entrega rápida, usualmente en las siguientes 24 horas. Dependiendo de la demanda, el plazo puede extenderse a un máximo de 48 horas. Tu entrega es nuestra prioridad y está 100% garantizada.'
+      answer: 'Para envíos dentro de la GAM, trabajamos con Mensajería Fonseca para garantizar una entrega rápida, usualmente en las siguientes 24 a 48 horas. Dependiendo de la demanda, el plazo puede extenderse. Tu entrega es nuestra prioridad y está 100% garantizada.'
     },
     {
-      question: '3. ¿La perfumería es original?',
+      question: '3. ¿Son productos originales?',
       answer: 'Absolutamente. Garantizamos que todos nuestros productos son 100% originales, nuevos y se entregan sellados en su empaque de fábrica. La autenticidad es el pilar de nuestra marca.'
     },
     {
       question: '4. ¿Realizan envíos fuera de la GAM?',
       answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envío se cancela contra entrega directamente en la sucursal. Te proporcionaremos el número de guía oficial para que puedas rastrear tu paquete en todo momento.'
-    },
-    {
-      question: '5. ¿Ofrecen precios especiales para ventas al por mayor?',
-      answer: (
-        <>
-          <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 2 }}>
-            Definitivamente. Nuestro modelo de negocio está diseñado para potenciar a los revendedores. Para acceder a nuestras listas de precios mayoristas y recibir asesoría personalizada, por favor contáctanos directamente.
-          </Typography>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<WhatsAppIcon />}
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{
-              bgcolor: '#25D366',
-              '&:hover': {
-                bgcolor: '#1EBE57',
-              },
-              fontWeight: 'bold',
-            }}
-          >
-            Consultar por WhatsApp
-          </Button>
-        </>
-      )
-    }
+    },    
   ];
 
   if (loadingSpecificProduct) {

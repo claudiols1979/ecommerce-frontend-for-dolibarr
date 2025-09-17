@@ -37,7 +37,7 @@ const PrivacyPolicyPage = () => {
     <>
       <Helmet>
         <title>Política de Privacidad - Software Factory ERP</title>
-        <meta name="description" content="Conoce cómo Look & Smell protege y gestiona tus datos personales. Nuestra política de privacidad para revendedores en Costa Rica." />
+        <meta name="description" content="Conoce cómo se protege y gestiona tus datos personales. Nuestra política de privacidad para revendedores en Costa Rica." />
       </Helmet>
       
       <Box sx={{

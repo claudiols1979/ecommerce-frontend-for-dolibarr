@@ -1,0 +1,219 @@
+import React, { Fragment, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Grid, Typography, Button, Fade, useTheme, useMediaQuery } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { useDepartmental } from '../../contexts/DepartmentalContext';
+
+const PictureGridContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  margin: theme.spacing(6, 0),
+  marginLeft: 60
+}));
+
+
+const ImageContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  overflow: 'hidden',
+  borderRadius: '12px',
+  height: '100%',
+  minHeight: '300px',
+  cursor: 'pointer',
+  boxShadow: theme.shadows[4],
+  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[8],
+    '& .image-overlay': {
+      opacity: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    '& img': {
+      transform: 'scale(1.05)',
+    }
+  },
+  [theme.breakpoints.down('md')]: {
+    minHeight: '250px',
+  },
+  [theme.breakpoints.down('sm')]: {
+    minHeight: '200px',
+  },
+}));
+
+const StyledImage = styled('img')({
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  transition: 'transform 0.5s ease',
+});
+
+const Overlay = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  opacity: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: theme.spacing(2),
+  transition: 'opacity 0.3s ease, background-color 0.3s ease',
+  color: 'white',
+  textAlign: 'center',
+}));
+
+const ShopButton = styled(Button)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  backgroundColor: 'white',
+  color: theme.palette.text.primary,
+  fontWeight: 'bold',
+  '&:hover': {
+    backgroundColor: theme.palette.grey[100],
+    transform: 'translateY(-2px)',
+  },
+  transition: 'transform 0.2s ease',
+}));
+
+const SectionTitle = styled(Typography)(({ theme }) => ({
+  marginBottom: theme.spacing(4),
+  textAlign: 'center',
+  fontWeight: '700',
+  position: 'relative',
+  '&:after': {
+    content: '""',
+    display: 'block',
+    width: '60px',
+    height: '4px',
+    backgroundColor: theme.palette.primary.main,
+    margin: `${theme.spacing(2)} auto 0`,
+    borderRadius: '2px',
+  },
+}));
+
+const PictureGrid = ({ 
+  images = [], 
+  seasonTitles = [],
+  onImageClick 
+}) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [loadedImages, setLoadedImages] = useState({});
+  const { fetchDepartmentalProducts } = useDepartmental(); // Use DepartmentalContext
+  const navigate = useNavigate();
+  
+  // Default images with department-specific filters
+  const defaultImages = [
+    {
+      url: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      department: 'Fragancias',      
+      title: 'Fragancias'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      department: 'Ropa',
+      title: 'Ropa'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      department: 'Calzado',
+      title: 'Calzado'
+    },
+    {
+      url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      department: 'Accesorios',
+      title: 'Accesorios'
+    }
+  ];
+  
+  const imageData = images.length === 4 
+    ? images.map((url, index) => ({ 
+        url, 
+        ...defaultImages[index]
+      }))
+    : defaultImages;
+  
+  const handleImageLoad = (index) => {
+    setLoadedImages(prev => ({ ...prev, [index]: true }));
+  };
+
+  // Handle click with department filter using DepartmentalContext
+  const handleViewProducts = (department) => {
+    console.log('Filtering by department:', department);
+    
+    // Navigate to products page first
+    navigate('/products');
+    
+    // Then apply the department filter using DepartmentalContext
+    setTimeout(() => {
+      fetchDepartmentalProducts(
+        { department: department }, // filters object
+        1, // page
+        20 // limit
+      );
+    }, 100);
+  };
+
+  return (
+    <Fragment>
+  <SectionTitle variant="h4" component="h4">
+    Departamentos
+  </SectionTitle>
+  <PictureGridContainer>    
+    <Grid container spacing={3} sx={{ maxWidth: '1200px', width: '100%' }}>
+      {imageData.map((imageData, index) => (
+        <Grid item xs={12} sm={6} key={index} sx={{ height: { xs: '250px', sm: '300px', md: '350px' } }}>
+          <Fade in={loadedImages[index]} timeout={800}>
+            <ImageContainer>
+              <StyledImage
+                src={imageData.url}
+                alt={imageData.title || seasonTitles[index] || `Oferta ${index + 1}`}
+                onLoad={() => handleImageLoad(index)}
+                onClick={() => handleViewProducts(imageData.department)}
+              />  
+              <Overlay 
+                sx={{ 
+                  '&:hover': {
+                    opacity: 1,
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  }
+                }}
+              >
+                <Typography 
+                  variant="h5" 
+                  component="h3" 
+                  sx={{ 
+                    color: 'white', 
+                    fontWeight: 'bold',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
+                    mb: 2
+                  }}
+                >
+                  {imageData.title}
+                </Typography>  
+                <ShopButton 
+                  variant="contained"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewProducts(imageData.department);
+                  }}
+                >
+                  Comprar
+                </ShopButton>
+              </Overlay>                           
+            </ImageContainer>                
+          </Fade>              
+        </Grid>
+      ))}
+    </Grid>
+  </PictureGridContainer>
+</Fragment>
+  );
+};
+
+
+export default PictureGrid;

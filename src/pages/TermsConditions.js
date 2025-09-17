@@ -37,7 +37,7 @@ const TermsAndConditionsPage = () => {
     <>
       <Helmet>
         <title>Términos y Condiciones - Software Factory ERP</title>
-        <meta name="description" content="Lee los términos y condiciones para el uso de la plataforma de revendedores de Look & Smell en Costa Rica. Reglas sobre cuentas, pedidos, precios y envíos." />
+        <meta name="description" content="Lee los términos y condiciones para el uso de la plataforma. Reglas sobre cuentas, pedidos, precios y envíos." />
       </Helmet>
       
       <Box sx={{
@@ -99,10 +99,8 @@ const TermsAndConditionsPage = () => {
               <AccordionDetails>
                 <Typography variant="body2" sx={{ color: '#263C5C' }}>
                   - <strong>Precios:</strong> Los precios mostrados en la plataforma son exclusivos y varían según la categoría asignada (`cat1`, `cat2`, etc.). El precio final es el que se muestra al momento de agregar los productos al carrito.
-                  <br /><br />
-                  - <strong>Reserva de Stock:</strong> Al agregar un producto a su carrito, el stock de dicho producto se deduce del inventario general y se reserva para su orden pendiente. Si elimina el producto del carrito, el stock se reintegrará automáticamente.
-                  <br /><br />
-                  - <strong>Confirmación:</strong> Un pedido se considera "colocado" únicamente después de que usted finalice el proceso de checkout y coordine el pago y la entrega a través de WhatsApp con nuestro agente.
+                  <br /><br />                 
+                  - <strong>Confirmación:</strong> Un pedido se considera "colocado" únicamente después de que usted finalice el proceso de checkout y pago.
                 </Typography>
               </AccordionDetails>
             </Accordion>
@@ -113,7 +111,7 @@ const TermsAndConditionsPage = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Typography variant="body2" sx={{ color: '#263C5C' }}>
-                  - <strong>GAM (Gran Área Metropolitana):</strong> Para las provincias de San José, Alajuela, Cartago y Heredia, se aplicará un costo de envío fijo de ₡3,000, el cual se sumará al total de su orden.
+                  - <strong>GAM (Gran Área Metropolitana):</strong> Para las provincias de San José, Alajuela, Cartago y Heredia, se aplicará un costo de envío fijo de ₡3,000 + iva, el cual se sumará al total de su orden.
                   <br /><br />
                   - <strong>Fuera de la GAM:</strong> Para las provincias de Guanacaste, Puntarenas y Limón, el envío se realizará mediante la modalidad de "pago contra entrega" a través de Correos de Costa Rica. El costo del envío no se incluirá en el total de la orden y deberá ser cancelado directamente al servicio de mensajería.
                 </Typography>
