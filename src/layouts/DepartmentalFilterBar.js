@@ -533,6 +533,9 @@ const DepartmentalFilterBar = () => {
                   onDelete={() => clearFilter(key)}
                   size="small"
                   variant="outlined"
+                  onClick={(e) => {
+                    e.stopPropagation();                    
+                  }}
                   sx={{ 
                     color: 'white', 
                     borderColor: 'rgba(255, 255, 255, 0.3)',

@@ -76,6 +76,8 @@ const ProductDetailsPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const isExtraSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const { products: allProductsFromContext } = useProducts();
   const { addItemToCart, loading: cartLoading, myOrders } = useOrders();
   const { user } = useAuth();
@@ -989,6 +991,54 @@ const ProductDetailsPage = () => {
                   </IconButton>
                 </Box>
                 <Button
+  variant="contained"
+  color="primary"
+  startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
+  onClick={handleAddToCart}
+  disabled={
+    cartLoading ||
+    isOutOfStock ||
+    quantity > product.countInStock ||
+    displayPrice <= 0 ||
+    !areAllAttributesSelected()
+  }
+  sx={{
+    borderRadius: 8,
+    textTransform: 'none',
+    px: { xs: 1.5, sm: 4 }, // Reducir padding horizontal en móviles
+    py: { xs: 1, sm: 1.5 }, // Reducir padding vertical en móviles
+    ml: { xs: 0.5, sm: 1 }, // Reducir margen izquierdo en móviles
+    fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Tamaño de fuente responsive
+    minWidth: { xs: 'auto', sm: '64px' }, // Ancho mínimo ajustable
+    background: '#bb4343ff',
+    boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`,
+    color: 'white',
+    '&:hover': {
+      background: '#ff0000ff',
+      boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
+      transform: 'translateY(-2px)',
+    },
+    '&:active': { transform: 'translateY(0)' },
+    '&:disabled': {
+      background: '#cccccc',
+      color: '#666666',
+    },
+    // Ocultar texto en móviles muy pequeños y mostrar solo el icono
+    ...(isExtraSmallMobile && {
+      '& .MuiButton-startIcon': {
+        margin: 0
+      },
+      minWidth: 'auto',
+      width: '40px',
+      height: '40px',
+      borderRadius: '50%'
+    })
+  }}
+>
+  {/* Texto condicional para móviles pequeños */}
+  {isExtraSmallMobile ? '' : 'Añadir al Carrito'}
+</Button>
+                {/* <Button
                   variant="contained"
                   color="primary"
                   startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
@@ -1023,7 +1073,7 @@ const ProductDetailsPage = () => {
                   }}
                 >
                   Añadir al Carrito
-                </Button>
+                </Button> */}
               </Box>
             </Box>
           </Grid>

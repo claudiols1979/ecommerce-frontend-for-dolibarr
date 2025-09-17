@@ -251,7 +251,43 @@ const Header = () => {
               <MenuIcon sx={{ color: '#fff' }}/>
             </IconButton>
             <Drawer
-              anchor="right" open={mobileMenuOpen} onClose={handleMobileMenuClose}
+              anchor="right" 
+              open={mobileMenuOpen} 
+              onClose={handleMobileMenuClose} 
+             
+              ModalProps={{
+                BackdropProps: {
+                  sx: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semi-transparente suave
+                    backdropFilter: 'blur(2px)', // Blur muy sutil en el fondo
+                  }
+                }
+              }}
+              sx={{
+                zIndex: (theme) => theme.zIndex.drawer + 2,
+                // Estilos para el papel del drawer (el panel lateral)
+                '& .MuiDrawer-paper': {
+                  backgroundColor: 'rgba(38, 60, 92, 0.92)', // Más opaco para mejor legibilidad
+                  backdropFilter: 'blur(12px)', // Efecto de vidrio esmerilado
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  width: 230,
+                  // Posicionamiento para que no cubra el header
+                  top: '70px', // Ajusta según la altura de tu header
+                  height: 'calc(100% - 100px)', // Altura que no cubre el header
+                  borderTopLeftRadius: '16px',
+                  borderBottomLeftRadius: '18px',
+                  border: '0.5px solid rgba(255, 255, 255, 0.1)',
+                  // Asegurar que el contenido sea visible
+                  color: 'white',
+                  '& .MuiListItemText-primary': {
+                    color: 'white',
+                    fontWeight: 400,
+                  },
+                  '& .MuiDivider-root': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  }
+                }
+              }}
             >
               {drawerContent}
             </Drawer>

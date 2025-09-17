@@ -9,10 +9,11 @@ const PictureGridContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  justifyContent: 'center',
   margin: theme.spacing(6, 0),
-  marginLeft: 60
+  padding: theme.spacing(0, 2),
+  boxSizing: 'border-box',
 }));
-
 
 const ImageContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
@@ -103,10 +104,9 @@ const PictureGrid = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loadedImages, setLoadedImages] = useState({});
-  const { fetchDepartmentalProducts } = useDepartmental(); // Use DepartmentalContext
+  const { fetchDepartmentalProducts } = useDepartmental();
   const navigate = useNavigate();
   
-  // Default images with department-specific filters
   const defaultImages = [
     {
       url: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -141,79 +141,84 @@ const PictureGrid = ({
     setLoadedImages(prev => ({ ...prev, [index]: true }));
   };
 
-  // Handle click with department filter using DepartmentalContext
   const handleViewProducts = (department) => {
-    console.log('Filtering by department:', department);
-    
-    // Navigate to products page first
     navigate('/products');
     
-    // Then apply the department filter using DepartmentalContext
     setTimeout(() => {
       fetchDepartmentalProducts(
-        { department: department }, // filters object
-        1, // page
-        20 // limit
+        { department: department },
+        1,
+        20
       );
     }, 100);
   };
 
   return (
     <Fragment>
-  <SectionTitle variant="h4" component="h4">
-    Departamentos
-  </SectionTitle>
-  <PictureGridContainer>    
-    <Grid container spacing={3} sx={{ maxWidth: '1200px', width: '100%' }}>
-      {imageData.map((imageData, index) => (
-        <Grid item xs={12} sm={6} key={index} sx={{ height: { xs: '250px', sm: '300px', md: '350px' } }}>
-          <Fade in={loadedImages[index]} timeout={800}>
-            <ImageContainer>
-              <StyledImage
-                src={imageData.url}
-                alt={imageData.title || seasonTitles[index] || `Oferta ${index + 1}`}
-                onLoad={() => handleImageLoad(index)}
-                onClick={() => handleViewProducts(imageData.department)}
-              />  
-              <Overlay 
-                sx={{ 
-                  '&:hover': {
-                    opacity: 1,
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                  }
-                }}
-              >
-                <Typography 
-                  variant="h5" 
-                  component="h3" 
-                  sx={{ 
-                    color: 'white', 
-                    fontWeight: 'bold',
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
-                    mb: 2
-                  }}
-                >
-                  {imageData.title}
-                </Typography>  
-                <ShopButton 
-                  variant="contained"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewProducts(imageData.department);
-                  }}
-                >
-                  Comprar
-                </ShopButton>
-              </Overlay>                           
-            </ImageContainer>                
-          </Fade>              
+      <SectionTitle variant="h4" component="h4">
+        Departamentos
+      </SectionTitle>
+      <PictureGridContainer>    
+        <Grid container spacing={3} sx={{ 
+          maxWidth: '1200px', 
+          width: '100%',
+          margin: '0 auto',
+          justifyContent: 'center',
+        }}>
+          {imageData.map((imageData, index) => (
+            <Grid item xs={12} sm={6} key={index} 
+              sx={{ 
+                height: { xs: '250px', sm: '300px', md: '350px' },
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Fade in={loadedImages[index]} timeout={800}>
+                <ImageContainer>
+                  <StyledImage
+                    src={imageData.url}
+                    alt={imageData.title || seasonTitles[index] || `Oferta ${index + 1}`}
+                    onLoad={() => handleImageLoad(index)}
+                    onClick={() => handleViewProducts(imageData.department)}
+                  />  
+                  <Overlay 
+                    sx={{ 
+                      '&:hover': {
+                        opacity: 1,
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                      }
+                    }}
+                  >
+                    <Typography 
+                      variant="h5" 
+                      component="h3" 
+                      sx={{ 
+                        color: 'white', 
+                        fontWeight: 'bold',
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
+                        mb: 2
+                      }}
+                    >
+                      {imageData.title}
+                    </Typography>  
+                    <ShopButton 
+                      variant="contained"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewProducts(imageData.department);
+                      }}
+                    >
+                      Comprar
+                    </ShopButton>
+                  </Overlay>                           
+                </ImageContainer>                
+              </Fade>              
+            </Grid>
+          ))}
         </Grid>
-      ))}
-    </Grid>
-  </PictureGridContainer>
-</Fragment>
+      </PictureGridContainer>
+    </Fragment>
   );
 };
-
 
 export default PictureGrid;
