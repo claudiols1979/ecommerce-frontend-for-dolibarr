@@ -564,7 +564,7 @@ const ProductDetailsPage = () => {
     setReviewDisabledMessage('Tu comentario (opcional)');
   }, [user, reviews, myOrders, id]);
 
-  const getSelectedVariant = () => {
+  const getSelectedVariantFunction = () => {
     if (attributeOptions.length === 0 || !product) return product;
 
     const selectedValues = attributeOptions.map(opt =>
@@ -581,11 +581,11 @@ const ProductDetailsPage = () => {
     return variant || product; // Fallback al producto original si no se encuentra
   };
 
-  const getSelectedVariant1 = getSelectedVariant()
+  const getSelectedVariant = getSelectedVariantFunction()
 
-  const displayPrice = getPriceAtSale(getSelectedVariant1);
-  const priceWithTax = product && displayPrice !== null ?
-    calculatePriceWithTax(displayPrice, getSelectedVariant1.iva) : null;
+  const displayPrice = getPriceAtSale(getSelectedVariantFunction());
+  const priceWithTax = getSelectedVariant && displayPrice !== null ?
+    calculatePriceWithTax(displayPrice, getSelectedVariant.iva) : null;
 
 
 
@@ -596,7 +596,7 @@ const ProductDetailsPage = () => {
       return;
     }
 
-    const selectedVariant = getSelectedVariant();
+    const selectedVariant = getSelectedVariantFunction();
 
     if (!selectedVariant) { return; }
     if (quantity <= 0) { return; }
@@ -752,8 +752,8 @@ const ProductDetailsPage = () => {
     );
   }
 
-  const selectedVariant = getSelectedVariant();
-  const isOutOfStock = selectedVariant.countInStock <= 0;
+  // const selectedVariant = getSelectedVariant();
+  const isOutOfStock = getSelectedVariantFunction().countInStock <= 0;
   const baseProductName = extractBaseProductName(product.name, product.code);
 
   const contentSectionStyle = {
@@ -856,7 +856,7 @@ const ProductDetailsPage = () => {
 
         <Grid container spacing={5}>
           <Grid item xs={12} md={6}>
-            <ProductImageCarousel imageUrls={getSelectedVariant().imageUrls} productName={baseProductName} />
+            <ProductImageCarousel imageUrls={getSelectedVariantFunction().imageUrls} productName={baseProductName} />
           </Grid>
           <Grid item xs={12} md={6}>
             <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3, boxShadow: theme.shadows[1] }}>
@@ -977,7 +977,7 @@ const ProductDetailsPage = () => {
                 IVA incluido
               </Typography>
               <Typography variant="body1" color={isOutOfStock ? 'error.main' : 'text.primary'} sx={{ mb: 2, fontWeight: 600 }}>
-                Stock Disponible: {product.countInStock} {isOutOfStock && '(Agotado)'}
+                Stock Disponible: {getSelectedVariantFunction().countInStock} {isOutOfStock && '(Agotado)'}
               </Typography>
 
               <Box display="flex" alignItems="center" mb={3}>
@@ -991,53 +991,53 @@ const ProductDetailsPage = () => {
                   </IconButton>
                 </Box>
                 <Button
-  variant="contained"
-  color="primary"
-  startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
-  onClick={handleAddToCart}
-  disabled={
-    cartLoading ||
-    isOutOfStock ||
-    quantity > product.countInStock ||
-    displayPrice <= 0 ||
-    !areAllAttributesSelected()
-  }
-  sx={{
-    borderRadius: 8,
-    textTransform: 'none',
-    px: { xs: 1.5, sm: 4 }, // Reducir padding horizontal en móviles
-    py: { xs: 1, sm: 1.5 }, // Reducir padding vertical en móviles
-    ml: { xs: 0.5, sm: 1 }, // Reducir margen izquierdo en móviles
-    fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Tamaño de fuente responsive
-    minWidth: { xs: 'auto', sm: '64px' }, // Ancho mínimo ajustable
-    background: '#bb4343ff',
-    boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`,
-    color: 'white',
-    '&:hover': {
-      background: '#ff0000ff',
-      boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
-      transform: 'translateY(-2px)',
-    },
-    '&:active': { transform: 'translateY(0)' },
-    '&:disabled': {
-      background: '#cccccc',
-      color: '#666666',
-    },
-    // Ocultar texto en móviles muy pequeños y mostrar solo el icono
-    ...(isExtraSmallMobile && {
-      '& .MuiButton-startIcon': {
-        margin: 0
-      },
-      minWidth: 'auto',
-      width: '40px',
-      height: '40px',
-      borderRadius: '50%'
-    })
-  }}
->
-  {/* Texto condicional para móviles pequeños */}
-  {isExtraSmallMobile ? '' : 'Añadir al Carrito'}
-</Button>
+                  variant="contained"
+                  color="primary"
+                  startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
+                  onClick={handleAddToCart}
+                  disabled={
+                    cartLoading ||
+                    isOutOfStock ||
+                    quantity > product.countInStock ||
+                    displayPrice <= 0 ||
+                    !areAllAttributesSelected()
+                  }
+                  sx={{
+                    borderRadius: 8,
+                    textTransform: 'none',
+                    px: { xs: 1.5, sm: 4 }, // Reducir padding horizontal en móviles
+                    py: { xs: 1, sm: 1.5 }, // Reducir padding vertical en móviles
+                    ml: { xs: 0.5, sm: 1 }, // Reducir margen izquierdo en móviles
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Tamaño de fuente responsive
+                    minWidth: { xs: 'auto', sm: '64px' }, // Ancho mínimo ajustable
+                    background: '#bb4343ff',
+                    boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`,
+                    color: 'white',
+                    '&:hover': {
+                      background: '#ff0000ff',
+                      boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
+                      transform: 'translateY(-2px)',
+                    },
+                    '&:active': { transform: 'translateY(0)' },
+                    '&:disabled': {
+                      background: '#cccccc',
+                      color: '#666666',
+                    },
+                    // Ocultar texto en móviles muy pequeños y mostrar solo el icono
+                    ...(isExtraSmallMobile && {
+                      '& .MuiButton-startIcon': {
+                        margin: 0
+                      },
+                      minWidth: 'auto',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%'
+                    })
+                  }}
+                >
+                  {/* Texto condicional para móviles pequeños */}
+                  {isExtraSmallMobile ? '' : 'Añadir al Carrito'}
+                </Button>
                 {/* <Button
                   variant="contained"
                   color="primary"
@@ -1207,11 +1207,11 @@ const ProductDetailsPage = () => {
                       Código
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.code ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().code ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150 // Ancho mínimo para la celda de datos
                     }}>
-                      {getSelectedVariant1.code || 'N/A'}
+                      {getSelectedVariantFunction().code || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1232,11 +1232,11 @@ const ProductDetailsPage = () => {
                       Volumen
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.volume ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().volume ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.volume || 'N/A'}
+                      {getSelectedVariantFunction().volume || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1257,11 +1257,11 @@ const ProductDetailsPage = () => {
                       Género
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.gender ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().gender ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.gender || 'N/A'}
+                      {getSelectedVariantFunction().gender || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1282,11 +1282,11 @@ const ProductDetailsPage = () => {
                       Colores
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.colors?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().colors?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(getSelectedVariant1.colors)}
+                      {formatArrayValue(getSelectedVariantFunction().colors)}
                     </TableCell>
                   </TableRow>
 
@@ -1307,11 +1307,11 @@ const ProductDetailsPage = () => {
                       Tamaños
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.sizes?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().sizes?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(getSelectedVariant1.sizes)}
+                      {formatArrayValue(getSelectedVariantFunction().sizes)}
                     </TableCell>
                   </TableRow>
 
@@ -1332,11 +1332,11 @@ const ProductDetailsPage = () => {
                       Materiales
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.materials?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().materials?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(getSelectedVariant1.materials)}
+                      {formatArrayValue(getSelectedVariantFunction().materials)}
                     </TableCell>
                   </TableRow>
 
@@ -1357,11 +1357,11 @@ const ProductDetailsPage = () => {
                       Rango de edad
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.ageRange ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().ageRange ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.ageRange || 'N/A'}
+                      {getSelectedVariantFunction().ageRange || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1382,11 +1382,11 @@ const ProductDetailsPage = () => {
                       Características
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.features?.length ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().features?.length ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatArrayValue(getSelectedVariant1.features)}
+                      {formatArrayValue(getSelectedVariantFunction().features)}
                     </TableCell>
                   </TableRow>
 
@@ -1407,11 +1407,11 @@ const ProductDetailsPage = () => {
                       Voltaje
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.voltage ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().voltage ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.voltage || 'N/A'}
+                      {getSelectedVariantFunction().voltage || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1432,11 +1432,11 @@ const ProductDetailsPage = () => {
                       Garantía
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.warranty ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().warranty ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.warranty || 'N/A'}
+                      {getSelectedVariantFunction().warranty || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1457,11 +1457,11 @@ const ProductDetailsPage = () => {
                       Incluye baterías
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.includesBatteries !== undefined ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().includesBatteries !== undefined ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.includesBatteries !== undefined ? (getSelectedVariant1.includesBatteries ? 'Sí' : 'No') : 'N/A'}
+                      {getSelectedVariantFunction().includesBatteries !== undefined ? (getSelectedVariantFunction().includesBatteries ? 'Sí' : 'No') : 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1482,11 +1482,11 @@ const ProductDetailsPage = () => {
                       Tipo de batería
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.batteryType ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().batteryType ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.batteryType || 'N/A'}
+                      {getSelectedVariantFunction().batteryType || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1507,11 +1507,11 @@ const ProductDetailsPage = () => {
                       Dimensiones
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.dimensions ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().dimensions ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {formatDimensions(getSelectedVariant1.dimensions)}
+                      {formatDimensions(getSelectedVariantFunction().dimensions)}
                     </TableCell>
                   </TableRow>
 
@@ -1532,11 +1532,11 @@ const ProductDetailsPage = () => {
                       Peso
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.weight ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().weight ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.weight || 'N/A'}
+                      {getSelectedVariantFunction().weight || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1557,11 +1557,11 @@ const ProductDetailsPage = () => {
                       Ubicación recomendada
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.recommendedLocation ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().recommendedLocation ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.recommendedLocation || 'N/A'}
+                      {getSelectedVariantFunction().recommendedLocation || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1582,11 +1582,11 @@ const ProductDetailsPage = () => {
                       Categoría
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.category ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().category ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.category || 'N/A'}
+                      {getSelectedVariantFunction().category || 'N/A'}
                     </TableCell>
                   </TableRow>
 
@@ -1607,11 +1607,11 @@ const ProductDetailsPage = () => {
                       Marca
                     </TableCell>
                     <TableCell sx={{
-                      color: getSelectedVariant1.brand ? 'text.primary' : 'grey.500',
+                      color: getSelectedVariantFunction().brand ? 'text.primary' : 'grey.500',
                       py: 2,
                       minWidth: 150
                     }}>
-                      {getSelectedVariant1.brand || 'N/A'}
+                      {getSelectedVariantFunction().brand || 'N/A'}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -1624,7 +1624,7 @@ const ProductDetailsPage = () => {
 
 
 
-        {getSelectedVariant1.tags && getSelectedVariant1.tags.length > 0 && (
+        {getSelectedVariantFunction().tags && getSelectedVariantFunction().tags.length > 0 && (
           <Box sx={contentSectionStyle}>
             <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Notas Aromáticas</Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
