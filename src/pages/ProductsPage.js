@@ -28,6 +28,7 @@ const ProductsPage = () => {
   const { departmentalProducts, departmentalLoading, departmentalError, 
           departmentalHasMore, fetchDepartmentalProducts, currentFilters } = useDepartmental();
 
+
   const { addItemToCart } = useOrders();
   const { user } = useAuth();
 
