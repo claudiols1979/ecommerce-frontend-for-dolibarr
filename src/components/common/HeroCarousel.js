@@ -42,9 +42,8 @@ const HeroCarousel = () => {
   const navigate = useNavigate();
 
   const slides = [
-    {
-      //image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589232/imageHome_rr1pkn.jpg', // USANDO LA IMAGEN IMPORTADA
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1757961934/nike-vaporfly4-ficha-recurso-foto1-bene_l9kien.jpg',
+    {      
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758209893/erik-mclean-nfoRa6NHTbU-unsplash_cthnfk.jpg',
       alt: 'Nueva Colección Primavera',
       title: 'Descubre las nuevas colecciones',
       description: 'Estilo para cada gusto. ¡Explora nuestros últimos productos!',
@@ -52,7 +51,7 @@ const HeroCarousel = () => {
       buttonLink: '/products',
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589040/syed-muhammad-baqir-zaidi-3qNVEa7SN_8-unsplash_jrfvpr.jpg', // USANDO LA IMAGEN IMPORTADA     
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1757961934/nike-vaporfly4-ficha-recurso-foto1-bene_l9kien.jpg', // USANDO LA IMAGEN IMPORTADA     
       alt: 'Ofertas Exclusivas',
       title: 'Ofertas Exclusivas',
       description: 'Precios especiales que no querrás perder!',
@@ -60,7 +59,7 @@ const HeroCarousel = () => {
       buttonLink: '/products', // O una ruta de ofertas real
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1757978203/rachit-tank-2cFZ_FB08UM-unsplash_tedlgx.jpg', // USANDO LA IMAGEN IMPORTADA
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758213151/charlesdeluvio-FK81rxilUXg-unsplash_xrs3ih.jpg', // USANDO LA IMAGEN IMPORTADA
       alt: 'Calidad Garantizada',
       title: 'Productos 100% originales',
       description: 'Comprometidos con la excelencia en cada artículo.',

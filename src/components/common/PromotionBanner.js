@@ -31,9 +31,9 @@ const PromotionalBanner = () => {
         flexShrink: 0, // Evita que el texto se encoja
       }}
     >
-      <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
+      {/* <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} /> */}
       Aprovecha todas nuestras ofertas de temporada
-      <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} />
+      {/* <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} /> */}
     </Typography>
   );
 

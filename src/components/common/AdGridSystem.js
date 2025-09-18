@@ -4,6 +4,7 @@ import { Box, Grid, Typography, Button, Fade, useTheme, useMediaQuery } from '@m
 import { styled } from '@mui/material/styles';
 import { useDepartmental } from '../../contexts/DepartmentalContext';
 
+// Componentes styled correctamente definidos
 const PictureGridContainer = styled(Box)(({ theme }) => ({
   width: '100%',
   display: 'flex',
@@ -24,6 +25,7 @@ const ImageContainer = styled(Box)(({ theme }) => ({
   cursor: 'pointer',
   boxShadow: theme.shadows[4],
   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  aspectRatio: '1 / 1', // Fuerza relación de aspecto cuadrada
   '&:hover': {
     transform: 'translateY(-4px)',
     boxShadow: theme.shadows[8],
@@ -96,6 +98,16 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
+// Función para procesar URLs de Cloudinary
+const processCloudinaryUrl = (url) => {
+  if (url.includes('cloudinary.com')) {
+    // Añadir parámetros de transformación para forzar tamaño y recorte consistentes
+    const baseUrl = url.split('?')[0];  // Eliminar parámetros existentes si los hay
+    return `${baseUrl}?w=600&h=600&c=fill&f=auto`;
+  }
+  return url;
+};
+
 const PictureGrid = ({ 
   images = [], 
   seasonTitles = [],
@@ -109,33 +121,47 @@ const PictureGrid = ({
   
   const defaultImages = [
     {
-      url: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589040/syed-muhammad-baqir-zaidi-3qNVEa7SN_8-unsplash_jrfvpr.jpg',
       department: 'Fragancias',      
       title: 'Fragancias'
     },
     {
-      url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b',
       department: 'Ropa',
       title: 'Ropa'
     },
     {
-      url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758213291/cut-collective-u94ywFnPedw-unsplash_z02shc.jpg',
       department: 'Calzado',
       title: 'Calzado'
     },
     {
-      url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758213370/engin-akyurt-xbFtknoQG_Y-unsplash_vixyfp.jpg',
+      department: 'Accesorios',
+      title: 'Accesorios'
+    },
+     {
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758217058/arno-senoner-l0BhJJhkvXg-unsplash_mnqmn3.jpg',
+      department: 'Accesorios',
+      title: 'Accesorios'
+    },
+     {
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758217151/catia-dombaxe-8IlqMcDYKA8-unsplash_jimlbl.jpg',
       department: 'Accesorios',
       title: 'Accesorios'
     }
   ];
   
+  // Procesamos todas las URLs para asegurar consistencia
   const imageData = images.length === 4 
     ? images.map((url, index) => ({ 
-        url, 
+        url: processCloudinaryUrl(url), 
         ...defaultImages[index]
       }))
-    : defaultImages;
+    : defaultImages.map(img => ({
+        ...img,
+        url: processCloudinaryUrl(img.url)
+      }));
   
   const handleImageLoad = (index) => {
     setLoadedImages(prev => ({ ...prev, [index]: true }));

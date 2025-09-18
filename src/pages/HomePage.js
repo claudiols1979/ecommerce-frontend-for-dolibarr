@@ -213,7 +213,7 @@ useEffect(() => {
   const features = [
     { icon: <LocalShippingIcon sx={{ fontSize: 40, color: 'secondary.main' }} />, title: 'Envío Rápido', description: 'Entregas eficientes y seguras a todo el país.' },
     { icon: <SupportAgentIcon sx={{ fontSize: 40, color: 'secondary.main' }} />, title: 'Soporte 24/7', description: 'Atención personalizada para todas tus dudas.' },
-    { icon: <StorefrontIcon sx={{ fontSize: 40, color: 'secondary.main' }} />, title: 'Amplio Catálogo', description: 'Cientos de productos para diversificar tu negocio.' },
+    { icon: <StorefrontIcon sx={{ fontSize: 40, color: 'secondary.main' }} />, title: 'Amplio Catálogo', description: 'Cientos de productos para todos tus gustos.' },
   ];
 
   return (
