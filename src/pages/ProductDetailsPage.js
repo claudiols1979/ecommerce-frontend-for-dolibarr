@@ -28,7 +28,7 @@ import axios from 'axios';
 import API_URL from '../config';
 import { formatPrice } from '../utils/formatters';
 import { calculatePriceWithTax } from '../utils/taxCalculations';
-
+import { useLocation } from 'react-router-dom';
 
 
 
@@ -73,6 +73,7 @@ const getAttributeType = (index) => {
 const ProductDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -261,6 +262,34 @@ const ProductDetailsPage = () => {
       }
     });
   };
+
+
+useEffect(() => {
+    // Store the current path when component mounts
+    const originalPath = location.pathname;
+    
+    return () => {
+      // When component unmounts, check the new path
+      setTimeout(() => {
+        const currentPath = window.location.pathname;
+        const isStillOnProductPage = currentPath.includes('/products/');
+        
+        // Only clear cache if we're not on any product page anymore
+        if (!isStillOnProductPage) {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('attributeOptions_')) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key));
+          console.log('Cache cleared - left product pages');
+        }
+      }, 100); // Small delay to ensure navigation completed
+    };
+  }, [location.pathname]);
+
 
   useEffect(() => {
     return () => {

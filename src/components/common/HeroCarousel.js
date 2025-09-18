@@ -51,7 +51,7 @@ const HeroCarousel = () => {
       buttonLink: '/products',
     },
     {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1757961934/nike-vaporfly4-ficha-recurso-foto1-bene_l9kien.jpg', // USANDO LA IMAGEN IMPORTADA     
+      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758218247/cardmapr-nl-pwxESDWRwDE-unsplash_lny8bk.jpg', // USANDO LA IMAGEN IMPORTADA     
       alt: 'Ofertas Exclusivas',
       title: 'Ofertas Exclusivas',
       description: 'Precios especiales que no querrás perder!',
