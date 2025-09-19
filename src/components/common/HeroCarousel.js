@@ -55,7 +55,7 @@ const HeroCarousel = () => {
       alt: 'Ofertas Exclusivas',
       title: 'Ofertas Exclusivas',
       description: 'Precios especiales que no querrás perder!',
-      buttonText: 'Ver Ofertas',
+      buttonText: 'Ver Productos',
       buttonLink: '/products', // O una ruta de ofertas real
     },
     {
@@ -63,7 +63,7 @@ const HeroCarousel = () => {
       alt: 'Calidad Garantizada',
       title: 'Productos 100% originales',
       description: 'Comprometidos con la excelencia en cada artículo.',
-      buttonText: 'Conocer Más',
+      buttonText: 'Ver Productos',
       buttonLink: '/products', // Puedes crear una página "acerca de"
     },
   ];
@@ -101,7 +101,7 @@ const HeroCarousel = () => {
                 size="large"
                 onClick={() => navigate(slide.buttonLink)}
                 sx={{
-                  px: { xs: 3, sm: 5 }, py: { xs: 1, sm: 1.5 }, boxShadow: '0 4px 20px rgba(255, 215, 0, 0.4)', borderRadius: 8, backgroundColor: '#bb4343ff', color: 'white', '&:hover': {
+                  px: { xs: 3, sm: 5 }, py: { xs: 1, sm: 1.5 }, borderRadius: 8, backgroundColor: '#bb4343ff', color: 'white', '&:hover': {
                     backgroundColor: '#ff0000ff', // Un tono más oscuro para el hover
                   }
                 }}

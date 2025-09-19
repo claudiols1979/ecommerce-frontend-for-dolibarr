@@ -82,10 +82,9 @@ const HeroCarousel = () => {
             py: { xs: 1.5, sm: 2 }, 
             borderRadius: 8,
             fontWeight: 'bold',
-            backgroundColor: '#bb4343ff',
-            '&:hover': { backgroundColor: '#ff0000ff' },
+            backgroundColor: '#bb4343ff', color: 'white', '&:hover': { backgroundColor: '#ff0000ff', },
             fontSize: { xs: '0.9rem', sm: '1rem' },
-            boxShadow: '0 4px 20px rgba(255, 215, 0, 0.4)',
+            // boxShadow: '0 4px 20px rgba(255, 215, 0, 0.4)',
             transition: 'transform 0.2s ease-in-out',
             '&:hover': {
               transform: 'scale(1.05)',
