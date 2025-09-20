@@ -105,13 +105,13 @@ const ProductDetailsPage = () => {
   const [loadingAttributes, setLoadingAttributes] = useState(false);
 
 
-  const areAllAttributesSelected = () => {
-    if (!attributeOptions || attributeOptions.length === 0) return true; // Productos simples
-
-    return attributeOptions.every(attribute =>
-      selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
-    );
-  };
+const areAllAttributesSelected = () => {
+  if (!attributeOptions || attributeOptions.length === 0) return true;
+  
+  return attributeOptions.every(attribute =>
+    selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
+  );
+};
 
   const WHATSAPP_AGENT_NUMBER = '50672317420';
 
@@ -507,12 +507,26 @@ useEffect(() => {
 
 
   // Handle attribute selection change
-  const handleAttributeChange = (attributeType, value) => {
-    setSelectedAttributes(prev => ({
-      ...prev,
-      [attributeType]: value
-    }));
-  };
+const handleAttributeChange = (attributeType, value) => {
+  setSelectedAttributes(prev => {
+    const newSelections = { ...prev };
+    
+    // Encontrar el índice del atributo que se está cambiando
+    const attributeIndex = attributeOptions.findIndex(opt => opt.type === attributeType);
+    
+    // Resetear todos los atributos posteriores al que se está cambiando
+    if (attributeIndex !== -1) {
+      for (let i = attributeIndex + 1; i < attributeOptions.length; i++) {
+        newSelections[attributeOptions[i].type] = '';
+      }
+    }
+    
+    // Establecer el nuevo valor para el atributo seleccionado
+    newSelections[attributeType] = value;
+    
+    return newSelections;
+  });
+};
 
   // Filter available options based on current selections
   // const getAvailableOptionsForAttribute = (attributeIndex) => {
@@ -540,29 +554,52 @@ useEffect(() => {
   // };
 
   // Filter available options based on current selections
-  const getAvailableOptionsForAttribute = (attributeIndex) => {
-    const currentSelections = Object.values(selectedAttributes);
-    const allValues = attributeOptions[attributeIndex]?.values || [];
-    const isLastAttribute = attributeIndex === attributeOptions.length - 1;
+// Filter available options based on current selections
+// Filter available options based on current selections - VERSIÓN CORRECTA
+const getAvailableOptionsForAttribute = (attributeIndex) => {
+  const allValues = attributeOptions[attributeIndex]?.values || [];
+  
+  // Si es el primer atributo, todas las opciones están disponibles
+  if (attributeIndex === 0) {
+    return allValues.map(value => ({ value, isAvailable: true }));
+  }
 
-    // Para atributos que NO son el último, siempre están disponibles
-    if (!isLastAttribute) {
-      return allValues.map(value => ({ value, isAvailable: true }));
+  // Verificar si TODOS los atributos anteriores están seleccionados
+  const allPreviousSelected = attributeOptions
+    .slice(0, attributeIndex)
+    .every(attr => selectedAttributes[attr.type] && selectedAttributes[attr.type] !== '');
+
+  // Si no todos los anteriores están seleccionados, mostrar todas como no disponibles
+  if (!allPreviousSelected) {
+    return allValues.map(value => ({ value, isAvailable: false }));
+  }
+
+  // Si todos los anteriores están seleccionados, filtrar correctamente
+  const availableValues = new Set();
+  const currentSelections = attributeOptions.map(opt => selectedAttributes[opt.type] || '');
+
+  Array.from(availableOptions.keys()).forEach(optionKey => {
+    const values = optionKey.split('|');
+
+    // Verificar coincidencia EXACTA con selecciones anteriores
+    let matchesExactly = true;
+    for (let i = 0; i < attributeIndex; i++) {
+      if (currentSelections[i] !== values[i]) {
+        matchesExactly = false;
+        break;
+      }
     }
 
-    // Solo para el último atributo verificamos disponibilidad
-    return allValues.map(value => {
-      const testSelections = [...currentSelections];
-      testSelections[attributeIndex] = value;
-      const optionKey = testSelections.join('|');
-      const isAvailable = availableOptions.has(optionKey);
+    if (matchesExactly) {
+      availableValues.add(values[attributeIndex]);
+    }
+  });
 
-      return {
-        value,
-        isAvailable
-      };
-    });
-  };
+  return allValues.map(value => ({
+    value,
+    isAvailable: availableValues.has(value)
+  }));
+};
 
   // --- useEffect para determinar si el usuario puede dejar una reseña ---
   useEffect(() => {
@@ -845,6 +882,21 @@ useEffect(() => {
     );
   };
 
+  const doesSelectedVariantExist = () => {
+  if (attributeOptions.length === 0) return true; // Productos simples siempre existen
+  
+  const selectedValues = attributeOptions.map(opt =>
+    selectedAttributes[opt.type] || ''
+  );
+
+  // Verificar que todas las selecciones estén completas
+  const allSelected = selectedValues.every(value => value !== '');
+  if (!allSelected) return false;
+
+  const optionKey = selectedValues.join('|');
+  return availableOptions.has(optionKey);
+};
+
   return (
     <>
       <Helmet>
@@ -930,12 +982,13 @@ useEffect(() => {
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {options.map((option, optionIndex) => {
                           const isSelected = selectedAttributes[attribute.type] === option.value;
+                          const isAvailable = option.isAvailable;
                           return (
                             <Button
                               key={optionIndex}
                               variant="outlined"
                               onClick={() => handleAttributeChange(attribute.type, option.value)}
-                              disabled={isLastAttribute && !option.isAvailable}
+                              disabled={!isAvailable}
                               sx={{
                                 px: 3,
                                 py: 1.5,
@@ -1029,7 +1082,8 @@ useEffect(() => {
                     isOutOfStock ||
                     quantity > product.countInStock ||
                     displayPrice <= 0 ||
-                    !areAllAttributesSelected()
+                    !areAllAttributesSelected() ||
+                    !doesSelectedVariantExist()
                   }
                   sx={{
                     borderRadius: 8,

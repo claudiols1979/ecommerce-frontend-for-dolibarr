@@ -24,10 +24,12 @@ const ProductsPage = () => {
   // --- CONTEXTOS EXISTENTES Y NUEVOS ---
   const { products: standardProducts, loading: standardLoading, error: standardError, 
           fetchProducts, currentPage, totalPages } = useProducts();
+
+ 
   
   const { departmentalProducts, departmentalLoading, departmentalError, 
           departmentalHasMore, fetchDepartmentalProducts, currentFilters } = useDepartmental();
-
+ 
 
   const { addItemToCart } = useOrders();
   const { user } = useAuth();
@@ -57,6 +59,31 @@ const ProductsPage = () => {
     { value: 'unisex', label: 'Unisex' }, { value: 'children', label: 'Niños' },
     { value: 'elderly', label: 'Ancianos' }, { value: 'other', label: 'Otro' },
   ];
+
+
+//   useEffect(() => {
+//   if (products && products.length > 0) {
+//     console.log('📊 Raw products:', products);
+    
+//     // Log each product's code and parsing results
+//     products.forEach(product => {
+//       console.log(`Product: ${product.name}, Code: ${product.code}`);
+//       console.log('Base code:', getBaseCode(product.code));
+//       console.log('Attributes:', getAttributes(product.code));
+//       console.log('Base name:', extractBaseNameFromAttributes(product.name, product.code));
+//     });
+    
+//     const grouped = groupProductsByBase(products);
+//     console.log('Grouped products:', grouped);
+    
+//     const displayProducts = selectRandomVariantFromEachGroup(grouped);
+//     console.log('Display products:', displayProducts);
+    
+//     setGroupedProducts(displayProducts);
+//   } else {
+//     setGroupedProducts([]);
+//   }
+// }, [products]);
 
   // --- FUNCIONES DE AGRUPAMIENTO ---
   const getBaseCode = (code) => {
@@ -191,12 +218,17 @@ useEffect(() => {
 
   // --- EFFECT SEPARADO PARA BÚSQUEDA ESTÁNDAR ---
   useEffect(() => {
-    if (!isDepartmentalMode) {
-      console.log('🔍 Actualizando búsqueda estándar');
-      setPage(1);
-      fetchProducts(1, 20, sortOrder, submittedSearchTerm, selectedGender, priceRange[0], priceRange[1]);
-    }
-  }, [sortOrder, submittedSearchTerm, selectedGender, priceRange, isDepartmentalMode, fetchProducts]);
+  if (!isDepartmentalMode) {
+    console.log('🔍 Actualizando búsqueda estándar');
+    setPage(1);
+    
+    // Calcular cuántos productos pedir considerando la agrupación
+    const estimatedVariantsPerProduct = 2; // Ajusta este valor según tu caso
+    const productsToFetch = 20 * estimatedVariantsPerProduct;
+    
+    fetchProducts(1, productsToFetch, sortOrder, submittedSearchTerm, selectedGender, priceRange[0], priceRange[1]);
+  }
+}, [sortOrder, submittedSearchTerm, selectedGender, priceRange, isDepartmentalMode, fetchProducts]);
 
   // --- EFFECT PARA AGRUPAMIENTO ---
   useEffect(() => {
@@ -292,6 +324,11 @@ useEffect(() => {
     navigate('/products', { replace: true });
     setPage(1);
   };
+
+
+  
+
+
 
   // --- LÓGICA DE VISUALIZACIÓN MEJORADA ---
   const shouldShowNoProductsMessage = !loading && products.length === 0 && 
