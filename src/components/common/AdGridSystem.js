@@ -136,9 +136,9 @@ const PictureGrid = ({
       title: 'Calzado'
     },
     {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758213370/engin-akyurt-xbFtknoQG_Y-unsplash_vixyfp.jpg',
-      department: 'Accesorios',
-      title: 'Accesorios'
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758178128/christopher-gower-_aXa21cf7rY-unsplash_wao9x2.jpg',
+      department: 'Electrónicos',
+      title: 'Electrónicos'
     },
      {
       url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758217058/arno-senoner-l0BhJJhkvXg-unsplash_mnqmn3.jpg',
