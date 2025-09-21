@@ -103,9 +103,20 @@ const ProductDetailsPage = () => {
   const [currentProductId, setCurrentProductId] = useState(null);
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [loadingAttributes, setLoadingAttributes] = useState(false);
+  const [allAttributesLoaded, setAllAttributesLoaded] = useState(false);
 
+// const areAllAttributesSelected = () => {
+//   if (!attributeOptions || attributeOptions.length === 0) return true;
+  
+//   return attributeOptions.every(attribute =>
+//     selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
+//   );
+// };
 
 const areAllAttributesSelected = () => {
+  // Si los atributos no han terminado de cargar, retornar false
+  if (!allAttributesLoaded) return false;
+  
   if (!attributeOptions || attributeOptions.length === 0) return true;
   
   return attributeOptions.every(attribute =>
@@ -332,84 +343,167 @@ useEffect(() => {
   }, [id, currentProductId]);
 
 
-  const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
-    // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
-    if (currentVariantAttributes.attributes.length === 0) {
+  // const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
+  //   // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
+  //   if (currentVariantAttributes.attributes.length === 0) {
+  //     setAttributeOptions([]);
+  //     setAvailableOptions(new Map());
+  //     setSelectedAttributes({});
+  //     setLoadingAttributes(false);
+  //     return;
+  //   }
+
+  //   setLoadingAttributes(true);
+
+  //   try {
+  //     const variants = allProductsFromContext.filter(p => {
+  //       const attr = extractVariantAttributes(p.code);
+  //       return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
+  //     });
+
+  //     if (variants.length === 0) {
+  //       setAttributeOptions([]);
+  //       setAvailableOptions(new Map());
+  //       return;
+  //     }
+
+  //     variants.sort((a, b) => a.code.localeCompare(b.code));
+
+  //     const optionsMap = new Map();
+  //     const attributeOptionsList = [];
+
+  //     currentVariantAttributes.attributes.forEach((_, index) => {
+  //       attributeOptionsList.push({
+  //         type: getAttributeType(index),
+  //         values: new Set()
+  //       });
+  //     });
+
+  //     variants.forEach(variant => {
+  //       const attr = extractVariantAttributes(variant.code);
+  //       attr.attributes.forEach((value, index) => {
+  //         if (index < attributeOptionsList.length) {
+  //           attributeOptionsList[index].values.add(value);
+  //         }
+  //       });
+  //       const optionKey = attr.attributes.join('|');
+  //       optionsMap.set(optionKey, variant);
+  //     });
+
+  //     const finalAttributeOptions = attributeOptionsList.map(opt => ({
+  //       type: opt.type,
+  //       values: Array.from(opt.values).sort()
+  //     }));
+
+  //     setAttributeOptions(finalAttributeOptions);
+  //     setAvailableOptions(optionsMap);
+
+  //     const initialSelections = {};
+  //     currentVariantAttributes.attributes.forEach((value, index) => {
+  //       initialSelections[getAttributeType(index)] = value;
+  //     });
+  //     setSelectedAttributes(initialSelections);
+
+  //     const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+  //     localStorage.setItem(cacheKey, JSON.stringify({
+  //       finalAttributeOptions,
+  //       optionsMap: Array.from(optionsMap.entries()),
+  //       timestamp: Date.now()
+  //     }));
+
+  //   } catch (error) {
+  //     console.error('Error building attribute options:', error);
+  //     setAttributeOptions([]);
+  //     setAvailableOptions(new Map());
+  //     setSelectedAttributes({});
+  //   } finally {
+  //     setLoadingAttributes(false);
+  //   }
+  // };
+const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
+  // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
+  if (currentVariantAttributes.attributes.length === 0) {
+    setAttributeOptions([]);
+    setAvailableOptions(new Map());
+    setSelectedAttributes({});
+    setLoadingAttributes(false);
+    setAllAttributesLoaded(true); // ← AÑADIR
+    return;
+  }
+
+  setLoadingAttributes(true);
+  setAllAttributesLoaded(false); // ← AÑADIR: resetear estado de carga
+
+  try {
+    const variants = allProductsFromContext.filter(p => {
+      const attr = extractVariantAttributes(p.code);
+      return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
+    });
+
+    if (variants.length === 0) {
       setAttributeOptions([]);
       setAvailableOptions(new Map());
-      setSelectedAttributes({});
-      setLoadingAttributes(false);
+      setAllAttributesLoaded(true); // ← AÑADIR
       return;
     }
 
-    setLoadingAttributes(true);
+    variants.sort((a, b) => a.code.localeCompare(b.code));
 
-    try {
-      const variants = allProductsFromContext.filter(p => {
-        const attr = extractVariantAttributes(p.code);
-        return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
+    const optionsMap = new Map();
+    const attributeOptionsList = [];
+
+    currentVariantAttributes.attributes.forEach((_, index) => {
+      attributeOptionsList.push({
+        type: getAttributeType(index),
+        values: new Set()
       });
+    });
 
-      if (variants.length === 0) {
-        setAttributeOptions([]);
-        setAvailableOptions(new Map());
-        return;
-      }
-
-      variants.sort((a, b) => a.code.localeCompare(b.code));
-
-      const optionsMap = new Map();
-      const attributeOptionsList = [];
-
-      currentVariantAttributes.attributes.forEach((_, index) => {
-        attributeOptionsList.push({
-          type: getAttributeType(index),
-          values: new Set()
-        });
+    variants.forEach(variant => {
+      const attr = extractVariantAttributes(variant.code);
+      attr.attributes.forEach((value, index) => {
+        if (index < attributeOptionsList.length) {
+          attributeOptionsList[index].values.add(value);
+        }
       });
+      const optionKey = attr.attributes.join('|');
+      optionsMap.set(optionKey, variant);
+    });
 
-      variants.forEach(variant => {
-        const attr = extractVariantAttributes(variant.code);
-        attr.attributes.forEach((value, index) => {
-          if (index < attributeOptionsList.length) {
-            attributeOptionsList[index].values.add(value);
-          }
-        });
-        const optionKey = attr.attributes.join('|');
-        optionsMap.set(optionKey, variant);
-      });
+    const finalAttributeOptions = attributeOptionsList.map(opt => ({
+      type: opt.type,
+      values: Array.from(opt.values).sort()
+    }));
 
-      const finalAttributeOptions = attributeOptionsList.map(opt => ({
-        type: opt.type,
-        values: Array.from(opt.values).sort()
-      }));
+    setAttributeOptions(finalAttributeOptions);
+    setAvailableOptions(optionsMap);
 
-      setAttributeOptions(finalAttributeOptions);
-      setAvailableOptions(optionsMap);
+    const initialSelections = {};
+    currentVariantAttributes.attributes.forEach((value, index) => {
+      initialSelections[getAttributeType(index)] = value;
+    });
+    setSelectedAttributes(initialSelections);
 
-      const initialSelections = {};
-      currentVariantAttributes.attributes.forEach((value, index) => {
-        initialSelections[getAttributeType(index)] = value;
-      });
-      setSelectedAttributes(initialSelections);
+    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+    localStorage.setItem(cacheKey, JSON.stringify({
+      finalAttributeOptions,
+      optionsMap: Array.from(optionsMap.entries()),
+      initialSelections, // ← AÑADIR initialSelections al cache
+      timestamp: Date.now()
+    }));
 
-      const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-      localStorage.setItem(cacheKey, JSON.stringify({
-        finalAttributeOptions,
-        optionsMap: Array.from(optionsMap.entries()),
-        timestamp: Date.now()
-      }));
+    setAllAttributesLoaded(true); // ← AÑADIR: marcar como completamente cargado
 
-    } catch (error) {
-      console.error('Error building attribute options:', error);
-      setAttributeOptions([]);
-      setAvailableOptions(new Map());
-      setSelectedAttributes({});
-    } finally {
-      setLoadingAttributes(false);
-    }
-  };
-
+  } catch (error) {
+    console.error('Error building attribute options:', error);
+    setAttributeOptions([]);
+    setAvailableOptions(new Map());
+    setSelectedAttributes({});
+    setAllAttributesLoaded(true); // ← AÑADIR: incluso en error, marcar como cargado
+  } finally {
+    setLoadingAttributes(false);
+  }
+};
 
 
 
@@ -427,69 +521,135 @@ useEffect(() => {
   }, [id, currentProductId]);
 
   // Then in your useEffect:
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  // useEffect(() => {
+  //   window.scrollTo(0, 0);
 
-    const fetchProductDetails = async () => {
-      setLoadingSpecificProduct(true);
-      setErrorSpecificProduct(null);
-      try {
-        const token = user?.token;
-        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-        setProduct(data);
+  //   const fetchProductDetails = async () => {
+  //     setLoadingSpecificProduct(true);
+  //     setErrorSpecificProduct(null);
+  //     try {
+  //       const token = user?.token;
+  //       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  //       const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+  //       setProduct(data);
 
-        const currentVariantAttributes = extractVariantAttributes(data.code);
+  //       const currentVariantAttributes = extractVariantAttributes(data.code);
 
-        // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
-        if (currentVariantAttributes.attributes.length > 0) {
-          const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-          const cachedData = localStorage.getItem(cacheKey);
+  //       // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
+  //       if (currentVariantAttributes.attributes.length > 0) {
+  //         const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+  //         const cachedData = localStorage.getItem(cacheKey);
 
-          if (cachedData) {
-            try {
-              const parsedData = JSON.parse(cachedData);
-              setAttributeOptions(parsedData.finalAttributeOptions);
-              setAvailableOptions(new Map(parsedData.optionsMap));
-              setSelectedAttributes(parsedData.initialSelections || {});
-            } catch (error) {
-              console.error('Error parsing cached data:', error);
-              localStorage.removeItem(cacheKey);
-              buildAttributeOptionsFromScratch(data, currentVariantAttributes);
-            }
-          } else {
+  //         if (cachedData) {
+  //           try {
+  //             const parsedData = JSON.parse(cachedData);
+  //             setAttributeOptions(parsedData.finalAttributeOptions);
+  //             setAvailableOptions(new Map(parsedData.optionsMap));
+  //             setSelectedAttributes(parsedData.initialSelections || {});
+  //           } catch (error) {
+  //             console.error('Error parsing cached data:', error);
+  //             localStorage.removeItem(cacheKey);
+  //             buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+  //           }
+  //         } else {
+  //           buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+  //         }
+  //       } else {
+  //         // PRODUCTO SIMPLE: LIMPIAR ESTADO
+  //         setAttributeOptions([]);
+  //         setAvailableOptions(new Map());
+  //         setSelectedAttributes({});
+  //         setLoadingAttributes(false);
+  //       }
+
+  //       fetchReviews(id);
+
+  //       if (allProductsFromContext.length > 1) {
+  //         const filtered = allProductsFromContext.filter(p => p._id !== id);
+  //         const groupedRelated = groupProductsByBase(filtered);
+  //         const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
+  //         const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+  //         setRelatedProducts(shuffled.slice(0, 3));
+  //       }
+  //     } catch (err) {
+  //       setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+  //     } finally {
+  //       setLoadingSpecificProduct(false);
+  //     }
+  //   };
+
+
+  //   if (id) {
+  //     fetchProductDetails();
+  //   }
+  //   setQuantity(1);
+  // }, [id, user?.token, allProductsFromContext, fetchReviews, productsLoaded]); // Agrega productsLoaded a las dependencias
+useEffect(() => {
+  window.scrollTo(0, 0);
+
+  const fetchProductDetails = async () => {
+    setLoadingSpecificProduct(true);
+    setErrorSpecificProduct(null);
+    setAllAttributesLoaded(false); // ← AÑADIR: resetear estado de carga
+    try {
+      const token = user?.token;
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+      setProduct(data);
+
+      const currentVariantAttributes = extractVariantAttributes(data.code);
+
+      // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
+      if (currentVariantAttributes.attributes.length > 0) {
+        const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+        const cachedData = localStorage.getItem(cacheKey);
+
+        if (cachedData) {
+          try {
+            const parsedData = JSON.parse(cachedData);
+            setAttributeOptions(parsedData.finalAttributeOptions);
+            setAvailableOptions(new Map(parsedData.optionsMap));
+            setSelectedAttributes(parsedData.initialSelections || {});
+            setAllAttributesLoaded(true); // ← AÑADIR: cache cargado inmediatamente
+          } catch (error) {
+            console.error('Error parsing cached data:', error);
+            localStorage.removeItem(cacheKey);
             buildAttributeOptionsFromScratch(data, currentVariantAttributes);
           }
         } else {
-          // PRODUCTO SIMPLE: LIMPIAR ESTADO
-          setAttributeOptions([]);
-          setAvailableOptions(new Map());
-          setSelectedAttributes({});
-          setLoadingAttributes(false);
+          buildAttributeOptionsFromScratch(data, currentVariantAttributes);
         }
-
-        fetchReviews(id);
-
-        if (allProductsFromContext.length > 1) {
-          const filtered = allProductsFromContext.filter(p => p._id !== id);
-          const groupedRelated = groupProductsByBase(filtered);
-          const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
-          const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
-          setRelatedProducts(shuffled.slice(0, 3));
-        }
-      } catch (err) {
-        setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-      } finally {
-        setLoadingSpecificProduct(false);
+      } else {
+        // PRODUCTO SIMPLE: LIMPIAR ESTADO
+        setAttributeOptions([]);
+        setAvailableOptions(new Map());
+        setSelectedAttributes({});
+        setLoadingAttributes(false);
+        setAllAttributesLoaded(true); // ← AÑADIR
       }
-    };
 
+      fetchReviews(id);
 
-    if (id) {
-      fetchProductDetails();
+      if (allProductsFromContext.length > 1) {
+        const filtered = allProductsFromContext.filter(p => p._id !== id);
+        const groupedRelated = groupProductsByBase(filtered);
+        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
+        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+        setRelatedProducts(shuffled.slice(0, 3));
+      }
+    } catch (err) {
+      setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
+      setAllAttributesLoaded(true); // ← AÑADIR: incluso en error
+    } finally {
+      setLoadingSpecificProduct(false);
     }
-    setQuantity(1);
-  }, [id, user?.token, allProductsFromContext, fetchReviews, productsLoaded]); // Agrega productsLoaded a las dependencias
+  };
+
+  if (id) {
+    fetchProductDetails();
+  }
+  setQuantity(1);
+}, [id, user?.token, allProductsFromContext, fetchReviews, productsLoaded]);
 
 
   // 3. Agrega un useEffect ESPECÍFICO para manejar filtros
@@ -882,8 +1042,25 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
     );
   };
 
-  const doesSelectedVariantExist = () => {
-  if (attributeOptions.length === 0) return true; // Productos simples siempre existen
+//   const doesSelectedVariantExist = () => {
+//   if (attributeOptions.length === 0) return true; // Productos simples siempre existen
+  
+//   const selectedValues = attributeOptions.map(opt =>
+//     selectedAttributes[opt.type] || ''
+//   );
+
+//   // Verificar que todas las selecciones estén completas
+//   const allSelected = selectedValues.every(value => value !== '');
+//   if (!allSelected) return false;
+
+//   const optionKey = selectedValues.join('|');
+//   return availableOptions.has(optionKey);
+// };
+const doesSelectedVariantExist = () => {
+  // Si los atributos no han terminado de cargar, retornar false
+  if (!allAttributesLoaded) return false;
+  
+  if (attributeOptions.length === 0) return true;
   
   const selectedValues = attributeOptions.map(opt =>
     selectedAttributes[opt.type] || ''
@@ -959,7 +1136,7 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
 
               {/* Dynamic attribute selection */}
               {/* SOLO MOSTRAR ATRIBUTOS SI HAY attributeOptions Y NO ESTÁ CARGANDO */}
-              {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
+              {/* {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
                 attributeOptions.map((attribute, index) => {
                   const options = getAvailableOptionsForAttribute(index) || [];
                   const isLastAttribute = index === attributeOptions.length - 1;
@@ -1049,7 +1226,115 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
                   </Typography>
                   <CircularProgress size={20} />
                 </Box>
-              ) : null}
+              ) : null} */}
+              {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
+  attributeOptions.map((attribute, index) => {
+    // MOSTRAR LOADING SI LOS ATRIBUTOS NO HAN TERMINADO DE CARGAR
+    if (!allAttributesLoaded) {
+      return (
+        <Box key={index} sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Cargando opciones...
+          </Typography>
+          <CircularProgress size={20} />
+        </Box>
+      );
+    }
+
+    const options = getAvailableOptionsForAttribute(index) || [];
+    const isLastAttribute = index === attributeOptions.length - 1;
+
+    return (
+      <Box key={index} sx={{ mb: 3 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            display: 'block',
+            fontWeight: 'bold',
+            color: 'grey.800',
+            mb: 2,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}
+        >
+          
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {options.map((option, optionIndex) => {
+            const isSelected = selectedAttributes[attribute.type] === option.value;
+            const isAvailable = option.isAvailable;
+            return (
+              <Button
+                key={optionIndex}
+                variant="outlined"
+                onClick={() => handleAttributeChange(attribute.type, option.value)}
+                disabled={!isAvailable || !allAttributesLoaded} 
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  borderRadius: 2,
+                  fontSize: '0.875rem',
+                  fontWeight: 'bold',
+                  minWidth: '60px',
+                  transition: 'all 0.3s ease',
+                  transform: 'scale(1)',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    ...(!isSelected && {
+                      bgcolor: 'primary.50',
+                      color: 'primary.700',
+                      borderColor: 'primary.300',
+                    })
+                  },
+                  '&:active': {
+                    transform: 'scale(0.95)'
+                  },
+                  ...(isSelected && {
+                    bgcolor: '#263C5C',
+                    color: 'white',
+                    borderColor: '#263C5C',
+                    boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
+                    '&:hover': {
+                      bgcolor: '#1E2F4A',
+                      borderColor: '#1E2F4A',
+                    }
+                  }),
+                  ...(!isSelected && {
+                    bgcolor: 'white',
+                    color: 'grey.800',
+                    borderColor: 'grey.300',
+                  }),
+                  ...(isLastAttribute && !option.isAvailable && {
+                    bgcolor: 'grey.100',
+                    color: 'grey.500',
+                    borderColor: 'grey.300',
+                    cursor: 'not-allowed',
+                    opacity: 0.7,
+                  }),
+                  // ESTILO ADICIONAL MIENTRAS LOS ATRIBUTOS SE CARGAN
+                  ...(!allAttributesLoaded && {
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                  })
+                }}
+              >
+                {option.value}
+              </Button>
+            );
+          })}
+        </Box>
+      </Box>
+    );
+  })
+) : loadingAttributes ? (
+  // MOSTRAR LOADING SOLO SI ESTÁ CARGANDO Y ES VARIANTE
+  <Box sx={{ mb: 3 }}>
+    <Typography variant="body2" sx={{ mb: 2 }}>
+      Cargando opciones...
+    </Typography>
+    <CircularProgress size={20} />
+  </Box>
+) : null}
 
 
               <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
