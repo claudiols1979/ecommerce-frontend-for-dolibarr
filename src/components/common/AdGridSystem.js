@@ -141,9 +141,9 @@ const PictureGrid = ({
       title: 'Electrónicos'
     },
      {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758217058/arno-senoner-l0BhJJhkvXg-unsplash_mnqmn3.jpg',
-      department: 'Accesorios',
-      title: 'Accesorios'
+      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758478320/air_conditioner_zers0j.jpg',
+      department: 'Aires Acondicionados',
+      title: 'Aires Acondicionados'
     },
      {
       url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758217151/catia-dombaxe-8IlqMcDYKA8-unsplash_jimlbl.jpg',

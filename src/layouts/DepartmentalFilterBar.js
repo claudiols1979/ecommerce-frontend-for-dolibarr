@@ -225,12 +225,20 @@ const DepartmentalFilterBar = () => {
               <Chip 
                 label={Object.keys(activeFilters).length} 
                 size="small" 
+                disabled 
+                onClick={(e) => {
+                    e.stopPropagation();                    
+                  }}
                 sx={{ 
                   ml: 1, 
                   backgroundColor: '#bb4343', 
                   color: 'white',
-                  height: 20,
-                  '& .MuiChip-label': { px: 1 }
+                  height: 20,                  
+                  '& .MuiChip-label': { px: 1 },
+                  '&.Mui-disabled': {
+                    opacity: 1, // Mantener opacidad completa
+                    backgroundColor: '#bb4343', // Forzar color de fondo
+                    color: 'white' }// Forzar color de texto
                 }} 
               />
             )}
