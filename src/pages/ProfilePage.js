@@ -40,8 +40,10 @@ const ProfilePage = () => {
     email: '',
     phoneNumber: '',
     address: '',
+    city: '', // ✅ NUEVO CAMPO
+    province: '', // ✅ NUEVO CAMPO
     resellerCategory: ''
-  });
+});
 
   useEffect(() => {
     // 1. Fetch the user's orders as soon as the page loads.
@@ -123,16 +125,18 @@ const ProfilePage = () => {
 
   const handleEditClick = () => {
     setEditFormData({
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      email: user.email || '',
-      phoneNumber: user.phoneNumber || '',
-      address: user.address || '',
-      resellerCategory: user.resellerCategory || ''
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
+        address: user.address || '',
+        city: user.city || '', // ✅ NUEVO CAMPO
+        province: user.province || '', // ✅ NUEVO CAMPO
+        resellerCategory: user.resellerCategory || ''
     });
     setEditDialogOpen(true);
     clearMessages();
-  };
+};
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
@@ -228,72 +232,102 @@ const ProfilePage = () => {
         </DialogTitle>
         <form onSubmit={handleEditSubmit}>
           <DialogContent sx={{ pt: 3 }}>
-            {updateError && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {updateError}
-              </Alert>
-            )}
-            {updateSuccess && (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                Perfil actualizado exitosamente!
-              </Alert>
-            )}
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+    {updateError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+            {updateError}
+        </Alert>
+    )}
+    {updateSuccess && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+            Perfil actualizado exitosamente!
+        </Alert>
+    )}
+    <Grid container spacing={2}>
+        <Grid item xs={12} sm={6}>
+            <TextField
+                fullWidth
+                label="Nombre"
+                name="firstName"
+                value={editFormData.firstName}
+                onChange={handleEditFormChange}
+                required
+            />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+            <TextField
+                fullWidth
+                label="Apellido"
+                name="lastName"
+                value={editFormData.lastName}
+                onChange={handleEditFormChange}
+                required
+            />
+        </Grid>
+        <Grid item xs={12}>
+            <TextField
+                fullWidth
+                disabled
+                label="Correo Electrónico"
+                name="email"
+                type="email"
+                value={editFormData.email}
+                onChange={handleEditFormChange}
+                required
+            />
+        </Grid>
+        <Grid item xs={12}>
+            <TextField
+                fullWidth
+                label="Teléfono"
+                name="phoneNumber"
+                value={editFormData.phoneNumber}
+                onChange={handleEditFormChange}                  
+            />
+        </Grid>
+        <Grid item xs={12}>
+            <TextField
+                fullWidth
+                label="Dirección"
+                name="address"
+                multiline
+                rows={3}
+                value={editFormData.address}
+                onChange={handleEditFormChange}                  
+            />
+        </Grid>
+        {/* ✅ NUEVOS CAMPOS - Ciudad y Provincia */}
+        <Grid item xs={12} sm={6}>
+            <TextField
+                fullWidth
+                label="Ciudad"
+                name="city"
+                value={editFormData.city}
+                onChange={handleEditFormChange}
+            />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+            <TextField
+                fullWidth
+                label="Provincia"
+                name="province"
+                value={editFormData.province}
+                onChange={handleEditFormChange}
+                select
+                SelectProps={{ native: true }}
+            >
+                <option value=""></option>
+                <option value="San José">San José</option>
+                <option value="Alajuela">Alajuela</option>
+                <option value="Cartago">Cartago</option>
+                <option value="Heredia">Heredia</option>
+                <option value="Guanacaste">Guanacaste</option>
+                <option value="Puntarenas">Puntarenas</option>
+                <option value="Limón">Limón</option>
+            </TextField>
+        </Grid>
+        {user.role === 'Revendedor' && (
+            <Grid item xs={12}>
                 <TextField
-                  fullWidth
-                  label="Nombre"
-                  name="firstName"
-                  value={editFormData.firstName}
-                  onChange={handleEditFormChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Apellido"
-                  name="lastName"
-                  value={editFormData.lastName}
-                  onChange={handleEditFormChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  disabled
-                  label="Correo Electrónico"
-                  name="email"
-                  type="email"
-                  value={editFormData.email}
-                  onChange={handleEditFormChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Teléfono"
-                  name="phoneNumber"
-                  value={editFormData.phoneNumber}
-                  onChange={handleEditFormChange}                  
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Dirección"
-                  name="address"
-                  multiline
-                  rows={3}
-                  value={editFormData.address}
-                  onChange={handleEditFormChange}                  
-                />
-              </Grid>
-              {user.role === 'Revendedor' && (
-                <Grid item xs={12}>
-                  <TextField
                     fullWidth
                     disabled
                     label="Categoría de Revendedor"
@@ -302,18 +336,18 @@ const ProfilePage = () => {
                     onChange={handleEditFormChange}
                     select
                     SelectProps={{ native: true }}
-                  >
+                >
                     <option value=""></option>
                     <option value="cat1">Categoría 1</option>
                     <option value="cat2">Categoría 2</option>
                     <option value="cat3">Categoría 3</option>
                     <option value="cat4">Categoría 4</option>
                     <option value="cat5">Categoría 5</option>
-                  </TextField>
-                </Grid>
-              )}
+                </TextField>
             </Grid>
-          </DialogContent>
+        )}
+    </Grid>
+</DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
             <Button onClick={handleCloseDialog} color="secondary">
               Cancelar
@@ -389,19 +423,33 @@ const ProfilePage = () => {
                 />
               </ListItem>
             )}
-            {(user.address ) && (
-              <ListItem disableGutters sx={{ py: 1 }}>
-                <ListItemText 
-                  primary={
-                    <Typography variant="body1" color="text.secondary">
-                      <LocationOnIcon sx={iconStyle} /> Dirección: <Typography component="span" fontWeight="medium" color="text.primary">
-                          {user.address || 'N/A'}
-                      </Typography>
+            {(user.address || user.city || user.province) && (           
+              <ListItemText 
+                primary={
+                  <Typography variant="body1" color="text.secondary">                   
+                    <Typography component="span" fontWeight="medium" color="text.primary">                      
+                      {(user.address || user.city || user.province) && (
+                      <ListItem disableGutters sx={{ py: 1 }}>
+                        <ListItemText 
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <LocationOnIcon sx={iconStyle} />
+                              <Typography variant="body1" color="text.primary">
+                                {[user.address, user.city, user.province]
+                                  .filter(Boolean)
+                                  .join(', ')}
+                              </Typography>
+                            </Box>
+                          } 
+                        />
+                      </ListItem>
+                    )}
                     </Typography>
-                  } 
-                />
-              </ListItem>
-            )}
+                  </Typography>
+                } 
+              />
+           
+          )}
           </List>
         
           {user.role === 'Revendedor' && (
@@ -448,8 +496,8 @@ const ProfilePage = () => {
       <Box>
         {displayOrders.map((order) => {
           // Calcular impuestos y envío
-          const GAM_PROVINCES = ["San Jose", "Heredia", "Cartago", "Alajuela"];
-          const isGAM = GAM_PROVINCES.includes(order.customerDetails?.province);
+          // const GAM_PROVINCES = ["San Jose", "Heredia", "Cartago", "Alajuela"];
+          // const isGAM = GAM_PROVINCES.includes(order.customerDetails?.province);
           
           // Calcular subtotal con impuestos
           const itemsWithTax = order.items.map(item => {
@@ -464,13 +512,18 @@ const ProfilePage = () => {
           const subtotal = itemsWithTax.reduce((sum, item) => sum + item.subtotalWithTax, 0);
           
           // Calcular envío
-          let shippingCost = 0;
-          let shippingText = "Pago contra entrega";
+          // let shippingCost = 0;
+          // let shippingText = "Pago contra entrega";
           
-          if (isGAM) {
-            shippingCost = 3000 * 1.13; // 3000 colones + IVA
-            shippingText = `₡${Math.round(shippingCost).toLocaleString('es-CR')} (Envío GAM)`;
-          }
+          // if (isGAM) {
+          //   shippingCost = 3000 * 1.13; // 3000 colones + IVA
+          //   shippingText = `₡${Math.round(shippingCost).toLocaleString('es-CR')} (Envío GAM)`;
+          // }
+          const shippingCostBase = 3000;
+          const shippingCostWithTax = shippingCostBase * 0.13;
+          const shippingCostSubTotal = shippingCostBase + shippingCostWithTax;
+          const shippingCost = shippingCostSubTotal;
+          const shippingText = `₡${Math.round(shippingCost).toLocaleString('es-CR')} (Envío a todo Costa Rica)`;
           
           // Calcular total final
           const totalWithTaxAndShipping = subtotal + shippingCost;
@@ -641,7 +694,7 @@ const ProfilePage = () => {
                       </Typography>
                     </Box>
                     <Typography variant="body1" fontWeight="bold" color="text.primary">
-                      {isGAM ? formatPrice(shippingCost) : shippingText}
+                      {formatPrice(shippingCost)}
                     </Typography>
                   </ListItem>
                   

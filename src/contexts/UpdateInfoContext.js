@@ -64,17 +64,18 @@ export const UpdateInfoProvider = ({ children }) => {
       if (response.status === 200) {
         setSuccess(true);
         
-        // Actualizar el AuthContext con los nuevos datos usando la función updateUser
         if (updateUser) {
           updateUser({
-            firstName: response.data.firstName,
-            lastName: response.data.lastName,
-            email: response.data.email,
-            phoneNumber: response.data.phoneNumber,
-            address: response.data.address,
-            resellerCategory: response.data.resellerCategory
+              firstName: response.data.firstName,
+              lastName: response.data.lastName,
+              email: response.data.email,
+              phoneNumber: response.data.phoneNumber,
+              address: response.data.address,
+              city: response.data.city, // ✅ NUEVO CAMPO
+              province: response.data.province, // ✅ NUEVO CAMPO
+              resellerCategory: response.data.resellerCategory
           });
-        }
+      }
         
         return response.data;
       }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container, Box, Typography, Button, TextField, CircularProgress, Grid,
-  Card, CardContent, Link as MuiLink, useTheme
+  Card, CardContent, Link as MuiLink, useTheme, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
@@ -14,6 +14,8 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -24,6 +26,8 @@ const RegisterPage = () => {
     confirmPassword: '',
     phoneNumber: '',
     address: '',
+    city: '',        // ✅ NUEVO CAMPO
+    province: '',    // ✅ NUEVO CAMPO
   });
   const [loading, setLoading] = useState(false);
   
@@ -31,29 +35,43 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const theme = useTheme();
 
+  // Lista de provincias de Costa Rica
+  const provinces = ["Alajuela", "Cartago", "Guanacaste", "Heredia", "Limón", "Puntarenas", "San José"];
+
   useEffect(() => {
     if (user) {
       navigate('/');      
     }
   }, [user, navigate]);
 
-  const { firstName, lastName, email, password, confirmPassword, phoneNumber, address } = formData;
+  const { firstName, lastName, email, password, confirmPassword, phoneNumber, address, city, province } = formData;
 
   const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    // Validaciones
     if (password !== confirmPassword) {
       toast.error('Las contraseñas no coinciden.');
       return;
     }
     if (password.length < 6) {
-        toast.error('La contraseña debe tener al menos 6 caracteres.');
-        return;
+      toast.error('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (!province) {
+      toast.error('Por favor seleccione su provincia.');
+      return;
+    }
+    if (!city) {
+      toast.error('Por favor ingrese su ciudad.');
+      return;
     }
 
     setLoading(true);
-    const userData = { firstName, lastName, email, password, phoneNumber, address };
+    // ✅ INCLUIR city y province en los datos del usuario
+    const userData = { firstName, lastName, email, password, phoneNumber, address, city, province };
     await register(userData);
     setLoading(false);
   };
@@ -62,7 +80,6 @@ const RegisterPage = () => {
     return null;
   }
 
-  // Updated styles to match PrivacyPolicyPage
   const primaryButtonStyle = {
     p: 1.5,
     mb: 2,
@@ -101,6 +118,15 @@ const RegisterPage = () => {
     '& .MuiInputLabel-root.Mui-focused': {
       color: '#263C5C',
     },
+  };
+
+  const selectStyle = {
+    ...textFieldStyle,
+    '& .MuiSelect-select': {
+      padding: '16.5px 14px',
+      display: 'flex',
+      alignItems: 'center'
+    }
   };
 
   return (
@@ -242,25 +268,75 @@ const RegisterPage = () => {
                       startAdornment: <PhoneOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
                     }} 
                   />
+                </Grid>    
+                <Box sx={{ 
+                      width: { 
+                        xs: '75%',    // 100% en móvil
+                        sm: '56%',     // 80% en tablet pequeña
+                        md: '56%',     // 65% en tablet grande
+                        lg: '56%'      // 56% en desktop
+                      } 
+                    }}>
+                   <Grid item xs={12}>                 
+                  <FormControl fullWidth required sx={selectStyle}>
+                    <InputLabel>Provincia</InputLabel>
+                    <Select
+                      name="province"
+                      value={province}
+                      label="Provincia"
+                      onChange={onChange}
+                      startAdornment={<MapOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} />}
+                    >
+                      <MenuItem value=""><em>Seleccionar provincia</em></MenuItem>
+                      {provinces.map((prov) => (
+                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>                  
                 </Grid>
+                </Box>         
+               
+                
+                {/* ✅ NUEVO: Campo Ciudad */}
                 <Grid item xs={12}>
                   <TextField 
                     required 
                     fullWidth 
+                    name="city" 
+                    label="Ciudad" 
+                    id="city" 
+                    autoComplete="address-level2" 
+                    value={city} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle} 
+                    InputProps={{ 
+                      startAdornment: <LocationCityIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>                  
+                  <TextField 
+                    required 
+                    fullWidth 
                     name="address" 
-                    label="Dirección de Envío" 
+                    label="Dirección Completa" 
                     id="address" 
                     autoComplete="shipping address-line1" 
                     value={address} 
                     onChange={onChange} 
                     variant="outlined" 
                     sx={textFieldStyle} 
+                    multiline
+                    rows={2}
                     InputProps={{ 
-                      startAdornment: <HomeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                      startAdornment: <HomeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)', alignSelf: 'flex-start' }} /> 
                     }} 
-                  />
+                    placeholder="Calle, número, urbanización, punto de referencia, etc."
+                  />                 
                 </Grid>
-              </Grid>
+            </Grid>
               <Button 
                 type="submit" 
                 fullWidth 

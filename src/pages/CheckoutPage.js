@@ -7,6 +7,7 @@ import {
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useUpdateInfo } from '../contexts/UpdateInfoContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { formatPrice } from '../utils/formatters';
@@ -20,8 +21,11 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 const CheckoutPage = () => {
     const { cartItems, loading, initiateTilopayPayment } = useOrders();
     const { user } = useAuth();
+    const { updateResellerProfile } = useUpdateInfo();
     const navigate = useNavigate();
     const theme = useTheme();
+
+    console.log("USER EN CHECKOUT: ", user)
 
     const [shippingDetails, setShippingDetails] = useState({
         name: '',
@@ -39,26 +43,26 @@ const CheckoutPage = () => {
     const [provinceTouched, setProvinceTouched] = useState(false);
 
     const [touchedFields, setTouchedFields] = useState({
-    name: false,
-    email: false,
-    phone: false,
-    address: false,
-    city: false,
-    province: false
-});
+        name: false,
+        email: false,
+        phone: false,
+        address: false,
+        city: false,
+        province: false
+    });
 
-// Función para manejar cuando un campo pierde el focus (se toca)
-const handleFieldBlur = (fieldName) => {
-    setTouchedFields(prev => ({
-        ...prev,
-        [fieldName]: true
-    }));
-};
+    // Función para manejar cuando un campo pierde el focus (se toca)
+    const handleFieldBlur = (fieldName) => {
+        setTouchedFields(prev => ({
+            ...prev,
+            [fieldName]: true
+        }));
+    };
 
-// Función para verificar si un campo debe mostrar error
-const shouldShowError = (fieldName, value) => {
-    return touchedFields[fieldName] && !value;
-};
+    // Función para verificar si un campo debe mostrar error
+    const shouldShowError = (fieldName, value) => {
+        return touchedFields[fieldName] && !value;
+    };
 
     const totalCartPrice = cartItems.reduce((acc, item) => {
         const priceWithTax = item.product ? 
@@ -70,18 +74,15 @@ const shouldShowError = (fieldName, value) => {
     const finalTotalPrice = totalCartPrice + shippingCost;
 
     const provinces = ["Alajuela", "Cartago", "Guanacaste", "Heredia", "Limón", "Puntarenas", "San José"];
-    const gamProvinces = ["San José", "Alajuela", "Cartago", "Heredia"];
 
     useEffect(() => {
-        if (gamProvinces.includes(selectedProvince)) {
+        // SIEMPRE cobrar envío sin importar la provincia
+        if (selectedProvince) {
             const baseShippingCost = 3000;
             const shippingTax = baseShippingCost * 0.13; // 13% de impuesto
             const totalShippingCost = baseShippingCost + shippingTax;
             setShippingCost(totalShippingCost);
-            setShippingMessage('');
-        } else if (selectedProvince && !gamProvinces.includes(selectedProvince)) {
-            setShippingCost(0);
-            setShippingMessage("Pago contra entrega - Envío gratuito");
+            setShippingMessage('Envío a todo Costa Rica');
         } else {
             setShippingCost(0);
             setShippingMessage('');
@@ -96,13 +97,23 @@ const shouldShowError = (fieldName, value) => {
 
     useEffect(() => {
         if (user) {
+            // ✅ CORREGIDO: Cargar todos los datos del usuario incluyendo provincia y ciudad
+            const fullName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '';
+            
             setShippingDetails(prev => ({
                 ...prev,
-                name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : prev.name,
+                name: fullName || prev.name,
                 email: user.email || prev.email,
                 phone: user.phoneNumber || prev.phone,
                 address: user.address || prev.address,
+                city: user.city || prev.city, // ✅ Ahora sí carga la ciudad
             }));
+            
+            // ✅ CORREGIDO: Cargar provincia del usuario si existe
+            if (user.province) {
+                setSelectedProvince(user.province);
+                setProvinceTouched(true); // Marcar como tocado para que se muestre el costo de envío
+            }
         }
     }, [user]);
 
@@ -114,6 +125,34 @@ const shouldShowError = (fieldName, value) => {
     const handleProvinceChange = (e) => {
         setSelectedProvince(e.target.value);
         setProvinceTouched(true);
+    };
+
+    // ✅ NUEVA FUNCIÓN: Actualizar perfil del usuario con la información de envío
+    const updateUserProfileWithShippingInfo = async () => {
+        if (!user || !user._id) return;
+
+        try {
+            // Extraer nombre y apellido del campo name
+            const nameParts = shippingDetails.name.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            const updatedData = {
+                firstName: firstName,
+                lastName: lastName,
+                email: shippingDetails.email,
+                phoneNumber: shippingDetails.phone,
+                address: shippingDetails.address,
+                city: shippingDetails.city,
+                province: selectedProvince
+            };
+
+            await updateResellerProfile(user._id, updatedData);
+            // La actualización del contexto de auth se maneja automáticamente en el contexto UpdateInfo
+        } catch (error) {
+            console.error('Error al actualizar perfil del usuario:', error);
+            // No mostramos error al usuario para no interrumpir el flujo de checkout
+        }
     };
 
     const handleInitiatePayment = async () => {
@@ -133,6 +172,9 @@ const shouldShowError = (fieldName, value) => {
         }
         
         try {
+            // ✅ NUEVO: Actualizar perfil del usuario antes de proceder al pago
+            await updateUserProfileWithShippingInfo();
+
             const finalShippingDetails = {
                 ...shippingDetails,
                 province: selectedProvince
@@ -319,7 +361,7 @@ const shouldShowError = (fieldName, value) => {
                                 <Divider sx={{ my: 3 }} />
                                 
                                 {/* Shipping Cost Info */}
-                               <Box sx={{ 
+                                <Box sx={{ 
                                     mb: 3,
                                     p: 2,
                                     backgroundColor: alpha(theme.palette.primary.main, 0.03),
@@ -348,7 +390,7 @@ const shouldShowError = (fieldName, value) => {
                                                 Selecciona tu provincia para calcular el envío
                                             </Typography>
                                         </Box>
-                                    ) : gamProvinces.includes(selectedProvince) ? (
+                                    ) : (
                                         <Box>
                                             <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                 Envío base: {formatPrice(3000)}
@@ -357,13 +399,15 @@ const shouldShowError = (fieldName, value) => {
                                                 Impuesto (13%): {formatPrice(3000 * 0.13)}
                                             </Typography>
                                             <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, mt: 1 }}>
-                                                Total envío: {formatPrice(shippingCost)} - Entrega en 24-48 horas
+                                                Total envío: {formatPrice(shippingCost)} - Entrega en 24-48 horas en la GAM
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600, mt: 1 }}>
+                                                Envio por Correos de Costa Rica fuera de la GAM
+                                            </Typography>
+                                            <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 500, display: 'block', mt: 1 }}>
+                                                {shippingMessage}
                                             </Typography>
                                         </Box>
-                                    ) : (
-                                        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
-                                            ¡Envío! - Pago contra entrega
-                                        </Typography>
                                     )}
                                 </Box>
                                 
@@ -392,9 +436,9 @@ const shouldShowError = (fieldName, value) => {
                                         </Typography>
                                         <Typography variant="body1" sx={{ 
                                             fontWeight: 600,
-                                            color: selectedProvince && !gamProvinces.includes(selectedProvince) ? 'success.main' : 'text.primary'
+                                            color: selectedProvince ? 'text.primary' : 'warning.main'
                                         }}>
-                                            {selectedProvince ? (gamProvinces.includes(selectedProvince) ? formatPrice(shippingCost) : 'Pago contra entrega') : 'Por calcular'}
+                                            {selectedProvince ? formatPrice(shippingCost) : 'Por calcular'}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -471,9 +515,9 @@ const shouldShowError = (fieldName, value) => {
                                             type="email"
                                             value={shippingDetails.email}
                                             onChange={handleShippingChange}
-                                            onBlur={() => handleFieldBlur('name')}
-                                            error={shouldShowError('name', shippingDetails.email)}
-                                            helperText={shouldShowError('name', shippingDetails.email) ? "Este campo es requerido" : ""}
+                                            onBlur={() => handleFieldBlur('email')}
+                                            error={shouldShowError('email', shippingDetails.email)}
+                                            helperText={shouldShowError('email', shippingDetails.email) ? "Este campo es requerido" : ""}
                                             fullWidth 
                                             required
                                             variant="outlined"
@@ -487,9 +531,9 @@ const shouldShowError = (fieldName, value) => {
                                             name="phone"
                                             value={shippingDetails.phone}
                                             onChange={handleShippingChange}
-                                            onBlur={() => handleFieldBlur('name')}
-                                            error={shouldShowError('name', shippingDetails.phone)}
-                                            helperText={shouldShowError('name', shippingDetails.phone) ? "Este campo es requerido" : ""}
+                                            onBlur={() => handleFieldBlur('phone')}
+                                            error={shouldShowError('phone', shippingDetails.phone)}
+                                            helperText={shouldShowError('phone', shippingDetails.phone) ? "Este campo es requerido" : ""}
                                             fullWidth 
                                             required
                                             variant="outlined"
@@ -499,45 +543,45 @@ const shouldShowError = (fieldName, value) => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <FormControl 
-                                        fullWidth 
-                                        required 
-                                        size="medium" 
-                                        sx={{ mb: 2 }}
-                                        error={shouldShowError('province', selectedProvince)}
-                                    >
-                                        <InputLabel sx={{ 
-                                            backgroundColor: 'white',
-                                            px: 1
-                                        }}>
-                                            Provincia *
-                                        </InputLabel>
-                                        <Select
-                                            value={selectedProvince}
-                                            label="Provincia *"
-                                            onChange={handleProvinceChange}
-                                            onBlur={() => handleFieldBlur('province')}
-                                            displayEmpty
-                                            sx={{
-                                                '& .MuiSelect-select': {
-                                                    padding: '16.5px 14px'
-                                                }
-                                            }}
+                                            fullWidth 
+                                            required 
+                                            size="medium" 
+                                            sx={{ mb: 2 }}
+                                            error={shouldShowError('province', selectedProvince)}
                                         >
-                                            <MenuItem value="">
-                                                <em>Seleccionar provincia</em>
-                                            </MenuItem>
-                                            {provinces.map((prov) => (
-                                                <MenuItem key={prov} value={prov} sx={{ py: 1.5 }}>
-                                                    {prov}
+                                            <InputLabel sx={{ 
+                                                backgroundColor: 'white',
+                                                px: 1
+                                            }}>
+                                                Provincia *
+                                            </InputLabel>
+                                            <Select
+                                                value={selectedProvince}
+                                                label="Provincia *"
+                                                onChange={handleProvinceChange}
+                                                onBlur={() => handleFieldBlur('province')}
+                                                displayEmpty
+                                                sx={{
+                                                    '& .MuiSelect-select': {
+                                                        padding: '16.5px 14px'
+                                                    }
+                                                }}
+                                            >
+                                                <MenuItem value="">
+                                                    <em>Seleccionar provincia</em>
                                                 </MenuItem>
-                                            ))}
-                                        </Select>
-                                        {shouldShowError('province', selectedProvince) && (
-                                            <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
-                                                Por favor selecciona tu provincia
-                                            </Typography>
-                                        )}
-                                    </FormControl>
+                                                {provinces.map((prov) => (
+                                                    <MenuItem key={prov} value={prov} sx={{ py: 1.5 }}>
+                                                        {prov}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {shouldShowError('province', selectedProvince) && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                                                    Por favor selecciona tu provincia
+                                                </Typography>
+                                            )}
+                                        </FormControl>
                                     </Grid>
                                     <Grid item xs={12}>
                                         <TextField
@@ -545,9 +589,9 @@ const shouldShowError = (fieldName, value) => {
                                             name="address"
                                             value={shippingDetails.address}
                                             onChange={handleShippingChange}
-                                            onBlur={() => handleFieldBlur('name')}
-                                            error={shouldShowError('name', shippingDetails.address)}
-                                            helperText={shouldShowError('name', shippingDetails.address) ? "Este campo es requerido" : ""}
+                                            onBlur={() => handleFieldBlur('address')}
+                                            error={shouldShowError('address', shippingDetails.address)}
+                                            helperText={shouldShowError('address', shippingDetails.address) ? "Este campo es requerido" : ""}
                                             fullWidth 
                                             required
                                             variant="outlined"
@@ -562,9 +606,9 @@ const shouldShowError = (fieldName, value) => {
                                             name="city"
                                             value={shippingDetails.city}
                                             onChange={handleShippingChange}
-                                            onBlur={() => handleFieldBlur('name')}
-                                            error={shouldShowError('name', shippingDetails.city)}
-                                            helperText={shouldShowError('name', shippingDetails.city) ? "Este campo es requerido" : ""}
+                                            onBlur={() => handleFieldBlur('city')}
+                                            error={shouldShowError('city', shippingDetails.city)}
+                                            helperText={shouldShowError('city', shippingDetails.city) ? "Este campo es requerido" : ""}
                                             fullWidth 
                                             required
                                             variant="outlined"
@@ -666,10 +710,10 @@ const shouldShowError = (fieldName, value) => {
                                 'Proceder al pago seguro'
                             )}
                             <PaymentIcon sx={{ 
-                                    color: 'black', 
-                                    ml: 2,
-                                    fontSize: 28
-                                }} />
+                                color: 'black', 
+                                ml: 2,
+                                fontSize: 28
+                            }} />
                         </Button>
                     </Grid>
                 </Grid>
