@@ -326,10 +326,20 @@ const RegisterPage = () => {
                     autoComplete="shipping address-line1" 
                     value={address} 
                     onChange={onChange} 
-                    variant="outlined" 
-                    sx={textFieldStyle} 
+                    variant="outlined"                     
                     multiline
                     rows={2}
+                    sx={{
+                      ...textFieldStyle,
+                      width: { 
+                        xs: '115%',    // 100% en móvil
+                        sm: '115%',     // 80% en tablet pequeña
+                        md: '115%',     // 65% en tablet grande
+                        lg: '115%' 
+                      },
+                      ml: -2,     // ✅ Esto lo centra horizontalmente
+                      display: 'block' // ✅ Necesario para que mx: 'auto' funcione
+                    }}
                     InputProps={{ 
                       startAdornment: <HomeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)', alignSelf: 'flex-start' }} /> 
                     }} 
