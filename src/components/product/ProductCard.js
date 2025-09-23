@@ -97,6 +97,22 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
     navigate(`/products/${product._id}`);
   };
 
+  const HTMLContent = ({ html, maxLength, ...typographyProps }) => {
+  const stripHtml = (html) => html.replace(/<[^>]*>/g, '');
+  
+  let content = stripHtml(html || '');
+  if (maxLength && content.length > maxLength) {
+    content = content.substring(0, maxLength) + '...';
+  }
+  
+  return (
+    <Typography {...typographyProps}>
+      {content || 'No description available.'}
+    </Typography>
+  );
+};
+
+
   return (
     <Card sx={{ 
       height: '100%', 
@@ -228,7 +244,7 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           </Box>
         )}
 
-        <Typography 
+        {/* <Typography 
           variant="body2" color="text.secondary" 
           sx={{ 
             minHeight: 30, overflow: 'hidden', textOverflow: 'ellipsis', 
@@ -237,7 +253,18 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
           }}
         >
           {product.shortDescription || (product.description ? product.description.substring(0, 60) + '...' : 'No description available.')}
-        </Typography>
+        </Typography> */}
+        <HTMLContent 
+          html={product.description}
+          maxLength={60}
+          variant="body2" 
+          color="text.secondary" 
+          sx={{ 
+            minHeight: 30, overflow: 'hidden', textOverflow: 'ellipsis', 
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            mb: 1, fontSize: '0.8rem', 
+          }}
+        />
         
         {/* --- JSX DE PRECIOS --- */}
         <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>

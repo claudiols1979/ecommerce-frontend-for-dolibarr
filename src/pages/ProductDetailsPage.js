@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import {
   Container, Box, Typography, Button, Grid, CircularProgress, Alert, Card, CardContent,
   TextField, Link as MuiLink, IconButton, useTheme, Divider, Paper, Chip, useMediaQuery,
@@ -31,6 +32,26 @@ import { calculatePriceWithTax } from '../utils/taxCalculations';
 import { useLocation } from 'react-router-dom';
 
 
+const HTMLContent = ({ 
+  html, 
+  fallback = 'No description available.', 
+  ...typographyProps 
+}) => {
+  const createMarkup = (htmlContent) => {
+    return { __html: DOMPurify.sanitize(htmlContent || '') };
+  };
+  
+  if (!html || html.trim() === '') {
+    return <Typography {...typographyProps}>{fallback}</Typography>;
+  }
+  
+  return (
+    <Typography 
+      {...typographyProps}
+      dangerouslySetInnerHTML={createMarkup(html)}
+    />
+  );
+};
 
 
 // Helper function to extract base product name from code
@@ -69,6 +90,7 @@ const getAttributeType = (index) => {
   const attributeTypes = ['color', 'size', 'model', 'type', 'material'];
   return attributeTypes[index] || `attribute_${index + 1}`;
 };
+
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -1074,13 +1096,40 @@ const doesSelectedVariantExist = () => {
   return availableOptions.has(optionKey);
 };
 
+
+// Reusable component that handles both truncated and full content
+// const HTMLContent = ({ html, maxLength, fallback = 'No description available.', ...typographyProps }) => {
+//   const stripHtml = (html) => html?.replace(/<[^>]*>/g, '') || '';
+  
+//   let content = stripHtml(html);
+  
+//   if (!content) {
+//     content = fallback;
+//   } else if (maxLength && content.length > maxLength) {
+//     content = content.substring(0, maxLength) + '...';
+//   }
+  
+//   return (
+//     <Typography {...typographyProps}>
+//       {content}
+//     </Typography>
+//   );
+// };
+
+const getCleanText = (html) => {
+  if (!html) return '';
+  const clean = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] }); // Remove all tags
+  return clean.replace(/\s+/g, ' ').trim();
+};
+
+
   return (
     <>
       <Helmet>
         <title>{product ? `${baseProductName} - Software Factory ERP` : 'Detalle de Producto'}</title>
-        <meta name="description" content={product ? `Compra ${baseProductName}, perfumería fina en Costa Rica. ${product.description.substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
+        <meta name="description" content={product ? `Compra ${baseProductName}, perfumería fina en Costa Rica. ${getCleanText(product.description).substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
         <meta property="og:title" content={product ? baseProductName : 'Look & Smell'} />
-        <meta property="og:description" content={product ? product.description.substring(0, 120) : 'Tu tienda de confianza para perfumería.'} />
+        <meta property="og:description" content={product ? getCleanText(product.description).substring(0, 120): 'Tu tienda de confianza.'} />
         <meta property="og:image" content={product?.imageUrls?.[0]?.secure_url} />
       </Helmet>
 
@@ -1449,7 +1498,14 @@ const doesSelectedVariantExist = () => {
 
         <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Descripción del Producto</Typography>
-          <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.7 }}>{product.description || 'No hay descripción detallada disponible para este producto.'}</Typography>
+          {/* <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.7 }}>{product.description || 'No hay descripción detallada disponible para este producto.'}</Typography> */}
+          <HTMLContent 
+            html={product.description}
+            fallback="No hay descripción detallada disponible para este producto."
+            variant="body1" 
+            color="text.primary" 
+            sx={{ lineHeight: 1.7 }}
+          />
 
           {/* --- 4. NUEVA SECCIÓN DE CONSULTA POR WHATSAPP --- */}
           <Card sx={{ ...contentSectionStyle, mt: 5 }}>
