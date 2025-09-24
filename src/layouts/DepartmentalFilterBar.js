@@ -51,7 +51,7 @@ const DepartmentalFilterBar = () => {
 
   const [activeFilters, setActiveFilters] = useState({});
   const [initialLoad, setInitialLoad] = useState(true);
-  const [expanded, setExpanded] = useState(!isSmallScreen);
+  const [expanded, setExpanded] = useState(false); // Cambiado: por defecto contraído
   const [filterLoading, setFilterLoading] = useState(false);
 
   console.log("Current Filters: ", currentFilters);
@@ -91,9 +91,8 @@ const DepartmentalFilterBar = () => {
 
   // Ajustar estado expandido cuando cambia el tamaño de pantalla
   useEffect(() => {
-    if (!isSmallScreen) {
-      setExpanded(true);
-    }
+    // En desktop, mantener el estado actual del usuario
+    // No forzar expandido automáticamente
   }, [isSmallScreen]);
 
   const handleFilterChange = async (filterType, value) => {
@@ -160,6 +159,7 @@ const DepartmentalFilterBar = () => {
   const handleSearch = useCallback(() => {
     if (!filterLoading && !taxonomyLoading) {
       applyFilters(uiFilters);
+      // No contraer automáticamente en desktop
       if (isSmallScreen) {
         setExpanded(false);
       }
@@ -257,51 +257,49 @@ const DepartmentalFilterBar = () => {
         zIndex: 700,
       }}
     >     
-      {/* Encabezado del acordeón para pantallas pequeñas */}
-      {isSmallScreen && (
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            cursor: 'pointer',
-            mb: expanded ? 2 : 0
-          }}
-          onClick={toggleExpanded}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <FilterListIcon sx={{ color: 'rgba(255, 255, 255, 0.8)', mr: 1 }} />
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 500 }}>
-              Filtros
-            </Typography>
-            {hasActiveFilters && (
-              <Chip 
-                label={Object.keys(activeFilters).length} 
-                size="small" 
-                disabled 
-                onClick={(e) => {
-                    e.stopPropagation();                    
-                  }}
-                sx={{ 
-                  ml: 1, 
-                  backgroundColor: '#bb4343', 
-                  color: 'white',
-                  height: 20,                  
-                  '& .MuiChip-label': { px: 1 },
-                  '&.Mui-disabled': {
-                    opacity: 1,
-                    backgroundColor: '#bb4343',
-                    color: 'white'
-                  }
-                }} 
-              />
-            )}
-          </Box>
-          <IconButton size="small" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
+      {/* Encabezado del acordeón para TODAS las pantallas */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          cursor: 'pointer',
+          mb: expanded ? 2 : 0
+        }}
+        onClick={toggleExpanded}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <FilterListIcon sx={{ color: 'rgba(255, 255, 255, 0.8)', mr: 1 }} />
+          <Typography variant="h6" sx={{ color: 'white', fontWeight: 500 }}>
+            Filtros
+          </Typography>
+          {hasActiveFilters && (
+            <Chip 
+              label={Object.keys(activeFilters).length} 
+              size="small" 
+              disabled 
+              onClick={(e) => {
+                  e.stopPropagation();                    
+                }}
+              sx={{ 
+                ml: 1, 
+                backgroundColor: '#bb4343', 
+                color: 'white',
+                height: 20,                  
+                '& .MuiChip-label': { px: 1 },
+                '&.Mui-disabled': {
+                  opacity: 1,
+                  backgroundColor: '#bb4343',
+                  color: 'white'
+                }
+              }} 
+            />
+          )}
         </Box>
-      )}
+        <IconButton size="small" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+          {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Box>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <Grid container spacing={2} alignItems="flex-end">
@@ -621,7 +619,7 @@ const DepartmentalFilterBar = () => {
                 }
               }}
             >
-              Ver todos los productos
+              Limpiar todos los filtros
             </Button>
           </Box>
         )}

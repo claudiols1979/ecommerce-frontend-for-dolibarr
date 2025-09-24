@@ -93,9 +93,18 @@ const ProductCard = ({ product, onAddToCart, isAdding }) => {
 
   const isOutOfStock = product.countInStock <= 0;
 
-  const handleViewDetails = () => {
-    navigate(`/products/${product._id}`);
-  };
+ const handleViewDetails = () => {
+  // Extraer los atributos de variante del producto actual
+  const currentVariantAttributes = extractVariantAttributes(product.code);
+  
+  // CORREGIR: quita la llave extra después de _id
+  navigate(`/products/${product._id}`, { // ← QUITA la llave extra
+    state: {
+      productData: product,
+      currentVariantAttributes: currentVariantAttributes
+    }
+  });
+};
 
   const HTMLContent = ({ html, maxLength, ...typographyProps }) => {
   const stripHtml = (html) => html.replace(/<[^>]*>/g, '');

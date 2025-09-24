@@ -53,37 +53,15 @@ const ProductsPage = () => {
   const [page, setPage] = useState(1);
   const [addingProductId, setAddingProductId] = useState(null);
   const [groupedProducts, setGroupedProducts] = useState([]);
+  const [groupingProducts, setGroupingProducts] = useState(false);
 
   const availableGenders = [
     { value: 'men', label: 'Hombre' }, { value: 'women', label: 'Mujer' },
     { value: 'unisex', label: 'Unisex' }, { value: 'children', label: 'Niños' },
-    { value: 'elderly', label: 'Ancianos' }, { value: 'other', label: 'Otro' },
-  ];
+    { value: 'elderly', label: 'Ancianos' }, { value: 'other', label: 'Otro' }, ];
 
 
-//   useEffect(() => {
-//   if (products && products.length > 0) {
-//     console.log('📊 Raw products:', products);
-    
-//     // Log each product's code and parsing results
-//     products.forEach(product => {
-//       console.log(`Product: ${product.name}, Code: ${product.code}`);
-//       console.log('Base code:', getBaseCode(product.code));
-//       console.log('Attributes:', getAttributes(product.code));
-//       console.log('Base name:', extractBaseNameFromAttributes(product.name, product.code));
-//     });
-    
-//     const grouped = groupProductsByBase(products);
-//     console.log('Grouped products:', grouped);
-    
-//     const displayProducts = selectRandomVariantFromEachGroup(grouped);
-//     console.log('Display products:', displayProducts);
-    
-//     setGroupedProducts(displayProducts);
-//   } else {
-//     setGroupedProducts([]);
-//   }
-// }, [products]);
+
 
   // --- FUNCIONES DE AGRUPAMIENTO ---
   const getBaseCode = (code) => {
@@ -230,17 +208,70 @@ useEffect(() => {
   }
 }, [sortOrder, submittedSearchTerm, selectedGender, priceRange, isDepartmentalMode, fetchProducts]);
 
-  // --- EFFECT PARA AGRUPAMIENTO ---
-  useEffect(() => {
-    if (products && products.length > 0) {
-      console.log('📊 Agrupando productos:', products.length);
-      const grouped = groupProductsByBase(products);
-      const displayProducts = selectRandomVariantFromEachGroup(grouped);
-      setGroupedProducts(displayProducts);
-    } else {
+  
+  // --- EFFECT MEJORADO PARA AGRUPAMIENTO ---
+useEffect(() => {
+  // No procesar si estamos en modo departamental y aún está cargando
+  if (isDepartmentalMode && departmentalLoading) {
+    console.log('⏳ Esperando a que carguen productos departamentales...');
+    return;
+  }
+
+  // No procesar si está cargando en modo estándar
+  if (!isDepartmentalMode && standardLoading && products.length === 0) {
+    console.log('⏳ Esperando a que carguen productos estándar...');
+    return;
+  }
+
+  if (products && products.length > 0) {
+    console.log('📊 Agrupando productos:', products.length, 'en modo:', isDepartmentalMode ? 'departamental' : 'estándar');
+    
+    // Verificar que los productos tengan la estructura esperada
+    const validProducts = products.filter(product => 
+      product && product.code && typeof product.code === 'string'
+    );
+    
+    if (validProducts.length === 0) {
+      console.warn('⚠️ No hay productos válidos para agrupar');
       setGroupedProducts([]);
+      return;
     }
-  }, [products]);
+
+    // Log detallado para debugging
+    if (isDepartmentalMode) {
+      console.log('🔍 Productos departamentales para agrupar:', validProducts);
+      validProducts.forEach((product, index) => {
+        console.log(`Producto ${index + 1}:`, {
+          name: product.name,
+          code: product.code,
+          baseCode: getBaseCode(product.code),
+          attributes: getAttributes(product.code)
+        });
+      });
+    }
+
+    try {
+      const grouped = groupProductsByBase(validProducts);
+      console.log('🏷️ Grupos creados:', Object.keys(grouped).length);
+      
+      const displayProducts = selectRandomVariantFromEachGroup(grouped);
+      console.log('🎯 Productos para mostrar:', displayProducts.length);
+      
+      setGroupedProducts(displayProducts);
+    } catch (error) {
+      console.error('❌ Error en el agrupamiento:', error);
+      // Fallback: mostrar productos sin agrupar
+      setGroupedProducts(validProducts.map(product => ({
+        ...product,
+        baseCode: getBaseCode(product.code),
+        baseName: extractBaseNameFromAttributes(product.name, product.code),
+        variantCount: 1
+      })));
+    }
+  } else {
+    setGroupedProducts([]);
+  }
+}, [products, departmentalLoading, standardLoading, isDepartmentalMode]); // ✅ Added standardLoading here
 
   // --- SCROLL INFINITO MEJORADO ---
   const handleScroll = useCallback(() => {
@@ -370,136 +401,7 @@ useEffect(() => {
       </Helmet>
 
       <Container maxWidth="xl" sx={{ my: 1, flexGrow: 1 }}>
-        {/* <Paper
-          elevation={8}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            mb: 4,
-            borderRadius: 4,
-            background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 60%, rgba(233, 229, 209, 0.6) 100%)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 215, 0, 0.2)',
-            boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          <Grid container spacing={3} alignItems="center" justifyContent="center">
-            <Grid item xs={12} sm={8} md={6}>
-              <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField
-                  label="Buscar por Nombre"
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '8px', color: 'white',
-                      '& fieldset': { borderColor: 'rgba(232, 229, 214, 0.3)' },
-                      '&:hover fieldset': { borderColor: '#ffffffff' },
-                      '&.Mui-focused fieldset': { borderColor: '#ffffffff' },
-                    },
-                    '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' },
-                    '& .MuiInputLabel-root.Mui-focused': { color: '#ffffffff' },
-                  }}
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  sx={{
-                    height: '40px', minWidth: '40px', p: 0,
-                    borderRadius: '8px', color: 'common.black',
-                    backgroundColor: '#ffffffff', '&:hover': { backgroundColor: '#c85813ff' },
-                  }}
-                >
-                  <SearchIcon />
-                </Button>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small" variant="outlined">
-                <InputLabel id="gender-select-label" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
-                <Select
-                  labelId="gender-select-label"
-                  value={selectedGender}
-                  label="Filtrar por Género"
-                  onChange={handleGenderChange}
-                  displayEmpty
-                  sx={{
-                    borderRadius: '8px',
-                    color: 'white',
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(240, 230, 230, 1)' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' },
-                    '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' },
-                  }}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        bgcolor: '#1E1E1E',
-                        color: 'white',
-                      },
-                    },
-                  }}
-                >
-                  <MenuItem value=""><em>Todos</em></MenuItem>
-                  {availableGenders.map((gender) => (<MenuItem key={gender.value} value={gender.value}>{gender.label}</MenuItem>))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}></InputLabel>
-                <Select 
-                  value={sortOrder} 
-                  label="Ordenar por" 
-                  onChange={handleSortChange} 
-                  sx={{ 
-                    borderRadius: '8px', 
-                    color: 'white', 
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 1)' }, 
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' }, 
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffffff' }, 
-                    '.MuiSvgIcon-root': { color: 'rgba(255, 255, 255, 0.7)' }, 
-                  }} 
-                  MenuProps={{ 
-                    PaperProps: { 
-                      sx: { 
-                        bgcolor: '#1E1E1E', 
-                        color: 'white' 
-                      } 
-                    } 
-                  }}
-                >
-                  <MenuItem value="updatedAt_desc">Más Recientes</MenuItem>
-                  <MenuItem value="createdAt_asc">Más Antiguos</MenuItem>
-                  <MenuItem value="price_asc">Precio: Menor a Mayor</MenuItem>
-                  <MenuItem value="price_desc">Precio: Mayor a Menor</MenuItem>
-                  <MenuItem value="name_asc">Nombre: A-Z</MenuItem>
-                  <MenuItem value="name_desc">Nombre: Z-A</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </Paper> */}
-
-        {/* MOSTRAR BOTÓN DE LIMPIAR FILTROS DEPARTAMENTALES SI ESTÁN ACTIVOS */}
-        {/* {isDepartmentalMode && (
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Button
-              variant="contained"
-              onClick={handleClearDepartmentalFilters}
-              sx={{ 
-                fontWeight: 'bold',
-                backgroundColor: '#bb4343ff', 
-                '&:hover': { backgroundColor: '#ff0000ff' } 
-              }}
-            >
-              Limpiar Filtros Departamentales
-            </Button>
-          </Box>
-        )} */}
+       
 
         {submittedSearchTerm && !isDepartmentalMode && (
           <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -513,7 +415,7 @@ useEffect(() => {
           </Box>
         )}
 
-        {loading && products.length === 0 ? (
+        {(loading || groupingProducts) && groupedProducts.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>
         ) : error ? (
           <Alert severity="error">{error.message}</Alert>
