@@ -191,13 +191,13 @@ const CartPage = () => {
                     </Box>
                   )
                 })}
-                {cartItems.length > 0 && (
+                {/* {cartItems.length > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                     <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={handleClearCart} disabled={loading}>
                       Vaciar Carrito
                     </Button>
                   </Box>
-                )}
+                )} */}
               </CardContent>
             </Card>
           </Grid>

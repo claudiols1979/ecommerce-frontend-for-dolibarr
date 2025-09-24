@@ -34,7 +34,7 @@ const DepartmentalFilterBar = () => {
     fetchTaxonomy, 
     currentFilters,
     departmentalLoading,
-    clearAllFilters: clearAllContextFilters  // Assuming this exists in your context
+    clearAllFilters: clearAllContextFilters
   } = useDepartmental();
   
   const navigate = useNavigate();
@@ -51,9 +51,10 @@ const DepartmentalFilterBar = () => {
 
   const [activeFilters, setActiveFilters] = useState({});
   const [initialLoad, setInitialLoad] = useState(true);
-  const [expanded, setExpanded] = useState(!isSmallScreen); // Expandido por defecto en pantallas grandes
+  const [expanded, setExpanded] = useState(!isSmallScreen);
+  const [filterLoading, setFilterLoading] = useState(false);
 
-  console.log("Current Filters: ", currentFilters)
+  console.log("Current Filters: ", currentFilters);
 
   // Cargar taxonomía completa solo una vez al montar
   useEffect(() => {
@@ -63,16 +64,23 @@ const DepartmentalFilterBar = () => {
     }
   }, [fetchTaxonomy, initialLoad]);
 
-  // Sincronizar UI filters con currentFilters cuando cambian
+  // Sincronizar UI filters con currentFilters - MEJORADO
   useEffect(() => {
-    setUiFilters({
-      department: currentFilters.department || '',
-      brand: currentFilters.brand || '',
-      category: currentFilters.category || '',
-      subcategory: currentFilters.subcategory || ''
-    });
-    setActiveFilters(currentFilters);
-  }, [currentFilters]);
+    // Solo sincronizar si los filtros actuales son diferentes a los UI filters
+    const shouldSync = Object.keys(currentFilters).some(key => 
+      currentFilters[key] !== uiFilters[key]
+    );
+    
+    if (shouldSync && !taxonomyLoading) {
+      setUiFilters(prev => ({
+        department: currentFilters.department || '',
+        brand: currentFilters.brand || '',
+        category: currentFilters.category || '',
+        subcategory: currentFilters.subcategory || ''
+      }));
+      setActiveFilters(currentFilters);
+    }
+  }, [currentFilters, taxonomyLoading, uiFilters]);
 
   // Clear filters when navigating away from products page
   useEffect(() => {
@@ -84,12 +92,17 @@ const DepartmentalFilterBar = () => {
   // Ajustar estado expandido cuando cambia el tamaño de pantalla
   useEffect(() => {
     if (!isSmallScreen) {
-      setExpanded(true); // Siempre expandido en pantallas grandes
+      setExpanded(true);
     }
   }, [isSmallScreen]);
 
   const handleFilterChange = async (filterType, value) => {
     const newValue = value.toString().trim();
+    
+    // Si el valor no cambió, no hacer nada
+    if (newValue === uiFilters[filterType]) return;
+    
+    setFilterLoading(true);
     
     const newFilters = { 
       ...uiFilters, 
@@ -110,14 +123,19 @@ const DepartmentalFilterBar = () => {
     
     setUiFilters(newFilters);
     
-    // Actualizar taxonomía basada en los nuevos filtros (solo si hay cambios reales)
-    if (newValue !== uiFilters[filterType]) {
+    try {
+      // Esperar a que la taxonomía se actualice antes de continuar
       await fetchTaxonomy(newFilters);
+    } catch (error) {
+      console.error('Error loading taxonomy:', error);
+    } finally {
+      setFilterLoading(false);
     }
   };
 
   const applyFilters = useCallback(async (filtersToApply) => {
-    // Limpiar filtros
+    setFilterLoading(true);
+    
     const nonEmptyFilters = Object.fromEntries(
       Object.entries(filtersToApply)
         .filter(([_, value]) => value && value.toString().trim() !== '')
@@ -130,54 +148,88 @@ const DepartmentalFilterBar = () => {
       navigate('/products');
     }
 
-    // Aplicar filtros a los productos
-    await fetchDepartmentalProducts(nonEmptyFilters, 1, 20);
+    try {
+      await fetchDepartmentalProducts(nonEmptyFilters, 1, 20);
+    } catch (error) {
+      console.error('Error applying filters:', error);
+    } finally {
+      setFilterLoading(false);
+    }
   }, [fetchDepartmentalProducts, navigate, location.pathname]);
 
   const handleSearch = useCallback(() => {
-    applyFilters(uiFilters);
-    if (isSmallScreen) {
-      setExpanded(false); // Colapsar después de buscar en móviles
+    if (!filterLoading && !taxonomyLoading) {
+      applyFilters(uiFilters);
+      if (isSmallScreen) {
+        setExpanded(false);
+      }
     }
-  }, [applyFilters, uiFilters, isSmallScreen]);
+  }, [applyFilters, uiFilters, isSmallScreen, filterLoading, taxonomyLoading]);
 
-  const clearFilter = useCallback((filterType) => {
+  const clearFilter = useCallback(async (filterType) => {
+    setFilterLoading(true);
+    
     const newFilters = { ...uiFilters, [filterType]: '' };
     setUiFilters(newFilters);
     
-    // Actualizar taxonomía con los filtros restantes
-    fetchTaxonomy(newFilters);
-    applyFilters(newFilters);
+    try {
+      await fetchTaxonomy(newFilters);
+      await applyFilters(newFilters);
+    } catch (error) {
+      console.error('Error clearing filter:', error);
+    } finally {
+      setFilterLoading(false);
+    }
   }, [uiFilters, fetchTaxonomy, applyFilters]);
 
-  const clearAllFilters = useCallback(() => {
+  const clearAllFilters = useCallback(async () => {
+    setFilterLoading(true);
+    
     const emptyFilters = {
       department: '',
       brand: '',
       category: '',
       subcategory: ''
     };
-    setUiFilters(emptyFilters);
-    fetchTaxonomy({});
-    applyFilters(emptyFilters);
     
-    // Clear filters in context if available
-    if (clearAllContextFilters) {
-      clearAllContextFilters();
+    setUiFilters(emptyFilters);
+    
+    try {
+      await fetchTaxonomy({});
+      await applyFilters(emptyFilters);
+      
+      if (clearAllContextFilters) {
+        clearAllContextFilters();
+      }
+    } catch (error) {
+      console.error('Error clearing all filters:', error);
+    } finally {
+      setFilterLoading(false);
     }
   }, [fetchTaxonomy, applyFilters, clearAllContextFilters]);
 
   const hasActiveFilters = Object.values(activeFilters).some(value => value !== '');
+  const isLoading = filterLoading || taxonomyLoading;
 
-  // Filtrar opciones basado en selecciones actuales
+  // Filtrar opciones basado en selecciones actuales - CON FALLBACKS
   const filteredOptions = useMemo(() => {
+    // Si está cargando, mantener las opciones actuales para evitar parpadeo
+    if (isLoading) {
+      return {
+        departments: taxonomy.departments || [],
+        brands: taxonomy.brands || [],
+        categories: taxonomy.categories || [],
+        subcategories: taxonomy.subcategories || []
+      };
+    }
+    
     return {
       departments: taxonomy.departments || [],
       brands: taxonomy.brands || [],
       categories: taxonomy.categories || [],
       subcategories: taxonomy.subcategories || []
     };
-  }, [taxonomy]);
+  }, [taxonomy, isLoading]);
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
@@ -188,20 +240,21 @@ const DepartmentalFilterBar = () => {
       elevation={0}        
       sx={{ 
         p: isSmallScreen ? 2 : 3,
+        width: isSmallScreen ? '90%' : '40%',
+        mx: 'auto',
+        py: 1.5,
         borderRadius: 10,
         backgroundColor: 'transparent',
-        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 25%, rgba(184, 183, 178, 0.59) 100%)',
+        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 25%, rgba(74, 80, 153, 0.59) 100%)',
         backdropFilter: 'blur(10px)',
         border: '0px solid',
         borderColor: 'rgba(255, 255, 255, 0.2)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         mt: 2,
-        mb: 3, 
-        mr: 2,
-        ml: 2,
+        mb: 3,         
         position: 'sticky',
-        top: 50,        
-        zIndex: 900,
+        top: 68,        
+        zIndex: 700,
       }}
     >     
       {/* Encabezado del acordeón para pantallas pequeñas */}
@@ -236,9 +289,10 @@ const DepartmentalFilterBar = () => {
                   height: 20,                  
                   '& .MuiChip-label': { px: 1 },
                   '&.Mui-disabled': {
-                    opacity: 1, // Mantener opacidad completa
-                    backgroundColor: '#bb4343', // Forzar color de fondo
-                    color: 'white' }// Forzar color de texto
+                    opacity: 1,
+                    backgroundColor: '#bb4343',
+                    color: 'white'
+                  }
                 }} 
               />
             )}
@@ -257,8 +311,7 @@ const DepartmentalFilterBar = () => {
               <Select
                 value={uiFilters.department}
                 onChange={(e) => handleFilterChange('department', e.target.value)}
-                label="Departamento"
-                disabled={taxonomyLoading}
+                disabled={isLoading}
                 displayEmpty
                 sx={{                
                   color: 'white',
@@ -279,10 +332,10 @@ const DepartmentalFilterBar = () => {
                 }}
                 renderValue={(value) => {
                   if (!value) {
-                  return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Departamento</span>;
+                    return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Departamento</span>;
                   }
                   return value;
-              }}
+                }}
                 MenuProps={{
                   PaperProps: {
                     sx: {
@@ -313,11 +366,10 @@ const DepartmentalFilterBar = () => {
 
           {/* Marca */}
           <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small" disabled={taxonomyLoading}>            
+            <FormControl fullWidth size="small" disabled={isLoading}>            
               <Select
                 value={uiFilters.brand}
                 onChange={(e) => handleFilterChange('brand', e.target.value)}
-                label="Marca"
                 displayEmpty
                 sx={{
                   color: 'white',
@@ -338,10 +390,10 @@ const DepartmentalFilterBar = () => {
                 }}
                 renderValue={(value) => {
                   if (!value) {
-                  return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Marca</span>;
+                    return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Marca</span>;
                   }
                   return value;
-              }}
+                }}
                 MenuProps={{
                   PaperProps: {
                     sx: {
@@ -372,11 +424,10 @@ const DepartmentalFilterBar = () => {
 
           {/* Categoría */}
           <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small" disabled={taxonomyLoading}>           
+            <FormControl fullWidth size="small" disabled={isLoading}>           
               <Select
                 value={uiFilters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                label="Categoría"
                 displayEmpty
                 sx={{
                   color: 'white',
@@ -397,10 +448,10 @@ const DepartmentalFilterBar = () => {
                 }}
                 renderValue={(value) => {
                   if (!value) {
-                  return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Categoría</span>;
+                    return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Categoría</span>;
                   }
                   return value;
-              }}
+                }}
                 MenuProps={{
                   PaperProps: {
                     sx: {
@@ -431,11 +482,10 @@ const DepartmentalFilterBar = () => {
 
           {/* Subcategoría */}
           <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth size="small" disabled={taxonomyLoading}>            
+            <FormControl fullWidth size="small" disabled={isLoading}>            
               <Select
                 value={uiFilters.subcategory}
                 onChange={(e) => handleFilterChange('subcategory', e.target.value)}
-                label="Subcategoría"
                 displayEmpty
                 sx={{
                   color: 'white',
@@ -456,10 +506,10 @@ const DepartmentalFilterBar = () => {
                 }}
                 renderValue={(value) => {
                   if (!value) {
-                  return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Subcategoría</span>;
+                    return <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Subcategoría</span>;
                   }
                   return value;
-              }}
+                }}
                 MenuProps={{
                   PaperProps: {
                     sx: {
@@ -495,8 +545,8 @@ const DepartmentalFilterBar = () => {
               color="primary"
               fullWidth
               onClick={handleSearch}
-              disabled={departmentalLoading || taxonomyLoading}
-              startIcon={departmentalLoading ? <CircularProgress size={16} /> : <SearchIcon />}
+              disabled={departmentalLoading || isLoading}
+              startIcon={(departmentalLoading || isLoading) ? <CircularProgress size={16} /> : <SearchIcon />}
               sx={{ 
                 height: '40px',
                 borderRadius: 2,
@@ -515,7 +565,7 @@ const DepartmentalFilterBar = () => {
                 }
               }}
             >
-              {departmentalLoading ? 'Buscando...' : 'Buscar'}
+              {(departmentalLoading || isLoading) ? 'Cargando...' : 'Buscar'}
             </Button>
           </Grid>
         </Grid>
@@ -577,7 +627,7 @@ const DepartmentalFilterBar = () => {
         )}
 
         {/* Indicador de carga de taxonomía */}
-        {taxonomyLoading && (
+        {(taxonomyLoading || filterLoading) && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', p: 1.5, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
             <CircularProgress size={16} sx={{ mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} />
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>

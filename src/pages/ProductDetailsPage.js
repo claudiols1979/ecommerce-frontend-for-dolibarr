@@ -945,7 +945,7 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
     },
     {
       question: '4. ¿Realizan envíos fuera de la GAM?',
-      answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envío se cancela contra entrega directamente en la sucursal. Te proporcionaremos el número de guía oficial para que puedas rastrear tu paquete en todo momento.'
+      answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envio es de 3000 colones más iva'
     },    
   ];
 

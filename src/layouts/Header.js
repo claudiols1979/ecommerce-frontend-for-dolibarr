@@ -158,9 +158,12 @@ const Header = () => {
     <AppBar position="sticky" 
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1, 
+        width: '98%',
+        mx: 'auto',
         backgroundColor: 'rgba(38, 60, 92, 0.9)', 
         backgroundImage: `linear-gradient(to bottom, transparent, ${amber[0]})`,
         boxShadow: 0,
+        borderRadius: 2,
       }}> 
       <Toolbar sx={{ justifyContent: 'space-between', flexWrap: 'wrap', py: { xs: 1, sm: 0 } }}>
         <NavBranding />
