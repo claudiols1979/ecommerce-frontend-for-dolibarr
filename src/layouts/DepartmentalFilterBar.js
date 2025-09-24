@@ -95,7 +95,7 @@ const DepartmentalFilterBar = () => {
     // No forzar expandido automáticamente
   }, [isSmallScreen]);
 
-  const handleFilterChange = async (filterType, value) => {
+const handleFilterChange = async (filterType, value) => {
     const newValue = value.toString().trim();
     
     // Si el valor no cambió, no hacer nada
@@ -108,7 +108,7 @@ const DepartmentalFilterBar = () => {
       [filterType]: newValue 
     };
     
-    // Resetear filtros dependientes
+    // Resetear SOLO los filtros dependientes (hacia adelante, no hacia atrás)
     if (filterType === 'department') {
       newFilters.brand = '';
       newFilters.category = '';
@@ -119,12 +119,28 @@ const DepartmentalFilterBar = () => {
     } else if (filterType === 'category') {
       newFilters.subcategory = '';
     }
+    // Si es subcategory, no resetear nada
     
     setUiFilters(newFilters);
     
     try {
-      // Esperar a que la taxonomía se actualice antes de continuar
-      await fetchTaxonomy(newFilters);
+      // IMPORTANTE: Cuando el valor es vacío, debemos pasar el filtro como vacío
+      // para que la taxonomía se actualice mostrando TODAS las opciones
+      const taxonomyFilters = { ...newFilters };
+      
+      // Si el filtro que cambió está vacío, lo removemos completamente
+      // para que el backend entienda que queremos TODAS las opciones
+      if (newValue === '') {
+        delete taxonomyFilters[filterType];
+      }
+      
+      await fetchTaxonomy(taxonomyFilters);
+      
+      // Si el usuario seleccionó "Todas las X", aplicar el filtro inmediatamente
+      // para actualizar los resultados
+      if (newValue === '') {
+        await applyFilters(newFilters);
+      }
     } catch (error) {
       console.error('Error loading taxonomy:', error);
     } finally {
@@ -132,9 +148,10 @@ const DepartmentalFilterBar = () => {
     }
   };
 
-  const applyFilters = useCallback(async (filtersToApply) => {
+const applyFilters = useCallback(async (filtersToApply) => {
     setFilterLoading(true);
     
+    // Filtrar solo los valores no vacíos
     const nonEmptyFilters = Object.fromEntries(
       Object.entries(filtersToApply)
         .filter(([_, value]) => value && value.toString().trim() !== '')
@@ -156,24 +173,43 @@ const DepartmentalFilterBar = () => {
     }
   }, [fetchDepartmentalProducts, navigate, location.pathname]);
 
-  const handleSearch = useCallback(() => {
+const handleSearch = useCallback(() => {
     if (!filterLoading && !taxonomyLoading) {
-      applyFilters(uiFilters);
-      // No contraer automáticamente en desktop
+      // Crear copia de los filtros actuales
+      const filtersToApply = { ...uiFilters };
+      
+      applyFilters(filtersToApply);
       if (isSmallScreen) {
         setExpanded(false);
       }
     }
   }, [applyFilters, uiFilters, isSmallScreen, filterLoading, taxonomyLoading]);
 
-  const clearFilter = useCallback(async (filterType) => {
+const clearFilter = useCallback(async (filterType) => {
     setFilterLoading(true);
     
     const newFilters = { ...uiFilters, [filterType]: '' };
+    
+    // Resetear SOLO los filtros dependientes
+    if (filterType === 'department') {
+      newFilters.brand = '';
+      newFilters.category = '';
+      newFilters.subcategory = '';
+    } else if (filterType === 'brand') {
+      newFilters.category = '';
+      newFilters.subcategory = '';
+    } else if (filterType === 'category') {
+      newFilters.subcategory = '';
+    }
+    
     setUiFilters(newFilters);
     
     try {
-      await fetchTaxonomy(newFilters);
+      // Para limpiar un filtro, removemos ese filtro específico
+      const taxonomyFilters = { ...newFilters };
+      delete taxonomyFilters[filterType];
+      
+      await fetchTaxonomy(taxonomyFilters);
       await applyFilters(newFilters);
     } catch (error) {
       console.error('Error clearing filter:', error);
@@ -182,7 +218,7 @@ const DepartmentalFilterBar = () => {
     }
   }, [uiFilters, fetchTaxonomy, applyFilters]);
 
-  const clearAllFilters = useCallback(async () => {
+const clearAllFilters = useCallback(async () => {
     setFilterLoading(true);
     
     const emptyFilters = {
@@ -195,7 +231,7 @@ const DepartmentalFilterBar = () => {
     setUiFilters(emptyFilters);
     
     try {
-      await fetchTaxonomy({});
+      await fetchTaxonomy({}); // Sin filtros para obtener toda la taxonomía
       await applyFilters(emptyFilters);
       
       if (clearAllContextFilters) {
