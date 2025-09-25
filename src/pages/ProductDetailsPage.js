@@ -376,7 +376,7 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
       return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
     });
 
-    console.log("variants encontradas: ", variants.length);
+    console.log("variants encontradas: ", variants);
 
     if (variants.length === 0) {
       setAttributeOptions([]);
@@ -390,6 +390,7 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
     const optionsMap = new Map();
     const attributeOptionsList = [];
 
+    console.log("currentVariantAttributes: ", currentVariantAttributes)
     currentVariantAttributes.attributes.forEach((_, index) => {
       attributeOptionsList.push({
         type: getAttributeType(index),
@@ -406,7 +407,7 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
       });
       const optionKey = attr.attributes.join('|');
       optionsMap.set(optionKey, variant);
-    });
+    });    
 
     const finalAttributeOptions = attributeOptionsList.map(opt => ({
       type: opt.type,
