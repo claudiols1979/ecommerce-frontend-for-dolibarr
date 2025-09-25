@@ -144,7 +144,7 @@ export const DepartmentalProvider = ({ children }) => {
     fetchDepartmentalProducts,
     loadMoreProducts,
     searchWithFilters,
-    resetSearch, // ✅ Nueva función
+    resetSearch, // ✅ Nueva función  
     
     // Taxonomía contextual
     taxonomy,

@@ -29,7 +29,7 @@ const ProductsPage = () => {
  
   
   const { departmentalProducts, departmentalLoading, departmentalError, 
-          departmentalHasMore, fetchDepartmentalProducts, currentFilters, resetSearch} = useDepartmental();
+          departmentalHasMore, fetchDepartmentalProducts, currentFilters, resetSearch, handleClearAllFilters} = useDepartmental();
  
 
   const { addItemToCart } = useOrders();
