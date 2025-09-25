@@ -236,65 +236,6 @@ const areAllAttributesSelected = () => {
     return productName;
   };
 
-  //   // Add this function to pre-cache attribute options for all loaded products
-  const preCacheProductAttributes = (products) => {
-    const productsWithVariants = products.filter(product => {
-      const attributes = extractVariantAttributes(product.code);
-      return attributes.attributes.length > 0;
-    });
-
-    productsWithVariants.forEach(product => {
-      const currentVariantAttributes = extractVariantAttributes(product.code);
-      const baseCode = currentVariantAttributes.baseCode;
-
-      // Check if we already have this cached
-      const cacheKey = `attributeOptions_${product._id}`;
-      if (!localStorage.getItem(cacheKey)) {
-        // Find all variants of this product
-        const variants = products.filter(p => {
-          const attr = extractVariantAttributes(p.code);
-          return attr.baseCode === baseCode;
-        });
-
-        const optionsMap = new Map();
-        const attributeOptionsList = [];
-
-        currentVariantAttributes.attributes.forEach((_, index) => {
-          attributeOptionsList.push({
-            type: getAttributeType(index),
-            values: new Set()
-          });
-        });
-
-        variants.forEach(variant => {
-          if (variant.countInStock > 0) {
-            const attr = extractVariantAttributes(variant.code);
-            attr.attributes.forEach((value, index) => {
-              if (index < attributeOptionsList.length) {
-                attributeOptionsList[index].values.add(value);
-              }
-            });
-            const optionKey = attr.attributes.join('|');
-            optionsMap.set(optionKey, variant);
-          }
-        });
-
-        const finalAttributeOptions = attributeOptionsList.map(opt => ({
-          type: opt.type,
-          values: Array.from(opt.values)
-        }));
-
-        // Cache the results
-        localStorage.setItem(cacheKey, JSON.stringify({
-          finalAttributeOptions,
-          optionsMap: Array.from(optionsMap.entries()),
-          initialSelections: {},
-          timestamp: Date.now()
-        }));
-      }
-    });
-  };
-
 
 useEffect(() => {
     // Store the current path when component mounts
@@ -346,15 +287,13 @@ useEffect(() => {
   }, [id, currentProductId]);
 
 
-  
-const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
+const buildAttributeOptionsFromScratch = async (productData, currentVariantAttributes) => {
   // DECIDIR QUÉ PRODUCTOS USAR DINÁMICAMENTE
   const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
   const productsToUse = hasActiveFilters ? departmentalProducts : defaultProducts;
 
-  console.log('Filtros activos:', hasActiveFilters);
+  console.log('=== 🔍 INICIO CONSTRUCCIÓN ATRIBUTOS ===');
   console.log('Productos a usar:', productsToUse?.length || 0);
-  console.log('Tipo de productos:', hasActiveFilters ? 'departmentalProducts' : 'defaultProducts');
 
   // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
   if (currentVariantAttributes.attributes.length === 0) {
@@ -370,74 +309,71 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
   setAllAttributesLoaded(false);
 
   try {
-    // USAR LOS PRODUCTOS DINÁMICOS EN LUGAR DE allProductsFromContext
-    const variants = productsToUse.filter(p => {
-      const attr = extractVariantAttributes(p.code);
-      return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
-    });
-
-    console.log("variants encontradas: ", variants);
-
-    if (variants.length === 0) {
-      setAttributeOptions([]);
-      setAvailableOptions(new Map());
-      setAllAttributesLoaded(true);
-      return;
+    // ✅ SOLUCIÓN: ESPERAR A QUE LOS PRODUCTOS ESTÉN CARGADOS
+    if (!productsToUse || productsToUse.length === 0) {
+      console.warn('⚠️  productsToUse está vacío, esperando...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      // Intentar nuevamente después de esperar
+      if (!productsToUse || productsToUse.length === 0) {
+        throw new Error('productsToUse no está disponible después de esperar');
+      }
     }
 
-    variants.sort((a, b) => a.code.localeCompare(b.code));
+    // ✅ VERIFICACIÓN DE CONSISTENCIA EN LA CARGA
+    let attempts = 0;
+    let lastVariantCount = 0;
+    let consistentCount = false;
 
-    const optionsMap = new Map();
-    const attributeOptionsList = [];
-
-    console.log("currentVariantAttributes: ", currentVariantAttributes)
-    currentVariantAttributes.attributes.forEach((_, index) => {
-      attributeOptionsList.push({
-        type: getAttributeType(index),
-        values: new Set()
+    while (attempts < 3 && !consistentCount) {
+      attempts++;
+      
+      const variants = productsToUse.filter(p => {
+        const attr = extractVariantAttributes(p.code);
+        return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
       });
-    });
 
-    variants.forEach(variant => {
-      const attr = extractVariantAttributes(variant.code);
-      attr.attributes.forEach((value, index) => {
-        if (index < attributeOptionsList.length) {
-          attributeOptionsList[index].values.add(value);
+      console.log(`Intento ${attempts}: ${variants.length} variantes encontradas`);
+      
+      // Si es el primer intento o el conteo es consistente con el anterior
+      if (attempts === 1 || variants.length === lastVariantCount) {
+        lastVariantCount = variants.length;
+        consistentCount = true;
+        
+        // Si tenemos variantes, procesarlas
+        if (variants.length > 0) {
+          await processVariants(variants, currentVariantAttributes);
+        } else {
+          setAttributeOptions([]);
+          setAvailableOptions(new Map());
         }
+      } else {
+        // Si el conteo cambió, esperar y reintentar
+        lastVariantCount = variants.length;
+        console.log(`❌ Conteo inconsistente, esperando 200ms...`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+
+    if (!consistentCount) {
+      console.error('❌ No se pudo obtener un conteo consistente después de 3 intentos');
+      // Usar el último conteo disponible pero mostrar advertencia
+      const finalVariants = productsToUse.filter(p => {
+        const attr = extractVariantAttributes(p.code);
+        return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
       });
-      const optionKey = attr.attributes.join('|');
-      optionsMap.set(optionKey, variant);
-    });    
-
-    const finalAttributeOptions = attributeOptionsList.map(opt => ({
-      type: opt.type,
-      values: Array.from(opt.values).sort()
-    }));
-
-    setAttributeOptions(finalAttributeOptions);
-    setAvailableOptions(optionsMap);
-
-    const initialSelections = {};
-    currentVariantAttributes.attributes.forEach((value, index) => {
-      initialSelections[getAttributeType(index)] = value;
-    });
-    setSelectedAttributes(initialSelections);
-
-    // NOTA: Podrías considerar modificar la clave del cache para incluir info sobre filtros
-    // si quieres cachear resultados diferentes para productos filtrados vs no filtrados
-    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}${hasActiveFilters ? '_filtered' : ''}`;
-    localStorage.setItem(cacheKey, JSON.stringify({
-      finalAttributeOptions,
-      optionsMap: Array.from(optionsMap.entries()),
-      initialSelections,
-      timestamp: Date.now(),
-      hasFilters: hasActiveFilters // Metadata para saber si este cache incluía filtros
-    }));
+      
+      if (finalVariants.length > 0) {
+        await processVariants(finalVariants, currentVariantAttributes);
+      } else {
+        setAttributeOptions([]);
+        setAvailableOptions(new Map());
+      }
+    }
 
     setAllAttributesLoaded(true);
 
   } catch (error) {
-    console.error('Error building attribute options:', error);
+    console.error('❌ Error building attribute options:', error);
     setAttributeOptions([]);
     setAvailableOptions(new Map());
     setSelectedAttributes({});
@@ -446,6 +382,58 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
     setLoadingAttributes(false);
   }
 };
+
+// FUNCIÓN AUXILIAR PARA PROCESAR VARIANTES
+const processVariants = async (variants, currentVariantAttributes) => {
+  console.log('🔄 Procesando variantes:', variants.length);
+  
+  variants.sort((a, b) => a.code.localeCompare(b.code));
+
+  const optionsMap = new Map();
+  const attributeOptionsList = [];
+
+  // Inicializar estructura de atributos
+  currentVariantAttributes.attributes.forEach((_, index) => {
+    attributeOptionsList.push({
+      type: getAttributeType(index),
+      values: new Set()
+    });
+  });
+
+  // Procesar cada variante
+  variants.forEach(variant => {
+    const attr = extractVariantAttributes(variant.code);
+    attr.attributes.forEach((value, index) => {
+      if (index < attributeOptionsList.length) {
+        attributeOptionsList[index].values.add(value);
+      }
+    });
+    
+    const optionKey = attr.attributes.join('|');
+    optionsMap.set(optionKey, variant);
+  });
+
+  const finalAttributeOptions = attributeOptionsList.map(opt => ({
+    type: opt.type,
+    values: Array.from(opt.values).sort()
+  }));
+
+  setAttributeOptions(finalAttributeOptions);
+  setAvailableOptions(optionsMap);
+
+  const initialSelections = {};
+  currentVariantAttributes.attributes.forEach((value, index) => {
+    initialSelections[getAttributeType(index)] = value;
+  });
+  setSelectedAttributes(initialSelections);
+
+  console.log('✅ Procesamiento completado:', {
+    variantes: variants.length,
+    opciones: finalAttributeOptions.length,
+    mapa: optionsMap.size
+  });
+};
+
 
 
   useEffect(() => {
