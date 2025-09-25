@@ -19,6 +19,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../contexts/ProductContext';
+import { useDepartmental } from '../contexts/DepartmentalContext';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useReviews } from '../contexts/ReviewContext';
@@ -101,7 +102,8 @@ const ProductDetailsPage = () => {
 
   const isExtraSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { products: allProductsFromContext } = useProducts();
+  const { products: defaultProducts } = useProducts();
+  const { departmentalProducts, currentFilters } = useDepartmental();
   const { addItemToCart, loading: cartLoading, myOrders } = useOrders();
   const { user } = useAuth();
 
@@ -127,13 +129,10 @@ const ProductDetailsPage = () => {
   const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [allAttributesLoaded, setAllAttributesLoaded] = useState(false);
 
-// const areAllAttributesSelected = () => {
-//   if (!attributeOptions || attributeOptions.length === 0) return true;
-  
-//   return attributeOptions.every(attribute =>
-//     selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
-//   );
-// };
+const getProductsToUse = () => {
+  const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
+  return hasActiveFilters ? departmentalProducts : defaultProducts;
+};
 
 const areAllAttributesSelected = () => {
   // Si los atributos no han terminado de cargar, retornar false
@@ -334,24 +333,6 @@ useEffect(() => {
     };
   }, []);
 
-
-  // useEffect(() => {
-  //   if (!user) {
-  //     // Clear all product-related localStorage when user logs out
-  //     const keysToRemove = [];
-  //     for (let i = 0; i < localStorage.length; i++) {
-  //       const key = localStorage.key(i);
-  //       if (key && key.startsWith('attributeOptions_')) {
-  //         keysToRemove.push(key);
-  //       }
-  //     }
-  //     keysToRemove.forEach(key => localStorage.removeItem(key));
-  //     setCurrentProductId(null);
-  //   }
-  // }, [user]);
-
-
-
   // Add this useEffect to clear localStorage when navigating to a different product
   useEffect(() => {
     // Clear previous product's attribute state when switching to a new product
@@ -365,107 +346,42 @@ useEffect(() => {
   }, [id, currentProductId]);
 
 
-  // const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
-  //   // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
-  //   if (currentVariantAttributes.attributes.length === 0) {
-  //     setAttributeOptions([]);
-  //     setAvailableOptions(new Map());
-  //     setSelectedAttributes({});
-  //     setLoadingAttributes(false);
-  //     return;
-  //   }
-
-  //   setLoadingAttributes(true);
-
-  //   try {
-  //     const variants = allProductsFromContext.filter(p => {
-  //       const attr = extractVariantAttributes(p.code);
-  //       return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
-  //     });
-
-  //     if (variants.length === 0) {
-  //       setAttributeOptions([]);
-  //       setAvailableOptions(new Map());
-  //       return;
-  //     }
-
-  //     variants.sort((a, b) => a.code.localeCompare(b.code));
-
-  //     const optionsMap = new Map();
-  //     const attributeOptionsList = [];
-
-  //     currentVariantAttributes.attributes.forEach((_, index) => {
-  //       attributeOptionsList.push({
-  //         type: getAttributeType(index),
-  //         values: new Set()
-  //       });
-  //     });
-
-  //     variants.forEach(variant => {
-  //       const attr = extractVariantAttributes(variant.code);
-  //       attr.attributes.forEach((value, index) => {
-  //         if (index < attributeOptionsList.length) {
-  //           attributeOptionsList[index].values.add(value);
-  //         }
-  //       });
-  //       const optionKey = attr.attributes.join('|');
-  //       optionsMap.set(optionKey, variant);
-  //     });
-
-  //     const finalAttributeOptions = attributeOptionsList.map(opt => ({
-  //       type: opt.type,
-  //       values: Array.from(opt.values).sort()
-  //     }));
-
-  //     setAttributeOptions(finalAttributeOptions);
-  //     setAvailableOptions(optionsMap);
-
-  //     const initialSelections = {};
-  //     currentVariantAttributes.attributes.forEach((value, index) => {
-  //       initialSelections[getAttributeType(index)] = value;
-  //     });
-  //     setSelectedAttributes(initialSelections);
-
-  //     const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-  //     localStorage.setItem(cacheKey, JSON.stringify({
-  //       finalAttributeOptions,
-  //       optionsMap: Array.from(optionsMap.entries()),
-  //       timestamp: Date.now()
-  //     }));
-
-  //   } catch (error) {
-  //     console.error('Error building attribute options:', error);
-  //     setAttributeOptions([]);
-  //     setAvailableOptions(new Map());
-  //     setSelectedAttributes({});
-  //   } finally {
-  //     setLoadingAttributes(false);
-  //   }
-  // };
+  
 const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes) => {
+  // DECIDIR QUÉ PRODUCTOS USAR DINÁMICAMENTE
+  const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
+  const productsToUse = hasActiveFilters ? departmentalProducts : defaultProducts;
+
+  console.log('Filtros activos:', hasActiveFilters);
+  console.log('Productos a usar:', productsToUse?.length || 0);
+  console.log('Tipo de productos:', hasActiveFilters ? 'departmentalProducts' : 'defaultProducts');
+
   // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
   if (currentVariantAttributes.attributes.length === 0) {
     setAttributeOptions([]);
     setAvailableOptions(new Map());
     setSelectedAttributes({});
     setLoadingAttributes(false);
-    setAllAttributesLoaded(true); // ← AÑADIR
+    setAllAttributesLoaded(true);
     return;
   }
 
   setLoadingAttributes(true);
-  setAllAttributesLoaded(false); // ← AÑADIR: resetear estado de carga
+  setAllAttributesLoaded(false);
 
   try {
-    const variants = allProductsFromContext.filter(p => {
+    // USAR LOS PRODUCTOS DINÁMICOS EN LUGAR DE allProductsFromContext
+    const variants = productsToUse.filter(p => {
       const attr = extractVariantAttributes(p.code);
       return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
     });
 
+    console.log("variants encontradas: ", variants.length);
+
     if (variants.length === 0) {
       setAttributeOptions([]);
       setAvailableOptions(new Map());
-      setAllAttributesLoaded(true); // ← AÑADIR
+      setAllAttributesLoaded(true);
       return;
     }
 
@@ -506,27 +422,29 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
     });
     setSelectedAttributes(initialSelections);
 
-    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+    // NOTA: Podrías considerar modificar la clave del cache para incluir info sobre filtros
+    // si quieres cachear resultados diferentes para productos filtrados vs no filtrados
+    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}${hasActiveFilters ? '_filtered' : ''}`;
     localStorage.setItem(cacheKey, JSON.stringify({
       finalAttributeOptions,
       optionsMap: Array.from(optionsMap.entries()),
-      initialSelections, // ← AÑADIR initialSelections al cache
-      timestamp: Date.now()
+      initialSelections,
+      timestamp: Date.now(),
+      hasFilters: hasActiveFilters // Metadata para saber si este cache incluía filtros
     }));
 
-    setAllAttributesLoaded(true); // ← AÑADIR: marcar como completamente cargado
+    setAllAttributesLoaded(true);
 
   } catch (error) {
     console.error('Error building attribute options:', error);
     setAttributeOptions([]);
     setAvailableOptions(new Map());
     setSelectedAttributes({});
-    setAllAttributesLoaded(true); // ← AÑADIR: incluso en error, marcar como cargado
+    setAllAttributesLoaded(true);
   } finally {
     setLoadingAttributes(false);
   }
 };
-
 
 
   useEffect(() => {
@@ -542,70 +460,7 @@ const buildAttributeOptionsFromScratch = (productData, currentVariantAttributes)
     }
   }, [id, currentProductId]);
 
-  // Then in your useEffect:
-  // useEffect(() => {
-  //   window.scrollTo(0, 0);
-
-  //   const fetchProductDetails = async () => {
-  //     setLoadingSpecificProduct(true);
-  //     setErrorSpecificProduct(null);
-  //     try {
-  //       const token = user?.token;
-  //       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  //       const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-  //       setProduct(data);
-
-  //       const currentVariantAttributes = extractVariantAttributes(data.code);
-
-  //       // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
-  //       if (currentVariantAttributes.attributes.length > 0) {
-  //         const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-  //         const cachedData = localStorage.getItem(cacheKey);
-
-  //         if (cachedData) {
-  //           try {
-  //             const parsedData = JSON.parse(cachedData);
-  //             setAttributeOptions(parsedData.finalAttributeOptions);
-  //             setAvailableOptions(new Map(parsedData.optionsMap));
-  //             setSelectedAttributes(parsedData.initialSelections || {});
-  //           } catch (error) {
-  //             console.error('Error parsing cached data:', error);
-  //             localStorage.removeItem(cacheKey);
-  //             buildAttributeOptionsFromScratch(data, currentVariantAttributes);
-  //           }
-  //         } else {
-  //           buildAttributeOptionsFromScratch(data, currentVariantAttributes);
-  //         }
-  //       } else {
-  //         // PRODUCTO SIMPLE: LIMPIAR ESTADO
-  //         setAttributeOptions([]);
-  //         setAvailableOptions(new Map());
-  //         setSelectedAttributes({});
-  //         setLoadingAttributes(false);
-  //       }
-
-  //       fetchReviews(id);
-
-  //       if (allProductsFromContext.length > 1) {
-  //         const filtered = allProductsFromContext.filter(p => p._id !== id);
-  //         const groupedRelated = groupProductsByBase(filtered);
-  //         const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
-  //         const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
-  //         setRelatedProducts(shuffled.slice(0, 3));
-  //       }
-  //     } catch (err) {
-  //       setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-  //     } finally {
-  //       setLoadingSpecificProduct(false);
-  //     }
-  //   };
-
-
-  //   if (id) {
-  //     fetchProductDetails();
-  //   }
-  //   setQuantity(1);
-  // }, [id, user?.token, allProductsFromContext, fetchReviews, productsLoaded]); // Agrega productsLoaded a las dependencias
+  
 useEffect(() => {
   window.scrollTo(0, 0);
 
@@ -652,8 +507,9 @@ useEffect(() => {
 
       fetchReviews(id);
 
-      if (allProductsFromContext.length > 1) {
-        const filtered = allProductsFromContext.filter(p => p._id !== id);
+      const productsToUse = getProductsToUse();
+      if (productsToUse.length > 1) {
+        const filtered = productsToUse.filter(p => p._id !== id);
         const groupedRelated = groupProductsByBase(filtered);
         const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
         const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
@@ -671,13 +527,14 @@ useEffect(() => {
     fetchProductDetails();
   }
   setQuantity(1);
-}, [id, user?.token, allProductsFromContext, fetchReviews, productsLoaded]);
+}, [id, user?.token, fetchReviews, productsLoaded]);
 
 
   // 3. Agrega un useEffect ESPECÍFICO para manejar filtros
   useEffect(() => {
+    const productsToUse = getProductsToUse();
     // Si los productos cambian (por filtros) y ya teníamos un producto cargado
-    if (product && allProductsFromContext.length > 0 && productsLoaded) {
+    if (product && productsToUse.length > 0 && productsLoaded) {
       const currentVariantAttributes = extractVariantAttributes(product.code);
 
       if (currentVariantAttributes.attributes.length > 0) {
@@ -685,7 +542,7 @@ useEffect(() => {
         buildAttributeOptionsFromScratch(product, currentVariantAttributes);
       }
     }
-  }, [allProductsFromContext]); // Se ejecuta cuando allProductsFromContext cambia
+  }, [currentFilters, departmentalProducts, defaultProducts]); // Se ejecuta cuando allProductsFromContext cambia
 
 
   // Handle attribute selection change
@@ -710,34 +567,7 @@ const handleAttributeChange = (attributeType, value) => {
   });
 };
 
-  // Filter available options based on current selections
-  // const getAvailableOptionsForAttribute = (attributeIndex) => {
-  //   const currentSelections = Object.values(selectedAttributes);
-  //   const availableValues = new Set();
 
-  //   Array.from(availableOptions.keys()).forEach(optionKey => {
-  //     const values = optionKey.split('|');
-
-  //     // Check if this option matches current selections (except the target attribute)
-  //     let matches = true;
-  //     for (let i = 0; i < values.length; i++) {
-  //       if (i !== attributeIndex && currentSelections[i] && currentSelections[i] !== values[i]) {
-  //         matches = false;
-  //         break;
-  //       }
-  //     }
-
-  //     if (matches) {
-  //       availableValues.add(values[attributeIndex]);
-  //     }
-  //   });
-
-  //   return Array.from(availableValues);
-  // };
-
-  // Filter available options based on current selections
-// Filter available options based on current selections
-// Filter available options based on current selections - VERSIÓN CORRECTA
 const getAvailableOptionsForAttribute = (attributeIndex) => {
   const allValues = attributeOptions[attributeIndex]?.values || [];
   
@@ -1064,20 +894,7 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
     );
   };
 
-//   const doesSelectedVariantExist = () => {
-//   if (attributeOptions.length === 0) return true; // Productos simples siempre existen
-  
-//   const selectedValues = attributeOptions.map(opt =>
-//     selectedAttributes[opt.type] || ''
-//   );
 
-//   // Verificar que todas las selecciones estén completas
-//   const allSelected = selectedValues.every(value => value !== '');
-//   if (!allSelected) return false;
-
-//   const optionKey = selectedValues.join('|');
-//   return availableOptions.has(optionKey);
-// };
 const doesSelectedVariantExist = () => {
   // Si los atributos no han terminado de cargar, retornar false
   if (!allAttributesLoaded) return false;
@@ -1097,24 +914,6 @@ const doesSelectedVariantExist = () => {
 };
 
 
-// Reusable component that handles both truncated and full content
-// const HTMLContent = ({ html, maxLength, fallback = 'No description available.', ...typographyProps }) => {
-//   const stripHtml = (html) => html?.replace(/<[^>]*>/g, '') || '';
-  
-//   let content = stripHtml(html);
-  
-//   if (!content) {
-//     content = fallback;
-//   } else if (maxLength && content.length > maxLength) {
-//     content = content.substring(0, maxLength) + '...';
-//   }
-  
-//   return (
-//     <Typography {...typographyProps}>
-//       {content}
-//     </Typography>
-//   );
-// };
 
 const getCleanText = (html) => {
   if (!html) return '';
@@ -1183,99 +982,7 @@ const getCleanText = (html) => {
               <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>{product.brand || 'Sin descripción disponible.'}</Typography>
               <Divider sx={{ my: 2 }} />
 
-              {/* Dynamic attribute selection */}
-              {/* SOLO MOSTRAR ATRIBUTOS SI HAY attributeOptions Y NO ESTÁ CARGANDO */}
-              {/* {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
-                attributeOptions.map((attribute, index) => {
-                  const options = getAvailableOptionsForAttribute(index) || [];
-                  const isLastAttribute = index === attributeOptions.length - 1;
-
-                  return (
-                    <Box key={index} sx={{ mb: 3 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          display: 'block',
-                          fontWeight: 'bold',
-                          color: 'grey.800',
-                          mb: 2,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em'
-                        }}
-                      >
-
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {options.map((option, optionIndex) => {
-                          const isSelected = selectedAttributes[attribute.type] === option.value;
-                          const isAvailable = option.isAvailable;
-                          return (
-                            <Button
-                              key={optionIndex}
-                              variant="outlined"
-                              onClick={() => handleAttributeChange(attribute.type, option.value)}
-                              disabled={!isAvailable}
-                              sx={{
-                                px: 3,
-                                py: 1.5,
-                                borderRadius: 2,
-                                fontSize: '0.875rem',
-                                fontWeight: 'bold',
-                                minWidth: '60px',
-                                transition: 'all 0.3s ease',
-                                transform: 'scale(1)',
-                                '&:hover': {
-                                  transform: 'scale(1.05)',
-                                  ...(!isSelected && {
-                                    bgcolor: 'primary.50',
-                                    color: 'primary.700',
-                                    borderColor: 'primary.300',
-                                  })
-                                },
-                                '&:active': {
-                                  transform: 'scale(0.95)'
-                                },
-                                ...(isSelected && {
-                                  bgcolor: '#263C5C',
-                                  color: 'white',
-                                  borderColor: '#263C5C',
-                                  boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
-                                  '&:hover': {
-                                    bgcolor: '#1E2F4A',
-                                    borderColor: '#1E2F4A',
-                                  }
-                                }),
-                                ...(!isSelected && {
-                                  bgcolor: 'white',
-                                  color: 'grey.800',
-                                  borderColor: 'grey.300',
-                                }),
-                                ...(isLastAttribute && !option.isAvailable && {
-                                  bgcolor: 'grey.100',
-                                  color: 'grey.500',
-                                  borderColor: 'grey.300',
-                                  cursor: 'not-allowed',
-                                  opacity: 0.7,
-                                })
-                              }}
-                            >
-                              {option.value}
-                            </Button>
-                          );
-                        })}
-                      </Box>
-                    </Box>
-                  );
-                })
-              ) : loadingAttributes ? (
-                // MOSTRAR LOADING SOLO SI ESTÁ CARGANDO Y ES VARIANTE
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ mb: 2 }}>
-                    Cargando opciones...
-                  </Typography>
-                  <CircularProgress size={20} />
-                </Box>
-              ) : null} */}
+           
               {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
   attributeOptions.map((attribute, index) => {
     // MOSTRAR LOADING SI LOS ATRIBUTOS NO HAN TERMINADO DE CARGAR
@@ -1455,42 +1162,7 @@ const getCleanText = (html) => {
                   {/* Texto condicional para móviles pequeños */}
                   {isExtraSmallMobile ? '' : 'Añadir al Carrito'}
                 </Button>
-                {/* <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={cartLoading ? <CircularProgress size={20} color="inherit" /> : <ShoppingCartIcon />}
-                  onClick={handleAddToCart}
-                  disabled={
-                    cartLoading ||
-                    isOutOfStock ||
-                    quantity > product.countInStock ||
-                    displayPrice <= 0 ||
-                    !areAllAttributesSelected() // ← NUEVA CONDICIÓN
-                  }
-                  sx={{
-                    borderRadius: 8,
-                    textTransform: 'none',
-                    px: { xs: 2, sm: 4 },
-                    py: 1.5,
-                    ml: 1,
-                    background: '#bb4343ff',
-                    boxShadow: `0 3px 5px 2px rgba(33, 33, 33, .3)`,
-                    color: 'white',
-                    '&:hover': {
-                      background: '#ff0000ff',
-                      boxShadow: `0 3px 8px 3px rgba(33, 33, 33, .4)`,
-                      transform: 'translateY(-2px)',
-                    },
-                    '&:active': { transform: 'translateY(0)' },
-                    // Estilo cuando está disabled por atributos no seleccionados
-                    '&:disabled:not(.Mui-disabled)': {
-                      background: '#cccccc',
-                      color: '#666666',
-                    }
-                  }}
-                >
-                  Añadir al Carrito
-                </Button> */}
+               
               </Box>
             </Box>
           </Grid>
@@ -1546,17 +1218,7 @@ const getCleanText = (html) => {
             </CardContent>
           </Card>
         </Box>
-        {/* <Box sx={contentSectionStyle}>
-          <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Especificaciones</Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Categoría:</Typography> {product.category || 'N/A'}</Typography></Grid>
-            <Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Marca:</Typography> {product.brand || 'N/A'}</Typography></Grid>
-            <Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Código SKU:</Typography> {product.productCode || product.code || 'N/A'}</Typography></Grid>
-            {product.gender && (<Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Género:</Typography> {getTranslatedGender(product.gender)}</Typography></Grid>)}
-            {product.volume && (<Grid item xs={12} sm={6}><Typography variant="body1"><Typography component="span" sx={{ fontWeight: 600, color: 'text.secondary' }}>Volumen:</Typography> {product.volume}</Typography></Grid>)}
-          </Grid>
-        </Box> */}
-
+       
 
         <Box sx={{
           p: { xs: 2, sm: 3 },

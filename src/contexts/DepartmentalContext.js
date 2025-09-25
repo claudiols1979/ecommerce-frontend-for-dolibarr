@@ -16,7 +16,8 @@ export const DepartmentalProvider = ({ children }) => {
   const [departmentalLoading, setDepartmentalLoading] = useState(false);
   const [departmentalError, setDepartmentalError] = useState(null);
   const [departmentalHasMore, setDepartmentalHasMore] = useState(false);
-  const [departmentalLastId, setDepartmentalLastId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1); // ✅ Nuevo estado para trackear página actual
+  const [currentFilters, setCurrentFilters] = useState({});
   
   // Estado para taxonomía
   const [taxonomy, setTaxonomy] = useState({
@@ -25,8 +26,6 @@ export const DepartmentalProvider = ({ children }) => {
     categories: [],
     subcategories: []
   });
-
-  const [currentFilters, setCurrentFilters] = useState({});
   const [taxonomyLoading, setTaxonomyLoading] = useState(false);
 
   // Función para obtener taxonomía contextual
@@ -35,7 +34,6 @@ export const DepartmentalProvider = ({ children }) => {
       setTaxonomyLoading(true);
       console.log('📋 Solicitando taxonomía con filtros:', filters);
       
-      // Construir parámetros de consulta
       const params = {};
       if (filters.department) params.department = filters.department;
       if (filters.brand) params.brand = filters.brand;
@@ -51,7 +49,6 @@ export const DepartmentalProvider = ({ children }) => {
       
     } catch (err) {
       console.error('❌ Error al obtener taxonomía:', err);
-      // Cargar taxonomía vacía para evitar errores
       setTaxonomy({
         departments: [],
         brands: [],
@@ -63,11 +60,11 @@ export const DepartmentalProvider = ({ children }) => {
     }
   }, [api]);
 
-  // Función para obtener productos con filtros departamentales
+  // Función principal para obtener productos - CORREGIDA
   const fetchDepartmentalProducts = useCallback(async (
     filters = {},
     page = 1,
-    limit = 20
+    limit = 18
   ) => {
     if (departmentalLoading) return;
 
@@ -77,7 +74,7 @@ export const DepartmentalProvider = ({ children }) => {
     try {
       const params = {
         limit: limit.toString(),
-        lastId: page > 1 ? departmentalLastId : null,
+        page: page.toString(),
         ...filters
       };
 
@@ -91,15 +88,18 @@ export const DepartmentalProvider = ({ children }) => {
       console.log('🚀 Fetching products with params:', params);
       const response = await api.get('/api/products/public/filtered', { params });
       
+      // ✅ Manejo correcto de la paginación
       if (page === 1) {
-        setDepartmentalProducts(response.data.data.products);
+        setDepartmentalProducts(response.data.products);
       } else {
-        setDepartmentalProducts(prev => [...prev, ...response.data.data.products]);
+        setDepartmentalProducts(prev => [...prev, ...response.data.products]);
       }
       
-      setDepartmentalHasMore(response.data.data.hasMore);
-      setDepartmentalLastId(response.data.data.lastId);
+      setDepartmentalHasMore(page < response.data.pages);
+      setCurrentPage(page); // ✅ Actualizar página actual
       setCurrentFilters(filters);
+
+      console.log(`📊 Página ${page} cargada. Productos: ${response.data.products.length}, ¿Hay más?: ${page < response.data.pages}`);
 
     } catch (err) {
       console.error('Error al obtener productos departamentales:', err);
@@ -109,7 +109,29 @@ export const DepartmentalProvider = ({ children }) => {
     } finally {
       setDepartmentalLoading(false);
     }
-  }, [api, departmentalLoading, departmentalLastId]);
+  }, [api, departmentalLoading]);
+
+  // ✅ Función para cargar más productos - CORREGIDA
+  const loadMoreProducts = useCallback(() => {
+    const nextPage = currentPage + 1;
+    console.log(`⬇️ Cargando página ${nextPage}...`);
+    fetchDepartmentalProducts(currentFilters, nextPage);
+  }, [fetchDepartmentalProducts, currentFilters, currentPage]);
+
+  // ✅ Función para buscar con nuevos filtros - CORREGIDA
+  const searchWithFilters = useCallback((filters) => {
+    console.log(`🔍 Nueva búsqueda con filtros:`, filters);
+    fetchDepartmentalProducts(filters, 1); // ✅ Siempre empezar en página 1
+  }, [fetchDepartmentalProducts]);
+
+  // ✅ Función para reiniciar búsqueda
+  const resetSearch = useCallback(() => {
+    console.log('🔄 Reiniciando búsqueda...');
+    setDepartmentalProducts([]);
+    setCurrentPage(1);
+    setDepartmentalHasMore(false);
+    setCurrentFilters({});
+  }, []);
 
   const value = {
     // Productos departamentales
@@ -117,7 +139,11 @@ export const DepartmentalProvider = ({ children }) => {
     departmentalLoading,
     departmentalError,
     departmentalHasMore,
+    currentPage, // ✅ Exportar página actual
     fetchDepartmentalProducts,
+    loadMoreProducts,
+    searchWithFilters,
+    resetSearch, // ✅ Nueva función
     
     // Taxonomía contextual
     taxonomy,
