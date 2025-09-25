@@ -341,7 +341,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
         
         // Si tenemos variantes, procesarlas
         if (variants.length > 0) {
-          await processVariants(variants, currentVariantAttributes);
+          await processVariants(variants, currentVariantAttributes, hasActiveFilters); // ✅ Pasar hasActiveFilters
         } else {
           setAttributeOptions([]);
           setAvailableOptions(new Map());
@@ -350,7 +350,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
         // Si el conteo cambió, esperar y reintentar
         lastVariantCount = variants.length;
         console.log(`❌ Conteo inconsistente, esperando 200ms...`);
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 400));
       }
     }
 
@@ -363,7 +363,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
       });
       
       if (finalVariants.length > 0) {
-        await processVariants(finalVariants, currentVariantAttributes);
+        await processVariants(finalVariants, currentVariantAttributes, hasActiveFilters); // ✅ Pasar hasActiveFilters
       } else {
         setAttributeOptions([]);
         setAvailableOptions(new Map());
@@ -383,8 +383,8 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
   }
 };
 
-// FUNCIÓN AUXILIAR PARA PROCESAR VARIANTES
-const processVariants = async (variants, currentVariantAttributes) => {
+// ✅ FUNCIÓN AUXILIAR ACTUALIZADA - AGREGAR GUARDADO EN LOCALSTORAGE
+const processVariants = async (variants, currentVariantAttributes, hasActiveFilters) => {
   console.log('🔄 Procesando variantes:', variants.length);
   
   variants.sort((a, b) => a.code.localeCompare(b.code));
@@ -426,6 +426,27 @@ const processVariants = async (variants, currentVariantAttributes) => {
     initialSelections[getAttributeType(index)] = value;
   });
   setSelectedAttributes(initialSelections);
+
+  // ✅ AGREGAR GUARDADO EN LOCALSTORAGE AQUÍ
+  console.log('💾 Guardando en localStorage...');
+  await new Promise(resolve => setTimeout(resolve, 500)); // Esperar para asegurar guardado
+
+  const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}${hasActiveFilters ? '_filtered' : ''}`;
+  const cacheData = {
+    finalAttributeOptions,
+    optionsMap: Array.from(optionsMap.entries()), // Convertir Map a Array
+    initialSelections,
+    timestamp: Date.now(),
+    hasFilters: hasActiveFilters
+  };
+
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    console.log('✅ Guardado en localStorage con clave:', cacheKey);
+    console.log('✅ Atributos guardados:', finalAttributeOptions.length, 'líneas');
+  } catch (error) {
+    console.error('❌ Error guardando en localStorage:', error);
+  }
 
   console.log('✅ Procesamiento completado:', {
     variantes: variants.length,
