@@ -1,5 +1,5 @@
 // components/DepartmentalFilterBar.js
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -24,6 +24,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useDepartmental } from '../contexts/DepartmentalContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+
 const DepartmentalFilterBar = () => {
   const { 
     taxonomy, 
@@ -39,6 +40,7 @@ const DepartmentalFilterBar = () => {
   const location = useLocation();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+ 
   
   const [uiFilters, setUiFilters] = useState({
     department: '',
@@ -54,6 +56,7 @@ const DepartmentalFilterBar = () => {
 
   console.log("🔍 Current Filters from Context: ", currentFilters);
   console.log("🎯 UI Filters: ", uiFilters);
+  
 
   // Cargar taxonomía completa al montar
   useEffect(() => {
@@ -173,37 +176,62 @@ const DepartmentalFilterBar = () => {
   }, [applyFiltersAutomatically]);
 
   // ✅ Limpiar filtro individual
-  const handleClearFilter = useCallback(async (filterType) => {
-    console.log("🧹 Limpiando filtro:", filterType);
-    setFilterLoading(true);
+const handleClearFilter = useCallback(async (filterType) => {
+  console.log("🧹 Limpiando filtro:", filterType);
+  setFilterLoading(true);
+  
+  const newFilters = { ...uiFilters, [filterType]: '' };
+  
+  // Resetear filtros dependientes
+  if (filterType === 'department') {
+    newFilters.brand = '';
+    newFilters.category = '';
+    newFilters.subcategory = '';
+  } else if (filterType === 'brand') {
+    newFilters.category = '';
+    newFilters.subcategory = '';
+  } else if (filterType === 'category') {
+    newFilters.subcategory = '';
+  }
+  
+  setUiFilters(newFilters);
+  
+  // ✅ ACTUALIZAR activeFilters - ESTO SÍ ES NECESARIO
+  setActiveFilters(prev => {
+    const newActiveFilters = { ...prev };
+    delete newActiveFilters[filterType];
     
-    const newFilters = { ...uiFilters, [filterType]: '' };
-    
-    // Resetear filtros dependientes
+    // También eliminar filtros dependientes si es necesario
     if (filterType === 'department') {
-      newFilters.brand = '';
-      newFilters.category = '';
-      newFilters.subcategory = '';
+      delete newActiveFilters.brand;
+      delete newActiveFilters.category;
+      delete newActiveFilters.subcategory;
     } else if (filterType === 'brand') {
-      newFilters.category = '';
-      newFilters.subcategory = '';
+      delete newActiveFilters.category;
+      delete newActiveFilters.subcategory;
     } else if (filterType === 'category') {
-      newFilters.subcategory = '';
+      delete newActiveFilters.subcategory;
     }
     
-    setUiFilters(newFilters);
+    console.log('✅ Nuevos activeFilters:', newActiveFilters);
+    return newActiveFilters;
+  });
+  
+  try {
+    const taxonomyFilters = { ...newFilters };
+    delete taxonomyFilters[filterType];
+    await fetchTaxonomy(taxonomyFilters);
     
-    try {
-      const taxonomyFilters = { ...newFilters };
-      delete taxonomyFilters[filterType];
-      await fetchTaxonomy(taxonomyFilters);
-      
-    } catch (error) {
-      console.error('Error clearing filter:', error);
-    } finally {
-      setFilterLoading(false);
-    }
-  }, [uiFilters, fetchTaxonomy]);
+    // ✅ AQUÍ NECESITO SABER QUÉ FUNCIÓN USAS PARA BUSCAR PRODUCTOS
+    // Por ahora, solo actualizo la taxonomía
+    console.log('🔍 Filtro limpiado, necesito ejecutar búsqueda aquí');
+    
+  } catch (error) {
+    console.error('Error clearing filter:', error);
+  } finally {
+    setFilterLoading(false);
+  }
+}, [uiFilters, fetchTaxonomy]); // ✅ Solo las dependencias que existen
 
   // ✅ Limpiar todos los filtros
   const handleClearAllFilters = useCallback(async () => {
@@ -248,7 +276,7 @@ const DepartmentalFilterBar = () => {
 
   return (
     <Paper 
-      elevation={0}        
+      elevation={0}             
       sx={{ 
         p: isSmallScreen ? 2 : 3,
         width: isSmallScreen ? '90%' : '40%',
@@ -437,10 +465,16 @@ const DepartmentalFilterBar = () => {
                   onDelete={() => handleClearFilter(key)}
                   size="small"
                   variant="outlined"
+                  clickable={false}
+                  onClick={undefined}
                   sx={{ 
                     color: 'white', 
                     borderColor: 'rgba(255, 255, 255, 0.3)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    pointerEvents: 'none',
+                    '& .MuiChip-deleteIcon': {
+                      pointerEvents: 'auto' // Pero permitir eventos en el icono de delete
+                    }
                   }}
                 />
               );
