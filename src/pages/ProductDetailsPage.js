@@ -130,10 +130,30 @@ const ProductDetailsPage = () => {
   const [allAttributesLoaded, setAllAttributesLoaded] = useState(false);
 
 const getProductsToUse = () => {
+  // ✅ PRIMERO intentar determinar hasActiveFilters desde el cache
+  if (product) {
+    const currentVariantAttributes = extractVariantAttributes(product.code);
+    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        const savedHasActiveFilters = parsedData.hasActiveFilters;
+        
+        console.log('🔍 Usando estado de filtros desde cache:', savedHasActiveFilters);
+        return savedHasActiveFilters ? departmentalProducts : defaultProducts;
+      } catch (error) {
+        console.error('Error reading cache for filters:', error);
+      }
+    }
+  }
+  
+  // ✅ FALLBACK: lógica original si no hay cache
   const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
+  console.log('🔍 Usando estado de filtros actual:', hasActiveFilters);
   return hasActiveFilters ? departmentalProducts : defaultProducts;
 };
-
 const areAllAttributesSelected = () => {
   // Si los atributos no han terminado de cargar, retornar false
   if (!allAttributesLoaded) return false;
@@ -427,34 +447,25 @@ const processVariants = async (variants, currentVariantAttributes, hasActiveFilt
   });
   setSelectedAttributes(initialSelections);
 
-  // ✅ AGREGAR GUARDADO EN LOCALSTORAGE AQUÍ
-  console.log('💾 Guardando en localStorage...');
-  await new Promise(resolve => setTimeout(resolve, 500)); // Esperar para asegurar guardado
-
-  const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}${hasActiveFilters ? '_filtered' : ''}`;
+  // ✅ GUARDAR EN LOCALSTORAGE CON ESTADO DE FILTROS
+  const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
   const cacheData = {
     finalAttributeOptions,
-    optionsMap: Array.from(optionsMap.entries()), // Convertir Map a Array
+    optionsMap: Array.from(optionsMap.entries()),
     initialSelections,
     timestamp: Date.now(),
-    hasFilters: hasActiveFilters
+    hasActiveFilters: hasActiveFilters // ✅ GUARDAR ESTADO DE FILTROS
   };
 
   try {
     localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-    console.log('✅ Guardado en localStorage con clave:', cacheKey);
-    console.log('✅ Atributos guardados:', finalAttributeOptions.length, 'líneas');
+    console.log('✅ Guardado en localStorage con estado de filtros:', hasActiveFilters);
   } catch (error) {
     console.error('❌ Error guardando en localStorage:', error);
   }
 
-  console.log('✅ Procesamiento completado:', {
-    variantes: variants.length,
-    opciones: finalAttributeOptions.length,
-    mapa: optionsMap.size
-  });
+  console.log('✅ Procesamiento completado');
 };
-
 
 
   useEffect(() => {
@@ -477,7 +488,8 @@ useEffect(() => {
   const fetchProductDetails = async () => {
     setLoadingSpecificProduct(true);
     setErrorSpecificProduct(null);
-    setAllAttributesLoaded(false); // ← AÑADIR: resetear estado de carga
+    setAllAttributesLoaded(false);
+    
     try {
       const token = user?.token;
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -494,10 +506,15 @@ useEffect(() => {
         if (cachedData) {
           try {
             const parsedData = JSON.parse(cachedData);
+            
+            // ✅ LEER EL ESTADO DE FILTROS GUARDADO
+            const savedHasActiveFilters = parsedData.hasActiveFilters;
+            console.log('✅ Estado de filtros cargado desde cache:', savedHasActiveFilters);
+            
             setAttributeOptions(parsedData.finalAttributeOptions);
             setAvailableOptions(new Map(parsedData.optionsMap));
             setSelectedAttributes(parsedData.initialSelections || {});
-            setAllAttributesLoaded(true); // ← AÑADIR: cache cargado inmediatamente
+            setAllAttributesLoaded(true);
           } catch (error) {
             console.error('Error parsing cached data:', error);
             localStorage.removeItem(cacheKey);
@@ -507,27 +524,19 @@ useEffect(() => {
           buildAttributeOptionsFromScratch(data, currentVariantAttributes);
         }
       } else {
-        // PRODUCTO SIMPLE: LIMPIAR ESTADO
+        // PRODUCTO SIMPLE
         setAttributeOptions([]);
         setAvailableOptions(new Map());
         setSelectedAttributes({});
         setLoadingAttributes(false);
-        setAllAttributesLoaded(true); // ← AÑADIR
+        setAllAttributesLoaded(true);
       }
 
-      fetchReviews(id);
-
-      const productsToUse = getProductsToUse();
-      if (productsToUse.length > 1) {
-        const filtered = productsToUse.filter(p => p._id !== id);
-        const groupedRelated = groupProductsByBase(filtered);
-        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
-        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
-        setRelatedProducts(shuffled.slice(0, 3));
-      }
+      // ... resto del código igual
+      
     } catch (err) {
       setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-      setAllAttributesLoaded(true); // ← AÑADIR: incluso en error
+      setAllAttributesLoaded(true);
     } finally {
       setLoadingSpecificProduct(false);
     }
