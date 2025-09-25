@@ -285,12 +285,14 @@ const DepartmentalFilterBar = () => {
             <Chip 
               label={Object.keys(activeFilters).length} 
               size="small" 
+              onClick={undefined}
               sx={{ 
                 ml: 1, 
                 backgroundColor: '#bb4343', 
                 color: 'white',
                 height: 20,                  
-                '& .MuiChip-label': { px: 1 }
+                '& .MuiChip-label': { px: 1 },
+                pointerEvents: 'none'
               }} 
             />
           )}

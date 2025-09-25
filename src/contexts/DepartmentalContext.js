@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext'; 
+import { useNavigate } from "react-router-dom";
 
 const DepartmentalContext = createContext();
 
@@ -10,7 +11,7 @@ export const useDepartmental = () => useContext(DepartmentalContext);
 
 export const DepartmentalProvider = ({ children }) => {
   const { api } = useAuth(); 
-  
+  const navigate = useNavigate()
   // Estados para productos departamentales
   const [departmentalProducts, setDepartmentalProducts] = useState([]);
   const [departmentalLoading, setDepartmentalLoading] = useState(false);
@@ -131,7 +132,7 @@ export const DepartmentalProvider = ({ children }) => {
     setCurrentPage(1);
     setDepartmentalHasMore(false);
     setCurrentFilters({});
-  }, []);
+  }, []);  
 
   const value = {
     // Productos departamentales
@@ -149,7 +150,7 @@ export const DepartmentalProvider = ({ children }) => {
     taxonomy,
     taxonomyLoading,
     fetchTaxonomy,
-    currentFilters
+    currentFilters    
   };
 
   return (

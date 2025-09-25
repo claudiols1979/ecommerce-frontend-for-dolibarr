@@ -16,6 +16,7 @@ import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
+
 const ProductsPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const ProductsPage = () => {
  
   
   const { departmentalProducts, departmentalLoading, departmentalError, 
-          departmentalHasMore, fetchDepartmentalProducts, currentFilters } = useDepartmental();
+          departmentalHasMore, fetchDepartmentalProducts, currentFilters, resetSearch} = useDepartmental();
  
 
   const { addItemToCart } = useOrders();
@@ -59,8 +60,7 @@ const ProductsPage = () => {
     { value: 'men', label: 'Hombre' }, { value: 'women', label: 'Mujer' },
     { value: 'unisex', label: 'Unisex' }, { value: 'children', label: 'Niños' },
     { value: 'elderly', label: 'Ancianos' }, { value: 'other', label: 'Otro' }, ];
-
-
+  
 
 
   // --- FUNCIONES DE AGRUPAMIENTO ---
@@ -327,6 +327,8 @@ useEffect(() => {
     }
   }, [addItemToCart, user]);
 
+    
+
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
@@ -351,11 +353,16 @@ useEffect(() => {
     navigate('/products', { replace: true });
   };
 
-  const handleClearDepartmentalFilters = () => {
-    navigate('/products', { replace: true });
-    setPage(1);
-  };
-
+const handleClearDepartmentalFilters = useCallback(() => {
+    console.log('🧹 Limpiando filtros departamentales...');
+    
+    // 1. Usar la función que YA EXISTE en el contexto
+    resetSearch();
+    
+    // 2. Navegar a la página base de productos
+    navigate('/products', { replace: true });    
+    
+  }, [resetSearch, navigate]);
 
   
 
@@ -393,6 +400,7 @@ useEffect(() => {
     return 'No hay productos disponibles en este momento.';
   };
 
+
   return (
     <>
       <Helmet>
@@ -414,6 +422,23 @@ useEffect(() => {
             </Button>
           </Box>
         )}
+
+        {isDepartmentalMode && (
+  <Box sx={{ textAlign: 'center', mb: 4 }}>
+    <Button
+      variant="contained"
+      onClick={handleClearDepartmentalFilters}
+      sx={{ 
+        fontWeight: 'bold', 
+        backgroundColor: '#bb4343ff', 
+        '&:hover': { backgroundColor: '#ff0000ff' },
+        mt: submittedSearchTerm ? 2 : 0 // Espacio si ambos botones están presentes
+      }}
+    >
+      Mostrar Todos los Productos
+    </Button>
+  </Box>
+)}
 
         {(loading || groupingProducts) && groupedProducts.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>
