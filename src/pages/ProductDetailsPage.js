@@ -332,7 +332,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
     // ✅ SOLUCIÓN: ESPERAR A QUE LOS PRODUCTOS ESTÉN CARGADOS
     if (!productsToUse || productsToUse.length === 0) {
       console.warn('⚠️  productsToUse está vacío, esperando...');
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 100));
       // Intentar nuevamente después de esperar
       if (!productsToUse || productsToUse.length === 0) {
         throw new Error('productsToUse no está disponible después de esperar');
@@ -370,7 +370,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
         // Si el conteo cambió, esperar y reintentar
         lastVariantCount = variants.length;
         console.log(`❌ Conteo inconsistente, esperando 200ms...`);
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 
