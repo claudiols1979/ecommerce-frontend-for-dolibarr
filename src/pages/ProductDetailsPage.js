@@ -458,7 +458,7 @@ const processVariants = async (variants, currentVariantAttributes, hasActiveFilt
     hasActiveFilters: hasActiveFilters // ✅ GUARDAR ESTADO DE FILTROS
   };
 
-  try {
+  try {    
     localStorage.setItem(cacheKey, JSON.stringify(cacheData));
     console.log('✅ Guardado en localStorage con estado de filtros:', hasActiveFilters);
   } catch (error) {
@@ -533,8 +533,18 @@ useEffect(() => {
         setAllAttributesLoaded(true);
       }
 
-      // ... resto del código igual
-      
+      // ✅ FALTABA ESTA PARTE: Cargar reviews y related products
+      fetchReviews(id);
+
+      const productsToUse = getProductsToUse();
+      if (productsToUse.length > 1) {
+        const filtered = productsToUse.filter(p => p._id !== id);
+        const groupedRelated = groupProductsByBase(filtered);
+        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
+        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+        setRelatedProducts(shuffled.slice(0, 3));
+      }
+
     } catch (err) {
       setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
       setAllAttributesLoaded(true);
@@ -960,13 +970,11 @@ const getCleanText = (html) => {
             sx={{
               borderRadius: 8,
               px: 5,
-              py: 1.5,
-              boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)',
+              py: 1.5,              
               transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
               background: '#263C5C',
               '&:hover': {
-                transform: 'translateY(-3px)',
-                boxShadow: '0 6px 20px rgba(255, 193, 7, 0.6)',
+                transform: 'translateY(-3px)',                
                 backgroundColor: '#0a2650ff',
               },
               '&:active': {
