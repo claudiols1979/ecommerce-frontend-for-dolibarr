@@ -23,6 +23,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useDepartmental } from '../contexts/DepartmentalContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import useClickOutside from '../hooks/useClickOutside';
 
 
 const DepartmentalFilterBar = () => {
@@ -56,6 +57,12 @@ const DepartmentalFilterBar = () => {
 
   console.log("🔍 Current Filters from Context: ", currentFilters);
   console.log("🎯 UI Filters: ", uiFilters);
+
+   const containerRef = useClickOutside(() => {
+    if (expanded) {
+      setExpanded(false);
+    }
+  }, { enabled: expanded });
   
 
   // Cargar taxonomía completa al montar
@@ -276,7 +283,8 @@ const handleClearFilter = useCallback(async (filterType) => {
 
   return (
     <Paper 
-      elevation={0}             
+      elevation={0}   
+      ref={containerRef}         
       sx={{ 
         p: isSmallScreen ? 2 : 3,
         width: isSmallScreen ? '90%' : '40%',
