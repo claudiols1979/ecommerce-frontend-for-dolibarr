@@ -154,6 +154,7 @@ const getProductsToUse = () => {
   console.log('🔍 Usando estado de filtros actual:', hasActiveFilters);
   return hasActiveFilters ? departmentalProducts : defaultProducts;
 };
+
 const areAllAttributesSelected = () => {
   // Si los atributos no han terminado de cargar, retornar false
   if (!allAttributesLoaded) return false;
@@ -451,13 +452,20 @@ const processVariants = async (variants, currentVariantAttributes) => {
 
   // Establecer selecciones iniciales basadas en la variante actual
   const initialSelections = {};
-  currentVariantAttributes.attributes.forEach((value, index) => {
-    if (index < finalAttributeOptions.length) {
-      initialSelections[finalAttributeOptions[index].type] = value;
-    }
-  });
+
+finalAttributeOptions.forEach((attribute, index) => {
+  const currentValue = currentVariantAttributes.attributes[index];
   
-  setSelectedAttributes(initialSelections);
+  // Verificar si el valor actual existe en los valores disponibles
+  if (currentValue && attribute.values.includes(currentValue)) {
+    initialSelections[attribute.type] = currentValue;
+  } else {
+    // Si no existe, usar el primer valor disponible
+    initialSelections[attribute.type] = attribute.values[0];
+  }
+});
+
+setSelectedAttributes(initialSelections);
 
   // ✅ GUARDAR EN LOCALSTORAGE
   const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
