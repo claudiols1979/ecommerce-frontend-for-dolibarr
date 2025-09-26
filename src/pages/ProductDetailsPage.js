@@ -361,6 +361,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
         
         // Si tenemos variantes, procesarlas
         if (variants.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 600));
           await processVariants(variants, currentVariantAttributes, hasActiveFilters); // ✅ Pasar hasActiveFilters
         } else {
           setAttributeOptions([]);
@@ -370,7 +371,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
         // Si el conteo cambió, esperar y reintentar
         lastVariantCount = variants.length;
         console.log(`❌ Conteo inconsistente, esperando 200ms...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 600));
       }
     }
 
