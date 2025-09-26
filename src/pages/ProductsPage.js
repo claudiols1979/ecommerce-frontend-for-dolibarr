@@ -449,7 +449,8 @@ const handleClearDepartmentalFilters = useCallback(() => {
             {getNoProductsMessage()}
           </Alert>
         ) : groupedProducts.length === 0 ? (
-          <Alert severity="info" sx={{ p: 3 }}>No hay productos disponibles en este momento.</Alert>
+          // <Alert severity="info" sx={{ p: 3 }}></Alert>
+          console.log("No hay productos disponibles")
         ) : (
           <>
             <Grid container spacing={4} justifyContent="center">
