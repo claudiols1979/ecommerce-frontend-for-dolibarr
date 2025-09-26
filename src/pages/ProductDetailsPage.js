@@ -332,7 +332,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
     // ✅ SOLUCIÓN: ESPERAR A QUE LOS PRODUCTOS ESTÉN CARGADOS
     if (!productsToUse || productsToUse.length === 0) {
       console.warn('⚠️  productsToUse está vacío, esperando...');
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 1200));
       // Intentar nuevamente después de esperar
       if (!productsToUse || productsToUse.length === 0) {
         throw new Error('productsToUse no está disponible después de esperar');
@@ -406,7 +406,7 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
 
 // ✅ FUNCIÓN AUXILIAR ACTUALIZADA - AGREGAR GUARDADO EN LOCALSTORAGE
 const processVariants = async (variants, currentVariantAttributes, hasActiveFilters) => {
-  console.log('🔄 Procesando variantes:', variants.length);
+  console.log('🔄 Procesando variantes:', variants.length);  
   
   variants.sort((a, b) => a.code.localeCompare(b.code));
 
@@ -439,14 +439,16 @@ const processVariants = async (variants, currentVariantAttributes, hasActiveFilt
     values: Array.from(opt.values).sort()
   }));
 
-  setAttributeOptions(finalAttributeOptions);
+  setAttributeOptions(finalAttributeOptions);  
   setAvailableOptions(optionsMap);
+  
 
   const initialSelections = {};
   currentVariantAttributes.attributes.forEach((value, index) => {
     initialSelections[getAttributeType(index)] = value;
   });
   setSelectedAttributes(initialSelections);
+  
 
   // ✅ GUARDAR EN LOCALSTORAGE CON ESTADO DE FILTROS
   const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
@@ -458,7 +460,8 @@ const processVariants = async (variants, currentVariantAttributes, hasActiveFilt
     hasActiveFilters: hasActiveFilters // ✅ GUARDAR ESTADO DE FILTROS
   };
 
-  try {    
+  try {  
+    await new Promise(resolve => setTimeout(resolve, 100));  
     localStorage.setItem(cacheKey, JSON.stringify(cacheData));
     console.log('✅ Guardado en localStorage con estado de filtros:', hasActiveFilters);
   } catch (error) {
@@ -496,6 +499,7 @@ useEffect(() => {
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
       setProduct(data);
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       const currentVariantAttributes = extractVariantAttributes(data.code);
 
