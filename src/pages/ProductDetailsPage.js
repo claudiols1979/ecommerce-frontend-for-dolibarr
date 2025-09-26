@@ -308,15 +308,13 @@ useEffect(() => {
 
 
 const buildAttributeOptionsFromScratch = async (productData, currentVariantAttributes) => {
-  // DECIDIR QUÉ PRODUCTOS USAR DINÁMICAMENTE
-  const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
-  const productsToUse = hasActiveFilters ? departmentalProducts : defaultProducts;
+  console.log('=== 🔍 INICIO CONSTRUCCIÓN ATRIBUTOS (NUEVA API) ===');
+  console.log('Producto:', productData.code);
+  console.log('BaseCode:', currentVariantAttributes.baseCode);
 
-  console.log('=== 🔍 INICIO CONSTRUCCIÓN ATRIBUTOS ===');
-  console.log('Productos a usar:', productsToUse?.length || 0);
-
-  // VERIFICAR SI ES PRODUCTO SIMPLE (sin atributos)
+  // VERIFICAR SI ES PRODUCTO SIMPLE
   if (currentVariantAttributes.attributes.length === 0) {
+    console.log('✅ Producto simple - sin atributos');
     setAttributeOptions([]);
     setAvailableOptions(new Map());
     setSelectedAttributes({});
@@ -329,75 +327,74 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
   setAllAttributesLoaded(false);
 
   try {
-    // ✅ SOLUCIÓN: ESPERAR A QUE LOS PRODUCTOS ESTÉN CARGADOS
-    if (!productsToUse || productsToUse.length === 0) {
-      console.warn('⚠️  productsToUse está vacío, esperando...');
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      // Intentar nuevamente después de esperar
-      if (!productsToUse || productsToUse.length === 0) {
-        throw new Error('productsToUse no está disponible después de esperar');
-      }
+    // ✅ NUEVA LLAMADA A LA API - OBTENER TODAS LAS VARIANTES
+    console.log('🔍 Buscando variantes via nuevo endpoint...');
+    
+    const token = user?.token;
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    
+    console.log("currentVariantAttributes.baseCode: ", currentVariantAttributes.baseCode)
+    const response = await axios.get(
+      `${API_URL}/api/products/variants/${currentVariantAttributes.baseCode}`,
+      config
+    );
+    
+    const allVariants = response.data.variants || [];
+    console.log('📊 Variantes encontradas via API:', allVariants.length);
+    
+    // ✅ FILTRAR SOLO VARIANTES CON STOCK Y MISMA ESTRUCTURA
+    const validVariants = allVariants.filter(variant => {
+    const variantAttributes = extractVariantAttributes(variant.code);
+    return variantAttributes.baseCode === currentVariantAttributes.baseCode &&
+          variant.countInStock > 0;
+  });
+    
+    console.log('📊 Variantes válidas (con stock y misma estructura):', validVariants.length);
+    
+    // ✅ PROCESAR LAS VARIANTES
+    if (validVariants.length > 0) {
+      console.log('🎯 Procesando variantes con nueva API');
+      await processVariants(validVariants, currentVariantAttributes);
+    } else {
+      console.log('ℹ️ No hay variantes válidas con stock');
+      setAttributeOptions([]);
+      setAvailableOptions(new Map());
+      setSelectedAttributes({});
     }
-
-    // ✅ VERIFICACIÓN DE CONSISTENCIA EN LA CARGA
-    let attempts = 0;
-    let lastVariantCount = 0;
-    let consistentCount = false;
-
-    while (attempts < 3 && !consistentCount) {
-      attempts++;
-      
-      const variants = productsToUse.filter(p => {
-        const attr = extractVariantAttributes(p.code);
-        return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
-      });
-
-      console.log(`Intento ${attempts}: ${variants.length} variantes encontradas`);
-      
-      // Si es el primer intento o el conteo es consistente con el anterior
-      if (attempts === 1 || variants.length === lastVariantCount) {
-        lastVariantCount = variants.length;
-        consistentCount = true;
-        
-        // Si tenemos variantes, procesarlas
-        if (variants.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 600));
-          await processVariants(variants, currentVariantAttributes, hasActiveFilters); // ✅ Pasar hasActiveFilters
-        } else {
-          setAttributeOptions([]);
-          setAvailableOptions(new Map());
-        }
-      } else {
-        // Si el conteo cambió, esperar y reintentar
-        lastVariantCount = variants.length;
-        console.log(`❌ Conteo inconsistente, esperando 200ms...`);
-        await new Promise(resolve => setTimeout(resolve, 600));
-      }
-    }
-
-    if (!consistentCount) {
-      console.error('❌ No se pudo obtener un conteo consistente después de 3 intentos');
-      // Usar el último conteo disponible pero mostrar advertencia
-      const finalVariants = productsToUse.filter(p => {
-        const attr = extractVariantAttributes(p.code);
-        return attr.baseCode === currentVariantAttributes.baseCode && p.countInStock > 0;
-      });
-      
-      if (finalVariants.length > 0) {
-        await processVariants(finalVariants, currentVariantAttributes, hasActiveFilters); // ✅ Pasar hasActiveFilters
-      } else {
-        setAttributeOptions([]);
-        setAvailableOptions(new Map());
-      }
-    }
-
+    
     setAllAttributesLoaded(true);
 
   } catch (error) {
-    console.error('❌ Error building attribute options:', error);
-    setAttributeOptions([]);
-    setAvailableOptions(new Map());
-    setSelectedAttributes({});
+    console.error('❌ Error con nueva API, usando fallback local:', error);
+    
+    // ✅ FALLBACK A LÓGICA ORIGINAL (por si la API falla)
+    try {
+      const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
+      const productsToUse = hasActiveFilters ? departmentalProducts : defaultProducts;
+      
+      if (productsToUse && productsToUse.length > 0) {
+        const localVariants = productsToUse.filter(p => {
+          const attr = extractVariantAttributes(p.code);
+          return attr.baseCode === currentVariantAttributes.baseCode && 
+                 attr.attributes.length === currentVariantAttributes.attributes.length &&
+                 p.countInStock > 0;
+        });
+        
+        if (localVariants.length > 0) {
+          await processVariants(localVariants, currentVariantAttributes);
+        } else {
+          setAttributeOptions([]);
+          setAvailableOptions(new Map());
+          setSelectedAttributes({});
+        }
+      }
+    } catch (fallbackError) {
+      console.error('❌ Fallback también falló:', fallbackError);
+      setAttributeOptions([]);
+      setAvailableOptions(new Map());
+      setSelectedAttributes({});
+    }
+    
     setAllAttributesLoaded(true);
   } finally {
     setLoadingAttributes(false);
@@ -405,25 +402,32 @@ const buildAttributeOptionsFromScratch = async (productData, currentVariantAttri
 };
 
 // ✅ FUNCIÓN AUXILIAR ACTUALIZADA - AGREGAR GUARDADO EN LOCALSTORAGE
-const processVariants = async (variants, currentVariantAttributes, hasActiveFilters) => {
-  console.log('🔄 Procesando variantes:', variants.length);  
+// ✅ FUNCIÓN AUXILIAR ACTUALIZADA - MANEJAR DIFERENTES NÚMEROS DE ATRIBUTOS
+const processVariants = async (variants, currentVariantAttributes) => {
+  console.log('🔄 Procesando variantes:', variants.length);
   
   variants.sort((a, b) => a.code.localeCompare(b.code));
 
   const optionsMap = new Map();
   const attributeOptionsList = [];
 
-  // Inicializar estructura de atributos
-  currentVariantAttributes.attributes.forEach((_, index) => {
+  // Encontrar el máximo número de atributos entre todas las variantes
+  const maxAttributes = Math.max(...variants.map(v => 
+    extractVariantAttributes(v.code).attributes.length
+  ));
+
+  // Inicializar estructura de atributos basada en el máximo
+  for (let i = 0; i < maxAttributes; i++) {
     attributeOptionsList.push({
-      type: getAttributeType(index),
+      type: getAttributeType(i),
       values: new Set()
     });
-  });
+  }
 
   // Procesar cada variante
   variants.forEach(variant => {
     const attr = extractVariantAttributes(variant.code);
+    
     attr.attributes.forEach((value, index) => {
       if (index < attributeOptionsList.length) {
         attributeOptionsList[index].values.add(value);
@@ -434,41 +438,38 @@ const processVariants = async (variants, currentVariantAttributes, hasActiveFilt
     optionsMap.set(optionKey, variant);
   });
 
-  const finalAttributeOptions = attributeOptionsList.map(opt => ({
-    type: opt.type,
-    values: Array.from(opt.values).sort()
-  }));
+  // Filtrar atributos que realmente tienen valores
+  const finalAttributeOptions = attributeOptionsList
+    .filter(opt => opt.values.size > 0)
+    .map(opt => ({
+      type: opt.type,
+      values: Array.from(opt.values).sort()
+    }));
 
-  setAttributeOptions(finalAttributeOptions);  
+  setAttributeOptions(finalAttributeOptions);
   setAvailableOptions(optionsMap);
-  
 
+  // Establecer selecciones iniciales basadas en la variante actual
   const initialSelections = {};
   currentVariantAttributes.attributes.forEach((value, index) => {
-    initialSelections[getAttributeType(index)] = value;
+    if (index < finalAttributeOptions.length) {
+      initialSelections[finalAttributeOptions[index].type] = value;
+    }
   });
-  setSelectedAttributes(initialSelections);
   
+  setSelectedAttributes(initialSelections);
 
-  // ✅ GUARDAR EN LOCALSTORAGE CON ESTADO DE FILTROS
+  // ✅ GUARDAR EN LOCALSTORAGE
   const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
   const cacheData = {
     finalAttributeOptions,
     optionsMap: Array.from(optionsMap.entries()),
     initialSelections,
-    timestamp: Date.now(),
-    hasActiveFilters: hasActiveFilters // ✅ GUARDAR ESTADO DE FILTROS
+    timestamp: Date.now()
   };
 
-  try {  
-    await new Promise(resolve => setTimeout(resolve, 100));  
-    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-    console.log('✅ Guardado en localStorage con estado de filtros:', hasActiveFilters);
-  } catch (error) {
-    console.error('❌ Error guardando en localStorage:', error);
-  }
-
-  console.log('✅ Procesamiento completado');
+  localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+  console.log('✅ Atributos guardados en localStorage');
 };
 
 
@@ -498,8 +499,7 @@ useEffect(() => {
       const token = user?.token;
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-      setProduct(data);
-      await new Promise(resolve => setTimeout(resolve, 600));
+      setProduct(data);     
 
       const currentVariantAttributes = extractVariantAttributes(data.code);
 
