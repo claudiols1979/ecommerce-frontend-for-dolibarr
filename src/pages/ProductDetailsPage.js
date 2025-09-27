@@ -33,21 +33,21 @@ import { calculatePriceWithTax } from '../utils/taxCalculations';
 import { useLocation } from 'react-router-dom';
 
 
-const HTMLContent = ({ 
-  html, 
-  fallback = 'No description available.', 
-  ...typographyProps 
+const HTMLContent = ({
+  html,
+  fallback = 'No description available.',
+  ...typographyProps
 }) => {
   const createMarkup = (htmlContent) => {
     return { __html: DOMPurify.sanitize(htmlContent || '') };
   };
-  
+
   if (!html || html.trim() === '') {
     return <Typography {...typographyProps}>{fallback}</Typography>;
   }
-  
+
   return (
-    <Typography 
+    <Typography
       {...typographyProps}
       dangerouslySetInnerHTML={createMarkup(html)}
     />
@@ -129,42 +129,42 @@ const ProductDetailsPage = () => {
   const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [allAttributesLoaded, setAllAttributesLoaded] = useState(false);
 
-const getProductsToUse = () => {
-  // ✅ PRIMERO intentar determinar hasActiveFilters desde el cache
-  if (product) {
-    const currentVariantAttributes = extractVariantAttributes(product.code);
-    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    
-    if (cachedData) {
-      try {
-        const parsedData = JSON.parse(cachedData);
-        const savedHasActiveFilters = parsedData.hasActiveFilters;
-        
-        console.log('🔍 Usando estado de filtros desde cache:', savedHasActiveFilters);
-        return savedHasActiveFilters ? departmentalProducts : defaultProducts;
-      } catch (error) {
-        console.error('Error reading cache for filters:', error);
+  const getProductsToUse = () => {
+    // ✅ PRIMERO intentar determinar hasActiveFilters desde el cache
+    if (product) {
+      const currentVariantAttributes = extractVariantAttributes(product.code);
+      const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+      const cachedData = localStorage.getItem(cacheKey);
+
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          const savedHasActiveFilters = parsedData.hasActiveFilters;
+
+          console.log('🔍 Usando estado de filtros desde cache:', savedHasActiveFilters);
+          return savedHasActiveFilters ? departmentalProducts : defaultProducts;
+        } catch (error) {
+          console.error('Error reading cache for filters:', error);
+        }
       }
     }
-  }
-  
-  // ✅ FALLBACK: lógica original si no hay cache
-  const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
-  console.log('🔍 Usando estado de filtros actual:', hasActiveFilters);
-  return hasActiveFilters ? departmentalProducts : defaultProducts;
-};
 
-const areAllAttributesSelected = () => {
-  // Si los atributos no han terminado de cargar, retornar false
-  if (!allAttributesLoaded) return false;
-  
-  if (!attributeOptions || attributeOptions.length === 0) return true;
-  
-  return attributeOptions.every(attribute =>
-    selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
-  );
-};
+    // ✅ FALLBACK: lógica original si no hay cache
+    const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
+    console.log('🔍 Usando estado de filtros actual:', hasActiveFilters);
+    return hasActiveFilters ? departmentalProducts : defaultProducts;
+  };
+
+  const areAllAttributesSelected = () => {
+    // Si los atributos no han terminado de cargar, retornar false
+    if (!allAttributesLoaded) return false;
+
+    if (!attributeOptions || attributeOptions.length === 0) return true;
+
+    return attributeOptions.every(attribute =>
+      selectedAttributes[attribute.type] && selectedAttributes[attribute.type] !== ''
+    );
+  };
 
   const WHATSAPP_AGENT_NUMBER = '50672317420';
 
@@ -258,16 +258,16 @@ const areAllAttributesSelected = () => {
   };
 
 
-useEffect(() => {
+  useEffect(() => {
     // Store the current path when component mounts
     const originalPath = location.pathname;
-    
+
     return () => {
       // When component unmounts, check the new path
       setTimeout(() => {
         const currentPath = window.location.pathname;
         const isStillOnProductPage = currentPath.includes('/products/');
-        
+
         // Only clear cache if we're not on any product page anymore
         if (!isStillOnProductPage) {
           const keysToRemove = [];
@@ -308,177 +308,177 @@ useEffect(() => {
   }, [id, currentProductId]);
 
 
-const buildAttributeOptionsFromScratch = async (productData, currentVariantAttributes) => {
-  console.log('=== 🔍 INICIO CONSTRUCCIÓN ATRIBUTOS (NUEVA API) ===');
-  console.log('Producto:', productData.code);
-  console.log('BaseCode:', currentVariantAttributes.baseCode);
+  const buildAttributeOptionsFromScratch = async (productData, currentVariantAttributes) => {
+    console.log('=== 🔍 INICIO CONSTRUCCIÓN ATRIBUTOS (NUEVA API) ===');
+    console.log('Producto:', productData.code);
+    console.log('BaseCode:', currentVariantAttributes.baseCode);
 
-  // VERIFICAR SI ES PRODUCTO SIMPLE
-  if (currentVariantAttributes.attributes.length === 0) {
-    console.log('✅ Producto simple - sin atributos');
-    setAttributeOptions([]);
-    setAvailableOptions(new Map());
-    setSelectedAttributes({});
-    setLoadingAttributes(false);
-    setAllAttributesLoaded(true);
-    return;
-  }
-
-  setLoadingAttributes(true);
-  setAllAttributesLoaded(false);
-
-  try {
-    // ✅ NUEVA LLAMADA A LA API - OBTENER TODAS LAS VARIANTES
-    console.log('🔍 Buscando variantes via nuevo endpoint...');
-    
-    const token = user?.token;
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    
-    console.log("currentVariantAttributes.baseCode: ", currentVariantAttributes.baseCode)
-    const response = await axios.get(
-      `${API_URL}/api/products/variants/${currentVariantAttributes.baseCode}`,
-      config
-    );
-    
-    const allVariants = response.data.variants || [];
-    console.log('📊 Variantes encontradas via API:', allVariants.length);
-    
-    // ✅ FILTRAR SOLO VARIANTES CON STOCK Y MISMA ESTRUCTURA
-    const validVariants = allVariants.filter(variant => {
-    const variantAttributes = extractVariantAttributes(variant.code);
-    return variantAttributes.baseCode === currentVariantAttributes.baseCode &&
-          variant.countInStock > 0;
-  });
-    
-    console.log('📊 Variantes válidas (con stock y misma estructura):', validVariants.length);
-    
-    // ✅ PROCESAR LAS VARIANTES
-    if (validVariants.length > 0) {
-      console.log('🎯 Procesando variantes con nueva API');
-      await processVariants(validVariants, currentVariantAttributes);
-    } else {
-      console.log('ℹ️ No hay variantes válidas con stock');
+    // VERIFICAR SI ES PRODUCTO SIMPLE
+    if (currentVariantAttributes.attributes.length === 0) {
+      console.log('✅ Producto simple - sin atributos');
       setAttributeOptions([]);
       setAvailableOptions(new Map());
       setSelectedAttributes({});
+      setLoadingAttributes(false);
+      setAllAttributesLoaded(true);
+      return;
     }
-    
-    setAllAttributesLoaded(true);
 
-  } catch (error) {
-    console.error('❌ Error con nueva API, usando fallback local:', error);
-    
-    // ✅ FALLBACK A LÓGICA ORIGINAL (por si la API falla)
+    setLoadingAttributes(true);
+    setAllAttributesLoaded(false);
+
     try {
-      const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
-      const productsToUse = hasActiveFilters ? departmentalProducts : defaultProducts;
-      
-      if (productsToUse && productsToUse.length > 0) {
-        const localVariants = productsToUse.filter(p => {
-          const attr = extractVariantAttributes(p.code);
-          return attr.baseCode === currentVariantAttributes.baseCode && 
-                 attr.attributes.length === currentVariantAttributes.attributes.length &&
-                 p.countInStock > 0;
-        });
-        
-        if (localVariants.length > 0) {
-          await processVariants(localVariants, currentVariantAttributes);
-        } else {
-          setAttributeOptions([]);
-          setAvailableOptions(new Map());
-          setSelectedAttributes({});
+      // ✅ NUEVA LLAMADA A LA API - OBTENER TODAS LAS VARIANTES
+      console.log('🔍 Buscando variantes via nuevo endpoint...');
+
+      const token = user?.token;
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
+      console.log("currentVariantAttributes.baseCode: ", currentVariantAttributes.baseCode)
+      const response = await axios.get(
+        `${API_URL}/api/products/variants/${currentVariantAttributes.baseCode}`,
+        config
+      );
+
+      const allVariants = response.data.variants || [];
+      console.log('📊 Variantes encontradas via API:', allVariants.length);
+
+      // ✅ FILTRAR SOLO VARIANTES CON STOCK Y MISMA ESTRUCTURA
+      const validVariants = allVariants.filter(variant => {
+        const variantAttributes = extractVariantAttributes(variant.code);
+        return variantAttributes.baseCode === currentVariantAttributes.baseCode &&
+          variant.countInStock > 0;
+      });
+
+      console.log('📊 Variantes válidas (con stock y misma estructura):', validVariants.length);
+
+      // ✅ PROCESAR LAS VARIANTES
+      if (validVariants.length > 0) {
+        console.log('🎯 Procesando variantes con nueva API');
+        await processVariants(validVariants, currentVariantAttributes);
+      } else {
+        console.log('ℹ️ No hay variantes válidas con stock');
+        setAttributeOptions([]);
+        setAvailableOptions(new Map());
+        setSelectedAttributes({});
+      }
+
+      setAllAttributesLoaded(true);
+
+    } catch (error) {
+      console.error('❌ Error con nueva API, usando fallback local:', error);
+
+      // ✅ FALLBACK A LÓGICA ORIGINAL (por si la API falla)
+      try {
+        const hasActiveFilters = currentFilters && Object.keys(currentFilters).length > 0;
+        const productsToUse = hasActiveFilters ? departmentalProducts : defaultProducts;
+
+        if (productsToUse && productsToUse.length > 0) {
+          const localVariants = productsToUse.filter(p => {
+            const attr = extractVariantAttributes(p.code);
+            return attr.baseCode === currentVariantAttributes.baseCode &&
+              attr.attributes.length === currentVariantAttributes.attributes.length &&
+              p.countInStock > 0;
+          });
+
+          if (localVariants.length > 0) {
+            await processVariants(localVariants, currentVariantAttributes);
+          } else {
+            setAttributeOptions([]);
+            setAvailableOptions(new Map());
+            setSelectedAttributes({});
+          }
         }
+      } catch (fallbackError) {
+        console.error('❌ Fallback también falló:', fallbackError);
+        setAttributeOptions([]);
+        setAvailableOptions(new Map());
+        setSelectedAttributes({});
       }
-    } catch (fallbackError) {
-      console.error('❌ Fallback también falló:', fallbackError);
-      setAttributeOptions([]);
-      setAvailableOptions(new Map());
-      setSelectedAttributes({});
+
+      setAllAttributesLoaded(true);
+    } finally {
+      setLoadingAttributes(false);
     }
-    
-    setAllAttributesLoaded(true);
-  } finally {
-    setLoadingAttributes(false);
-  }
-};
-
-// ✅ FUNCIÓN AUXILIAR ACTUALIZADA - AGREGAR GUARDADO EN LOCALSTORAGE
-// ✅ FUNCIÓN AUXILIAR ACTUALIZADA - MANEJAR DIFERENTES NÚMEROS DE ATRIBUTOS
-const processVariants = async (variants, currentVariantAttributes) => {
-  console.log('🔄 Procesando variantes:', variants.length);
-  
-  variants.sort((a, b) => a.code.localeCompare(b.code));
-
-  const optionsMap = new Map();
-  const attributeOptionsList = [];
-
-  // Encontrar el máximo número de atributos entre todas las variantes
-  const maxAttributes = Math.max(...variants.map(v => 
-    extractVariantAttributes(v.code).attributes.length
-  ));
-
-  // Inicializar estructura de atributos basada en el máximo
-  for (let i = 0; i < maxAttributes; i++) {
-    attributeOptionsList.push({
-      type: getAttributeType(i),
-      values: new Set()
-    });
-  }
-
-  // Procesar cada variante
-  variants.forEach(variant => {
-    const attr = extractVariantAttributes(variant.code);
-    
-    attr.attributes.forEach((value, index) => {
-      if (index < attributeOptionsList.length) {
-        attributeOptionsList[index].values.add(value);
-      }
-    });
-    
-    const optionKey = attr.attributes.join('|');
-    optionsMap.set(optionKey, variant);
-  });
-
-  // Filtrar atributos que realmente tienen valores
-  const finalAttributeOptions = attributeOptionsList
-    .filter(opt => opt.values.size > 0)
-    .map(opt => ({
-      type: opt.type,
-      values: Array.from(opt.values).sort()
-    }));
-
-  setAttributeOptions(finalAttributeOptions);
-  setAvailableOptions(optionsMap);
-
-  // Establecer selecciones iniciales basadas en la variante actual
-  const initialSelections = {};
-
-finalAttributeOptions.forEach((attribute, index) => {
-  const currentValue = currentVariantAttributes.attributes[index];
-  
-  // Verificar si el valor actual existe en los valores disponibles
-  if (currentValue && attribute.values.includes(currentValue)) {
-    initialSelections[attribute.type] = currentValue;
-  } else {
-    // Si no existe, usar el primer valor disponible
-    initialSelections[attribute.type] = attribute.values[0];
-  }
-});
-
-setSelectedAttributes(initialSelections);
-
-  // ✅ GUARDAR EN LOCALSTORAGE
-  const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-  const cacheData = {
-    finalAttributeOptions,
-    optionsMap: Array.from(optionsMap.entries()),
-    initialSelections,
-    timestamp: Date.now()
   };
 
-  localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-  console.log('✅ Atributos guardados en localStorage');
-};
+  // ✅ FUNCIÓN AUXILIAR ACTUALIZADA - AGREGAR GUARDADO EN LOCALSTORAGE
+  // ✅ FUNCIÓN AUXILIAR ACTUALIZADA - MANEJAR DIFERENTES NÚMEROS DE ATRIBUTOS
+  const processVariants = async (variants, currentVariantAttributes) => {
+    console.log('🔄 Procesando variantes:', variants.length);
+
+    variants.sort((a, b) => a.code.localeCompare(b.code));
+
+    const optionsMap = new Map();
+    const attributeOptionsList = [];
+
+    // Encontrar el máximo número de atributos entre todas las variantes
+    const maxAttributes = Math.max(...variants.map(v =>
+      extractVariantAttributes(v.code).attributes.length
+    ));
+
+    // Inicializar estructura de atributos basada en el máximo
+    for (let i = 0; i < maxAttributes; i++) {
+      attributeOptionsList.push({
+        type: getAttributeType(i),
+        values: new Set()
+      });
+    }
+
+    // Procesar cada variante
+    variants.forEach(variant => {
+      const attr = extractVariantAttributes(variant.code);
+
+      attr.attributes.forEach((value, index) => {
+        if (index < attributeOptionsList.length) {
+          attributeOptionsList[index].values.add(value);
+        }
+      });
+
+      const optionKey = attr.attributes.join('|');
+      optionsMap.set(optionKey, variant);
+    });
+
+    // Filtrar atributos que realmente tienen valores
+    const finalAttributeOptions = attributeOptionsList
+      .filter(opt => opt.values.size > 0)
+      .map(opt => ({
+        type: opt.type,
+        values: Array.from(opt.values).sort()
+      }));
+
+    setAttributeOptions(finalAttributeOptions);
+    setAvailableOptions(optionsMap);
+
+    // Establecer selecciones iniciales basadas en la variante actual
+    const initialSelections = {};
+
+    finalAttributeOptions.forEach((attribute, index) => {
+      const currentValue = currentVariantAttributes.attributes[index];
+
+      // Verificar si el valor actual existe en los valores disponibles
+      if (currentValue && attribute.values.includes(currentValue)) {
+        initialSelections[attribute.type] = currentValue;
+      } else {
+        // Si no existe, usar el primer valor disponible
+        initialSelections[attribute.type] = attribute.values[0];
+      }
+    });
+
+    setSelectedAttributes(initialSelections);
+
+    // ✅ GUARDAR EN LOCALSTORAGE
+    const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+    const cacheData = {
+      finalAttributeOptions,
+      optionsMap: Array.from(optionsMap.entries()),
+      initialSelections,
+      timestamp: Date.now()
+    };
+
+    localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    console.log('✅ Atributos guardados en localStorage');
+  };
 
 
   useEffect(() => {
@@ -494,82 +494,82 @@ setSelectedAttributes(initialSelections);
     }
   }, [id, currentProductId]);
 
-  
-useEffect(() => {
-  window.scrollTo(0, 0);
 
-  const fetchProductDetails = async () => {
-    setLoadingSpecificProduct(true);
-    setErrorSpecificProduct(null);
-    setAllAttributesLoaded(false);
-    
-    try {
-      const token = user?.token;
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-      const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
-      setProduct(data);     
+  useEffect(() => {
+    window.scrollTo(0, 0);
 
-      const currentVariantAttributes = extractVariantAttributes(data.code);
+    const fetchProductDetails = async () => {
+      setLoadingSpecificProduct(true);
+      setErrorSpecificProduct(null);
+      setAllAttributesLoaded(false);
 
-      // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
-      if (currentVariantAttributes.attributes.length > 0) {
-        const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
-        const cachedData = localStorage.getItem(cacheKey);
+      try {
+        const token = user?.token;
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        const { data } = await axios.get(`${API_URL}/api/products/${id}`, config);
+        setProduct(data);
 
-        if (cachedData) {
-          try {
-            const parsedData = JSON.parse(cachedData);
-            
-            // ✅ LEER EL ESTADO DE FILTROS GUARDADO
-            const savedHasActiveFilters = parsedData.hasActiveFilters;
-            console.log('✅ Estado de filtros cargado desde cache:', savedHasActiveFilters);
-            
-            setAttributeOptions(parsedData.finalAttributeOptions);
-            setAvailableOptions(new Map(parsedData.optionsMap));
-            setSelectedAttributes(parsedData.initialSelections || {});
-            setAllAttributesLoaded(true);
-          } catch (error) {
-            console.error('Error parsing cached data:', error);
-            localStorage.removeItem(cacheKey);
+        const currentVariantAttributes = extractVariantAttributes(data.code);
+
+        // SOLO PROCESAR SI TIENE ATRIBUTOS (es variante)
+        if (currentVariantAttributes.attributes.length > 0) {
+          const cacheKey = `attributeOptions_${currentVariantAttributes.baseCode}`;
+          const cachedData = localStorage.getItem(cacheKey);
+
+          if (cachedData) {
+            try {
+              const parsedData = JSON.parse(cachedData);
+
+              // ✅ LEER EL ESTADO DE FILTROS GUARDADO
+              const savedHasActiveFilters = parsedData.hasActiveFilters;
+              console.log('✅ Estado de filtros cargado desde cache:', savedHasActiveFilters);
+
+              setAttributeOptions(parsedData.finalAttributeOptions);
+              setAvailableOptions(new Map(parsedData.optionsMap));
+              setSelectedAttributes(parsedData.initialSelections || {});
+              setAllAttributesLoaded(true);
+            } catch (error) {
+              console.error('Error parsing cached data:', error);
+              localStorage.removeItem(cacheKey);
+              buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+            }
+          } else {
             buildAttributeOptionsFromScratch(data, currentVariantAttributes);
           }
         } else {
-          buildAttributeOptionsFromScratch(data, currentVariantAttributes);
+          // PRODUCTO SIMPLE
+          setAttributeOptions([]);
+          setAvailableOptions(new Map());
+          setSelectedAttributes({});
+          setLoadingAttributes(false);
+          setAllAttributesLoaded(true);
         }
-      } else {
-        // PRODUCTO SIMPLE
-        setAttributeOptions([]);
-        setAvailableOptions(new Map());
-        setSelectedAttributes({});
-        setLoadingAttributes(false);
+
+        // ✅ FALTABA ESTA PARTE: Cargar reviews y related products
+        fetchReviews(id);
+
+        const productsToUse = getProductsToUse();
+        if (productsToUse.length > 1) {
+          const filtered = productsToUse.filter(p => p._id !== id);
+          const groupedRelated = groupProductsByBase(filtered);
+          const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
+          const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
+          setRelatedProducts(shuffled.slice(0, 3));
+        }
+
+      } catch (err) {
+        setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
         setAllAttributesLoaded(true);
+      } finally {
+        setLoadingSpecificProduct(false);
       }
+    };
 
-      // ✅ FALTABA ESTA PARTE: Cargar reviews y related products
-      fetchReviews(id);
-
-      const productsToUse = getProductsToUse();
-      if (productsToUse.length > 1) {
-        const filtered = productsToUse.filter(p => p._id !== id);
-        const groupedRelated = groupProductsByBase(filtered);
-        const displayRelatedProducts = selectRandomVariantFromEachGroup(groupedRelated);
-        const shuffled = [...displayRelatedProducts].sort(() => 0.5 - Math.random());
-        setRelatedProducts(shuffled.slice(0, 3));
-      }
-
-    } catch (err) {
-      setErrorSpecificProduct(err.response?.data?.message || 'Producto no encontrado o error al cargar.');
-      setAllAttributesLoaded(true);
-    } finally {
-      setLoadingSpecificProduct(false);
+    if (id) {
+      fetchProductDetails();
     }
-  };
-
-  if (id) {
-    fetchProductDetails();
-  }
-  setQuantity(1);
-}, [id, user?.token, fetchReviews, productsLoaded]);
+    setQuantity(1);
+  }, [id, user?.token, fetchReviews, productsLoaded]);
 
 
   // 3. Agrega un useEffect ESPECÍFICO para manejar filtros
@@ -588,72 +588,72 @@ useEffect(() => {
 
 
   // Handle attribute selection change
-const handleAttributeChange = (attributeType, value) => {
-  setSelectedAttributes(prev => {
-    const newSelections = { ...prev };
-    
-    // Encontrar el índice del atributo que se está cambiando
-    const attributeIndex = attributeOptions.findIndex(opt => opt.type === attributeType);
-    
-    // Resetear todos los atributos posteriores al que se está cambiando
-    if (attributeIndex !== -1) {
-      for (let i = attributeIndex + 1; i < attributeOptions.length; i++) {
-        newSelections[attributeOptions[i].type] = '';
+  const handleAttributeChange = (attributeType, value) => {
+    setSelectedAttributes(prev => {
+      const newSelections = { ...prev };
+
+      // Encontrar el índice del atributo que se está cambiando
+      const attributeIndex = attributeOptions.findIndex(opt => opt.type === attributeType);
+
+      // Resetear todos los atributos posteriores al que se está cambiando
+      if (attributeIndex !== -1) {
+        for (let i = attributeIndex + 1; i < attributeOptions.length; i++) {
+          newSelections[attributeOptions[i].type] = '';
+        }
       }
+
+      // Establecer el nuevo valor para el atributo seleccionado
+      newSelections[attributeType] = value;
+
+      return newSelections;
+    });
+  };
+
+
+  const getAvailableOptionsForAttribute = (attributeIndex) => {
+    const allValues = attributeOptions[attributeIndex]?.values || [];
+
+    // Si es el primer atributo, todas las opciones están disponibles
+    if (attributeIndex === 0) {
+      return allValues.map(value => ({ value, isAvailable: true }));
     }
-    
-    // Establecer el nuevo valor para el atributo seleccionado
-    newSelections[attributeType] = value;
-    
-    return newSelections;
-  });
-};
 
+    // Verificar si TODOS los atributos anteriores están seleccionados
+    const allPreviousSelected = attributeOptions
+      .slice(0, attributeIndex)
+      .every(attr => selectedAttributes[attr.type] && selectedAttributes[attr.type] !== '');
 
-const getAvailableOptionsForAttribute = (attributeIndex) => {
-  const allValues = attributeOptions[attributeIndex]?.values || [];
-  
-  // Si es el primer atributo, todas las opciones están disponibles
-  if (attributeIndex === 0) {
-    return allValues.map(value => ({ value, isAvailable: true }));
-  }
+    // Si no todos los anteriores están seleccionados, mostrar todas como no disponibles
+    if (!allPreviousSelected) {
+      return allValues.map(value => ({ value, isAvailable: false }));
+    }
 
-  // Verificar si TODOS los atributos anteriores están seleccionados
-  const allPreviousSelected = attributeOptions
-    .slice(0, attributeIndex)
-    .every(attr => selectedAttributes[attr.type] && selectedAttributes[attr.type] !== '');
+    // Si todos los anteriores están seleccionados, filtrar correctamente
+    const availableValues = new Set();
+    const currentSelections = attributeOptions.map(opt => selectedAttributes[opt.type] || '');
 
-  // Si no todos los anteriores están seleccionados, mostrar todas como no disponibles
-  if (!allPreviousSelected) {
-    return allValues.map(value => ({ value, isAvailable: false }));
-  }
+    Array.from(availableOptions.keys()).forEach(optionKey => {
+      const values = optionKey.split('|');
 
-  // Si todos los anteriores están seleccionados, filtrar correctamente
-  const availableValues = new Set();
-  const currentSelections = attributeOptions.map(opt => selectedAttributes[opt.type] || '');
-
-  Array.from(availableOptions.keys()).forEach(optionKey => {
-    const values = optionKey.split('|');
-
-    // Verificar coincidencia EXACTA con selecciones anteriores
-    let matchesExactly = true;
-    for (let i = 0; i < attributeIndex; i++) {
-      if (currentSelections[i] !== values[i]) {
-        matchesExactly = false;
-        break;
+      // Verificar coincidencia EXACTA con selecciones anteriores
+      let matchesExactly = true;
+      for (let i = 0; i < attributeIndex; i++) {
+        if (currentSelections[i] !== values[i]) {
+          matchesExactly = false;
+          break;
+        }
       }
-    }
 
-    if (matchesExactly) {
-      availableValues.add(values[attributeIndex]);
-    }
-  });
+      if (matchesExactly) {
+        availableValues.add(values[attributeIndex]);
+      }
+    });
 
-  return allValues.map(value => ({
-    value,
-    isAvailable: availableValues.has(value)
-  }));
-};
+    return allValues.map(value => ({
+      value,
+      isAvailable: availableValues.has(value)
+    }));
+  };
 
   // --- useEffect para determinar si el usuario puede dejar una reseña ---
   useEffect(() => {
@@ -818,7 +818,7 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
     {
       question: '4. ¿Realizan envíos fuera de la GAM?',
       answer: 'Sí. Para las provincias de Guanacaste, Puntarenas y Limón, los envíos se gestionan a través de Correos de Costa Rica. El costo del envio es de 3000 colones más iva'
-    },    
+    },
   ];
 
   if (loadingSpecificProduct) {
@@ -937,31 +937,31 @@ const getAvailableOptionsForAttribute = (attributeIndex) => {
   };
 
 
-const doesSelectedVariantExist = () => {
-  // Si los atributos no han terminado de cargar, retornar false
-  if (!allAttributesLoaded) return false;
-  
-  if (attributeOptions.length === 0) return true;
-  
-  const selectedValues = attributeOptions.map(opt =>
-    selectedAttributes[opt.type] || ''
-  );
+  const doesSelectedVariantExist = () => {
+    // Si los atributos no han terminado de cargar, retornar false
+    if (!allAttributesLoaded) return false;
 
-  // Verificar que todas las selecciones estén completas
-  const allSelected = selectedValues.every(value => value !== '');
-  if (!allSelected) return false;
+    if (attributeOptions.length === 0) return true;
 
-  const optionKey = selectedValues.join('|');
-  return availableOptions.has(optionKey);
-};
+    const selectedValues = attributeOptions.map(opt =>
+      selectedAttributes[opt.type] || ''
+    );
+
+    // Verificar que todas las selecciones estén completas
+    const allSelected = selectedValues.every(value => value !== '');
+    if (!allSelected) return false;
+
+    const optionKey = selectedValues.join('|');
+    return availableOptions.has(optionKey);
+  };
 
 
 
-const getCleanText = (html) => {
-  if (!html) return '';
-  const clean = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] }); // Remove all tags
-  return clean.replace(/\s+/g, ' ').trim();
-};
+  const getCleanText = (html) => {
+    if (!html) return '';
+    const clean = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] }); // Remove all tags
+    return clean.replace(/\s+/g, ' ').trim();
+  };
 
 
   return (
@@ -970,7 +970,7 @@ const getCleanText = (html) => {
         <title>{product ? `${baseProductName} - Software Factory ERP` : 'Detalle de Producto'}</title>
         <meta name="description" content={product ? `Compra ${baseProductName}, perfumería fina en Costa Rica. ${getCleanText(product.description).substring(0, 120)}...` : 'Descubre nuestra colección de perfumes y cosméticos.'} />
         <meta property="og:title" content={product ? baseProductName : 'Look & Smell'} />
-        <meta property="og:description" content={product ? getCleanText(product.description).substring(0, 120): 'Tu tienda de confianza.'} />
+        <meta property="og:description" content={product ? getCleanText(product.description).substring(0, 120) : 'Tu tienda de confianza.'} />
         <meta property="og:image" content={product?.imageUrls?.[0]?.secure_url} />
       </Helmet>
 
@@ -982,11 +982,11 @@ const getCleanText = (html) => {
             sx={{
               borderRadius: 8,
               px: 5,
-              py: 1.5,              
+              py: 1.5,
               transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
               background: '#263C5C',
               '&:hover': {
-                transform: 'translateY(-3px)',                
+                transform: 'translateY(-3px)',
                 backgroundColor: '#0a2650ff',
               },
               '&:active': {
@@ -1022,115 +1022,115 @@ const getCleanText = (html) => {
               <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>{product.brand || 'Sin descripción disponible.'}</Typography>
               <Divider sx={{ my: 2 }} />
 
-           
+
               {!loadingAttributes && attributeOptions && attributeOptions.length > 0 ? (
-  attributeOptions.map((attribute, index) => {
-    // MOSTRAR LOADING SI LOS ATRIBUTOS NO HAN TERMINADO DE CARGAR
-    if (!allAttributesLoaded) {
-      return (
-        <Box key={index} sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Cargando...
-          </Typography>
-          <CircularProgress size={20} />
-        </Box>
-      );
-    }
+                attributeOptions.map((attribute, index) => {
+                  // MOSTRAR LOADING SI LOS ATRIBUTOS NO HAN TERMINADO DE CARGAR
+                  if (!allAttributesLoaded) {
+                    return (
+                      <Box key={index} sx={{ mb: 3 }}>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          Cargando...
+                        </Typography>
+                        <CircularProgress size={20} />
+                      </Box>
+                    );
+                  }
 
-    const options = getAvailableOptionsForAttribute(index) || [];
-    const isLastAttribute = index === attributeOptions.length - 1;
+                  const options = getAvailableOptionsForAttribute(index) || [];
+                  const isLastAttribute = index === attributeOptions.length - 1;
 
-    return (
-      <Box key={index} sx={{ mb: 3 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            display: 'block',
-            fontWeight: 'bold',
-            color: 'grey.800',
-            mb: 2,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}
-        >
-          
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {options.map((option, optionIndex) => {
-            const isSelected = selectedAttributes[attribute.type] === option.value;
-            const isAvailable = option.isAvailable;
-            return (
-              <Button
-                key={optionIndex}
-                variant="outlined"
-                onClick={() => handleAttributeChange(attribute.type, option.value)}
-                disabled={!isAvailable || !allAttributesLoaded} 
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 2,
-                  fontSize: '0.875rem',
-                  fontWeight: 'bold',
-                  minWidth: '60px',
-                  transition: 'all 0.3s ease',
-                  transform: 'scale(1)',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                    ...(!isSelected && {
-                      bgcolor: 'primary.50',
-                      color: 'primary.700',
-                      borderColor: 'primary.300',
-                    })
-                  },
-                  '&:active': {
-                    transform: 'scale(0.95)'
-                  },
-                  ...(isSelected && {
-                    bgcolor: '#263C5C',
-                    color: 'white',
-                    borderColor: '#263C5C',
-                    boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
-                    '&:hover': {
-                      bgcolor: '#1E2F4A',
-                      borderColor: '#1E2F4A',
-                    }
-                  }),
-                  ...(!isSelected && {
-                    bgcolor: 'white',
-                    color: 'grey.800',
-                    borderColor: 'grey.300',
-                  }),
-                  ...(isLastAttribute && !option.isAvailable && {
-                    bgcolor: 'grey.100',
-                    color: 'grey.500',
-                    borderColor: 'grey.300',
-                    cursor: 'not-allowed',
-                    opacity: 0.7,
-                  }),
-                  // ESTILO ADICIONAL MIENTRAS LOS ATRIBUTOS SE CARGAN
-                  ...(!allAttributesLoaded && {
-                    opacity: 0.6,
-                    cursor: 'not-allowed',
-                  })
-                }}
-              >
-                {option.value}
-              </Button>
-            );
-          })}
-        </Box>
-      </Box>
-    );
-  })
-) : loadingAttributes ? (
-  // MOSTRAR LOADING SOLO SI ESTÁ CARGANDO Y ES VARIANTE
-  <Box sx={{ mb: 3 }}>
-    <Typography variant="body2" sx={{ mb: 2 }}>
-      Cargando...
-    </Typography>
-    <CircularProgress size={20} />
-  </Box>
-) : null}
+                  return (
+                    <Box key={index} sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          display: 'block',
+                          fontWeight: 'bold',
+                          color: 'grey.800',
+                          mb: 2,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}
+                      >
+
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {options.map((option, optionIndex) => {
+                          const isSelected = selectedAttributes[attribute.type] === option.value;
+                          const isAvailable = option.isAvailable;
+                          return (
+                            <Button
+                              key={optionIndex}
+                              variant="outlined"
+                              onClick={() => handleAttributeChange(attribute.type, option.value)}
+                              disabled={!isAvailable || !allAttributesLoaded}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                borderRadius: 2,
+                                fontSize: '0.875rem',
+                                fontWeight: 'bold',
+                                minWidth: '60px',
+                                transition: 'all 0.3s ease',
+                                transform: 'scale(1)',
+                                '&:hover': {
+                                  transform: 'scale(1.05)',
+                                  ...(!isSelected && {
+                                    bgcolor: 'primary.50',
+                                    color: 'primary.700',
+                                    borderColor: 'primary.300',
+                                  })
+                                },
+                                '&:active': {
+                                  transform: 'scale(0.95)'
+                                },
+                                ...(isSelected && {
+                                  bgcolor: '#263C5C',
+                                  color: 'white',
+                                  borderColor: '#263C5C',
+                                  boxShadow: '0 4px 12px rgba(38, 60, 92, 0.3)',
+                                  '&:hover': {
+                                    bgcolor: '#1E2F4A',
+                                    borderColor: '#1E2F4A',
+                                  }
+                                }),
+                                ...(!isSelected && {
+                                  bgcolor: 'white',
+                                  color: 'grey.800',
+                                  borderColor: 'grey.300',
+                                }),
+                                ...(isLastAttribute && !option.isAvailable && {
+                                  bgcolor: 'grey.100',
+                                  color: 'grey.500',
+                                  borderColor: 'grey.300',
+                                  cursor: 'not-allowed',
+                                  opacity: 0.7,
+                                }),
+                                // ESTILO ADICIONAL MIENTRAS LOS ATRIBUTOS SE CARGAN
+                                ...(!allAttributesLoaded && {
+                                  opacity: 0.6,
+                                  cursor: 'not-allowed',
+                                })
+                              }}
+                            >
+                              {option.value}
+                            </Button>
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                  );
+                })
+              ) : loadingAttributes ? (
+                // MOSTRAR LOADING SOLO SI ESTÁ CARGANDO Y ES VARIANTE
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Cargando...
+                  </Typography>
+                  <CircularProgress size={20} />
+                </Box>
+              ) : null}
 
 
               <Typography variant="h4" color="secondary" sx={{ mb: 2, fontWeight: 800 }}>
@@ -1202,7 +1202,7 @@ const getCleanText = (html) => {
                   {/* Texto condicional para móviles pequeños */}
                   {isExtraSmallMobile ? '' : 'Añadir al Carrito'}
                 </Button>
-               
+
               </Box>
             </Box>
           </Grid>
@@ -1211,11 +1211,11 @@ const getCleanText = (html) => {
         <Box sx={contentSectionStyle}>
           <Typography variant="h5" component="h2" gutterBottom sx={sectionTitleStyle}>Descripción del Producto</Typography>
           {/* <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.7 }}>{product.description || 'No hay descripción detallada disponible para este producto.'}</Typography> */}
-          <HTMLContent 
+          <HTMLContent
             html={product.description}
             fallback="No hay descripción detallada disponible para este producto."
-            variant="body1" 
-            color="text.primary" 
+            variant="body1"
+            color="text.primary"
             sx={{ lineHeight: 1.7 }}
           />
 
@@ -1258,7 +1258,7 @@ const getCleanText = (html) => {
             </CardContent>
           </Card>
         </Box>
-       
+
 
         <Box sx={{
           p: { xs: 2, sm: 3 },
