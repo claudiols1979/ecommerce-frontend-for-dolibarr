@@ -1,8 +1,9 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Grid, Typography, Button, Fade, useTheme, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useDepartmental } from '../../contexts/DepartmentalContext';
+import { useAdGrid } from '../../contexts/AdGridContext'; // Importar el contexto
 
 // Componentes styled correctamente definidos
 const PictureGridContainer = styled(Box)(({ theme }) => ({
@@ -98,71 +99,21 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
-// Función para procesar URLs de Cloudinary
-const processCloudinaryUrl = (url) => {
-  if (url.includes('cloudinary.com')) {
-    // Añadir parámetros de transformación para forzar tamaño y recorte consistentes
-    const baseUrl = url.split('?')[0];  // Eliminar parámetros existentes si los hay
-    return `${baseUrl}?w=600&h=600&c=fill&f=auto`;
-  }
-  return url;
-};
-
-const PictureGrid = ({ 
-  images = [], 
-  seasonTitles = [],
-  onImageClick 
-}) => {
+const AdGridSystem = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loadedImages, setLoadedImages] = useState({});
   const { fetchDepartmentalProducts } = useDepartmental();
+  const { gridItems, loading, processCloudinaryUrl } = useAdGrid(); // Usar el contexto
   const navigate = useNavigate();
-  
-  const defaultImages = [
-    {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1754589040/syed-muhammad-baqir-zaidi-3qNVEa7SN_8-unsplash_jrfvpr.jpg',
-      department: 'Fragancias',      
-      title: 'Fragancias'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b',
-      department: 'Ropa',
-      title: 'Ropa'
-    },
-    {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758213291/cut-collective-u94ywFnPedw-unsplash_z02shc.jpg',
-      department: 'Calzado',
-      title: 'Calzado'
-    },
-    {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758178128/christopher-gower-_aXa21cf7rY-unsplash_wao9x2.jpg',
-      department: 'Electrónicos',
-      title: 'Electrónicos'
-    },
-     {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758478320/air_conditioner_zers0j.jpg',
-      department: 'Aires Acondicionados',
-      title: 'Aires Acondicionados'
-    },
-     {
-      url: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758217151/catia-dombaxe-8IlqMcDYKA8-unsplash_jimlbl.jpg',
-      department: 'Accesorios',
-      title: 'Accesorios'
-    }
-  ];
-  
-  // Procesamos todas las URLs para asegurar consistencia
-  const imageData = images.length === 4 
-    ? images.map((url, index) => ({ 
-        url: processCloudinaryUrl(url), 
-        ...defaultImages[index]
-      }))
-    : defaultImages.map(img => ({
-        ...img,
-        url: processCloudinaryUrl(img.url)
-      }));
-  
+
+  // Procesar las URLs de las imágenes
+  const processedGridItems = gridItems.map(item => ({
+    ...item,
+    image: processCloudinaryUrl(item.image),
+    url: processCloudinaryUrl(item.image) // Para compatibilidad
+  }));
+
   const handleImageLoad = (index) => {
     setLoadedImages(prev => ({ ...prev, [index]: true }));
   };
@@ -179,6 +130,49 @@ const PictureGrid = ({
     }, 100);
   };
 
+  if (loading) {
+    return (
+      <PictureGridContainer>
+        <SectionTitle variant="h4" component="h4">
+          Departamentos
+        </SectionTitle>
+        <Grid container spacing={3} sx={{ 
+          maxWidth: '1200px', 
+          width: '100%',
+          margin: '0 auto',
+          justifyContent: 'center',
+        }}>
+          {[...Array(6)].map((_, index) => (
+            <Grid item xs={12} sm={6} key={index} 
+              sx={{ 
+                height: { xs: '250px', sm: '300px', md: '350px' },
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <ImageContainer>
+                <Box 
+                  sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    backgroundColor: 'grey.300',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Typography variant="body2" color="textSecondary">
+                    Cargando...
+                  </Typography>
+                </Box>
+              </ImageContainer>
+            </Grid>
+          ))}
+        </Grid>
+      </PictureGridContainer>
+    );
+  }
+
   return (
     <Fragment>
       <SectionTitle variant="h4" component="h4">
@@ -191,8 +185,8 @@ const PictureGrid = ({
           margin: '0 auto',
           justifyContent: 'center',
         }}>
-          {imageData.map((imageData, index) => (
-            <Grid item xs={12} sm={6} key={index} 
+          {processedGridItems.map((item, index) => (
+            <Grid item xs={12} sm={6} key={item._id || index} 
               sx={{ 
                 height: { xs: '250px', sm: '300px', md: '350px' },
                 display: 'flex',
@@ -202,10 +196,10 @@ const PictureGrid = ({
               <Fade in={loadedImages[index]} timeout={800}>
                 <ImageContainer>
                   <StyledImage
-                    src={imageData.url}
-                    alt={imageData.title || seasonTitles[index] || `Oferta ${index + 1}`}
+                    src={item.image || item.url}
+                    alt={item.alt || item.title}
                     onLoad={() => handleImageLoad(index)}
-                    onClick={() => handleViewProducts(imageData.department)}
+                    onClick={() => handleViewProducts(item.department)}
                   />  
                   <Overlay 
                     sx={{ 
@@ -225,13 +219,13 @@ const PictureGrid = ({
                         mb: 2
                       }}
                     >
-                      {imageData.title}
+                      {item.title}
                     </Typography>  
                     <ShopButton 
                       variant="contained"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleViewProducts(imageData.department);
+                        handleViewProducts(item.department);
                       }}
                     >
                       Comprar
@@ -247,4 +241,4 @@ const PictureGrid = ({
   );
 };
 
-export default PictureGrid;
+export default AdGridSystem;
