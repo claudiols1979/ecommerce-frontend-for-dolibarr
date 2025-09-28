@@ -116,6 +116,9 @@ const HeroCarousel = () => {
                   color: 'white', 
                   '&:hover': {
                     backgroundColor: '#ff0000ff',
+                  },
+                  '& *': {
+                    pointerEvents: 'none'
                   }
                 }}
               >
