@@ -12,6 +12,7 @@ import { ReviewProvider } from './contexts/ReviewContext';
 import { DepartmentalProvider } from './contexts/DepartmentalContext';
 import { SearchProvider } from './contexts/searchContext';
 import { UpdateInfoProvider } from './contexts/UpdateInfoContext';
+import { HeroCarouselProvider } from './contexts/HeroCarouselContext';
 import { ToastContainer } from 'react-toastify';
 import { HelmetProvider } from 'react-helmet-async';
 import 'react-toastify/dist/ReactToastify.css';
@@ -30,7 +31,9 @@ root.render(
                   <DepartmentalProvider>
                     <SearchProvider>
                       <UpdateInfoProvider>
-                    <App />
+                        <HeroCarouselProvider>
+                        <App />
+                        </HeroCarouselProvider>
                     </UpdateInfoProvider>
                     </SearchProvider>
                   </DepartmentalProvider>

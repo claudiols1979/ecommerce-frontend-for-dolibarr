@@ -3,15 +3,7 @@ import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { Box, Typography, Button, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
-// IMPORTAR TUS IMÁGENES
-// Asegúrate de que las rutas sean correctas según donde tengas tu carpeta 'assets'
-// Si 'assets' está directamente dentro de 'src', la ruta sería './assets/heroX.jpg'
-// Si 'components/common' y 'assets' están al mismo nivel dentro de 'src', la ruta sería '../assets/heroX.jpg'
-// Asumo que están en `src/assets` y este componente está en `src/components/common`
-// import hero1 from '../../assets/hero1.jpg'; 
-// import hero2 from '../../assets/hero2.jpg';
-// import hero3 from '../../assets/hero3.jpg';
+import { useHeroCarousel } from '../../contexts/HeroCarouselContext';
 
 // Componente estilizado para el contenedor del slide
 const CarouselSlideContent = styled(Box)(({ theme }) => ({
@@ -26,47 +18,41 @@ const CarouselSlideContent = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   textAlign: 'center',
   color: theme.palette.common.white,
-  background: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6))', // Overlay oscuro
+  background: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6))',
   padding: theme.spacing(2),
   [theme.breakpoints.up('md')]: {
     padding: theme.spacing(4),
-    alignItems: 'flex-start', // Alinear a la izquierda en pantallas grandes
+    alignItems: 'flex-start',
     textAlign: 'left',
-    left: '10%', // Empujar contenido hacia la derecha
+    left: '10%',
     right: 'unset',
-    width: '80%', // Limitar ancho del contenido
+    width: '80%',
   },
 }));
 
 const HeroCarousel = () => {
   const navigate = useNavigate();
+  const { slides, loading, error } = useHeroCarousel();
 
-  const slides = [
-    {      
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758209893/erik-mclean-nfoRa6NHTbU-unsplash_cthnfk.jpg',
-      alt: 'Nueva Colección Primavera',
-      title: 'Descubre las nuevas colecciones',
-      description: 'Estilo para cada gusto. ¡Explora nuestros últimos productos!',
-      buttonText: 'Ver Productos',
-      buttonLink: '/products',
-    },
-    {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758218247/cardmapr-nl-pwxESDWRwDE-unsplash_lny8bk.jpg', // USANDO LA IMAGEN IMPORTADA     
-      alt: 'Ofertas Exclusivas',
-      title: 'Ofertas Exclusivas',
-      description: 'Precios especiales que no querrás perder!',
-      buttonText: 'Ver Productos',
-      buttonLink: '/products', // O una ruta de ofertas real
-    },
-    {
-      image: 'https://res.cloudinary.com/dl4k0gqfv/image/upload/v1758213151/charlesdeluvio-FK81rxilUXg-unsplash_xrs3ih.jpg', // USANDO LA IMAGEN IMPORTADA
-      alt: 'Calidad Garantizada',
-      title: 'Productos 100% originales',
-      description: 'Comprometidos con la excelencia en cada artículo.',
-      buttonText: 'Ver Productos',
-      buttonLink: '/products', // Puedes crear una página "acerca de"
-    },
-  ];
+  if (loading) {
+    return (
+      <Box sx={{ 
+        width: '100%', 
+        height: { xs: 250, sm: 350, md: 500 }, 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5'
+      }}>
+        <Typography variant="h6" color="textSecondary">
+          Cargando carrusel...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Determinar qué slides mostrar (el contexto ya maneja el fallback a defaultSlides)
+  const displaySlides = slides;
 
   return (
     <Box sx={{ width: '100%', mb: 4, borderRadius: 2, overflow: 'hidden', boxShadow: 3 }}>
@@ -81,19 +67,41 @@ const HeroCarousel = () => {
         swipeable={true}
         emulateTouch={true}
       >
-        {slides.map((slide, index) => (
-          <Box key={index} sx={{ position: 'relative' }}>
+        {displaySlides.map((slide, index) => (
+          <Box key={slide._id || index} sx={{ position: 'relative' }}>
             <Box
               component="img"
               src={slide.image}
               alt={slide.alt}
-              sx={{ width: '100%', height: { xs: 250, sm: 350, md: 500 }, objectFit: 'cover' }}
+              sx={{ 
+                width: '100%', 
+                height: { xs: 250, sm: 350, md: 500 }, 
+                objectFit: 'cover' 
+              }}
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/1200x500/cccccc/969696?text=Imagen+no+disponible';
+              }}
             />
             <CarouselSlideContent>
-              <Typography variant="h4" component="h2" sx={{ mb: 1, fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2.5rem', md: '3rem' } }}>
+              <Typography 
+                variant="h4" 
+                component="h2" 
+                sx={{ 
+                  mb: 1, 
+                  fontWeight: 700, 
+                  fontSize: { xs: '1.5rem', sm: '2.5rem', md: '3rem' } 
+                }}
+              >
                 {slide.title}
               </Typography>
-              <Typography variant="body1" sx={{ mb: 2, maxWidth: { xs: '90%', md: '60%' }, fontSize: { xs: '0.9rem', sm: '1.1rem' } }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mb: 2, 
+                  maxWidth: { xs: '90%', md: '60%' }, 
+                  fontSize: { xs: '0.9rem', sm: '1.1rem' } 
+                }}
+              >
                 {slide.description}
               </Typography>
               <Button
@@ -101,8 +109,13 @@ const HeroCarousel = () => {
                 size="large"
                 onClick={() => navigate(slide.buttonLink)}
                 sx={{
-                  px: { xs: 3, sm: 5 }, py: { xs: 1, sm: 1.5 }, borderRadius: 8, backgroundColor: '#bb4343ff', color: 'white', '&:hover': {
-                    backgroundColor: '#ff0000ff', // Un tono más oscuro para el hover
+                  px: { xs: 3, sm: 5 }, 
+                  py: { xs: 1, sm: 1.5 }, 
+                  borderRadius: 8, 
+                  backgroundColor: '#bb4343ff', 
+                  color: 'white', 
+                  '&:hover': {
+                    backgroundColor: '#ff0000ff',
                   }
                 }}
               >
