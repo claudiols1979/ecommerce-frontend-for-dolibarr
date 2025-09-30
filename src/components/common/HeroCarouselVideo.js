@@ -1,3 +1,4 @@
+// components/HeroCarouselVideo.js
 import React from 'react';
 import { Box, Typography, Button, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,7 @@ const CarouselSlideContent = styled(Box)(({ theme }) => ({
 
 const HeroCarouselVideo = () => {
   const navigate = useNavigate();
-  const { videoData, loading, error } = useHeroCarouselVideo();
+  const { videoData, loading, error, defaultVideo } = useHeroCarouselVideo();
   
   // Si está cargando o no hay datos, mostrar un estado de carga o el video por defecto
   if (loading) {
@@ -55,13 +56,7 @@ const HeroCarouselVideo = () => {
   }
 
   // Usar los datos del video del contexto (pueden ser del backend o por defecto)
-  const currentVideo = videoData || {
-    video: 'https://res.cloudinary.com/dl4k0gqfv/video/upload/v1758212825/video_promocion_erp_ecommerce_pifbth.mp4',
-    title: 'Tu estilo, a un clic de distancia.',
-    subtitle: 'Las mejores marcas. El mejor precio. Todo para ti.',
-    buttonText: 'Explorar Productos',
-    buttonLink: '/products',
-  };
+  const currentVideo = videoData || defaultVideo;
 
   return (
     <Box sx={{
@@ -79,14 +74,13 @@ const HeroCarouselVideo = () => {
         loop
         muted
         playsInline
-        // --- CORRECCIÓN CLAVE 2: Estilos para que el video cubra el contenedor ---
         style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
-          width: '100%', // El video siempre ocupará el 100% del ancho
-          height: 'auto', // La altura se ajustará para mantener la proporción
-          transform: 'translate(-50%, -50%)', // Centra el video
+          width: '100%',
+          height: 'auto',
+          transform: 'translate(-50%, -50%)',
           zIndex: 1,
         }}
       >

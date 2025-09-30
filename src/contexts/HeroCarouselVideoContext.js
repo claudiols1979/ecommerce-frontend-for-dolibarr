@@ -1,3 +1,4 @@
+// contexts/HeroCarouselVideoContext.js
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { useAuth } from './AuthContext'; 
 
@@ -29,39 +30,40 @@ export const HeroCarouselVideoProvider = ({ children }) => {
     buttonLink: '/products',
   };
 
-  // Fetch video from backend - RUTA PÚBLICA
-  const fetchVideo = useCallback(async () => {
+  // Fetch active video from backend - RUTA PÚBLICA
+  const fetchActiveVideo = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       // Para rutas públicas, usar axios directamente sin auth
       const response = await api.get('/api/hero-carousel-video/public');
       
-      // Si hay video activo en la base de datos, usarlo; si no, usar el por defecto
-      if (response.data && response.data.video) {
+      // Si hay un video activo en la base de datos, usarlo
+      if (response.data) {
         setVideoData(response.data);
       } else {
+        // Si no hay video activo, usar el por defecto
         setVideoData(defaultVideo);
       }
     } catch (err) {
-      console.error('Error al obtener el video:', err);
+      console.error('Error al obtener el video activo:', err);
       // En caso de error, mostrar video por defecto
       setVideoData(defaultVideo);
-      setError('Error al cargar el video. Mostrando video por defecto.');
+      setError('Error al cargar el video promocional. Mostrando video por defecto.');
     } finally {
       setLoading(false);
     }
   }, [api]);
 
-  // Fetch video cuando el componente se monta
+  // Fetch active video cuando el componente se monta
   useEffect(() => {
-    fetchVideo();
-  }, [fetchVideo]);
+    fetchActiveVideo();
+  }, [fetchActiveVideo]);
 
   // Función para recargar el video
-  const refetchVideo = useCallback(() => {
-    fetchVideo();
-  }, [fetchVideo]);
+  const refetchActiveVideo = useCallback(() => {
+    fetchActiveVideo();
+  }, [fetchActiveVideo]);
 
   const value = {
     // Estado
@@ -70,7 +72,7 @@ export const HeroCarouselVideoProvider = ({ children }) => {
     error,
     
     // Funciones públicas (para ecommerce frontend)
-    refetchVideo,
+    refetchActiveVideo,
     
     // Video por defecto
     defaultVideo,
