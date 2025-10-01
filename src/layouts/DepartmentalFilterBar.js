@@ -297,7 +297,7 @@ const handleClearFilter = useCallback(async (filterType) => {
         mt: 2,
         mb: 3,         
         position: 'sticky',
-        top: 68,        
+        top: isSmallScreen ? 135 : 120,        
         zIndex: 700,
       }}
     >     

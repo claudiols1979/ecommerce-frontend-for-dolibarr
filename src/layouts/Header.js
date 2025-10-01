@@ -22,6 +22,7 @@ const Header = () => {
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,15 +49,6 @@ const Header = () => {
     navigate(path);
     handleMobileMenuClose();
   };
-
-  // const handleSearch = (e) => {
-  //   e.preventDefault();
-  //   if (searchTerm.trim()) {
-  //     navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
-  //     setSearchTerm('');
-  //     setSearchOpen(false);
-  //   }
-  // };
 
   const handleSearch = (e) => {
   e.preventDefault();
@@ -165,18 +157,123 @@ const Header = () => {
         boxShadow: 0,
         borderRadius: 2,
       }}> 
-      <Toolbar sx={{ justifyContent: 'space-between', flexWrap: 'wrap', py: { xs: 1, sm: 0 } }}>
-        <NavBranding />
+      <Toolbar sx={{ 
+        justifyContent: 'space-between', 
+        flexWrap: 'wrap', 
+        py: { xs: 1, sm: 0 },
+        flexDirection: { xs: 'row', lg: 'row' },
+        alignItems: 'center'
+      }}>
+        {/* Primera fila: Branding y menú */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          width: '100%',
+          order: 1
+        }}>
+          <NavBranding />
 
-        {/* Search Bar para desktop */}
-        {!isMobile && !searchOpen && (
-          <Box sx={{ 
+          {isMobile ? (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <IconButton
+                component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#fff' }}
+                aria-label={`cart with ${cartItemCount} items`}
+              >
+                <Badge badgeContent={cartItemCount} color="success">
+                  <ShoppingCartIcon />
+                </Badge>
+              </IconButton>
+              <IconButton
+                color="inherit" aria-label="open drawer" edge="end"
+                onClick={handleMobileMenuToggle}
+              >
+                <MenuIcon sx={{ color: '#fff' }}/>
+              </IconButton>
+              <Drawer
+                anchor="right" 
+                open={mobileMenuOpen} 
+                onClose={handleMobileMenuClose} 
+               
+                ModalProps={{
+                  BackdropProps: {
+                    sx: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      backdropFilter: 'blur(2px)',
+                    }
+                  }
+                }}
+                sx={{
+                  zIndex: (theme) => theme.zIndex.drawer + 2,
+                  '& .MuiDrawer-paper': {
+                    backgroundColor: 'rgba(38, 60, 92, 0.92)',
+                    backdropFilter: 'blur(12px)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                    width: 230,
+                    top: '70px',
+                    height: 'calc(100% - 100px)',
+                    borderTopLeftRadius: '16px',
+                    borderBottomLeftRadius: '18px',
+                    border: '0.5px solid rgba(255, 255, 255, 0.1)',
+                    color: 'white',
+                    '& .MuiListItemText-primary': {
+                      color: 'white',
+                      fontWeight: 400,
+                    },
+                    '& .MuiDivider-root': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    }
+                  }
+                }}
+              >
+                {drawerContent}
+              </Drawer>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button color="inherit" component={RouterLink} to="/" sx={getNavButtonStyle('/')}>
+                Inicio
+              </Button>
+              <Button color="inherit" component={RouterLink} to="/products" sx={getNavButtonStyle('/products')}>
+               Productos
+              </Button>
+              {user ? (
+                <>
+                  <Button color="#36454F" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
+                    Mi cuenta 
+                  </Button>
+                  <Button color="#36454F" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
+                    <ExitToAppIcon sx={{color: '#fff'}}/>
+                  </Button>
+                </>
+              ) : (
+                <Button color="#fff" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
+                  Iniciar Sesión
+                </Button>
+              )}
+              <IconButton
+                component={RouterLink} to="/cart" color="#fff"
+                sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
+              >
+                <Badge badgeContent={cartItemCount} color="success">
+                  <ShoppingCartIcon sx={{color: '#fff'}}/>
+                </Badge>
+              </IconButton>
+            </Box>
+          )}
+        </Box>
+
+        {/* Search Box - Posición diferente según el dispositivo */}
+        {isDesktop ? (
+          /* Desktop: Search box en línea con el resto */
+          <Box sx={{             
             display: 'flex', 
             alignItems: 'center', 
-            flex: 1, 
-            maxWidth: 400, 
-            mx: 3,
-            transition: 'all 0.3s ease'
+            width: '100%',
+            order: 3,
+            mt: 2,
+            mb: 2,
+            px: { xs: 0, sm: 0 } // Sin padding para que ocupe todo el ancho          
           }}>
             <Paper
               component="form"
@@ -218,7 +315,79 @@ const Header = () => {
               )}
               <IconButton
                 type="submit"
-                sx={{ p: 1, color: 'white' }}
+                sx={{ 
+                  p: 1, 
+                  color: 'white',
+                  backgroundColor: alpha(theme.palette.common.white, 0.2),
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.common.white, 0.3),
+                  }
+                }}
+                aria-label="buscar"
+              >
+                <SearchIcon />
+              </IconButton>
+            </Paper>
+          </Box>
+        ) : (
+          /* Mobile y Tablets: Search box full width debajo */
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            width: '100%',
+            order: 3,
+            mt: 2,
+            mb: 2,
+            px: { xs: 0, sm: 0 } // Sin padding para que ocupe todo el ancho
+          }}>
+            <Paper
+              component="form"
+              onSubmit={handleSearch}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                backgroundColor: alpha(theme.palette.common.white, 0.15),
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.common.white, 0.25),
+                },
+                borderRadius: 2,
+                overflow: 'hidden',
+              }}
+            >
+              <InputBase
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{
+                  ml: 2,
+                  flex: 1,
+                  color: 'white',
+                  '&::placeholder': {
+                    color: alpha(theme.palette.common.white, 0.7),
+                  },
+                }}
+                inputProps={{ 'aria-label': 'buscar productos' }}
+              />
+              {searchTerm && (
+                <IconButton
+                  size="small"
+                  onClick={handleClearSearch}
+                  sx={{ color: 'white' }}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              )}
+              <IconButton
+                type="submit"
+                sx={{ 
+                  p: 1, 
+                  color: 'white',
+                  backgroundColor: alpha(theme.palette.common.white, 0.2),
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.common.white, 0.3),
+                  }
+                }}
                 aria-label="buscar"
               >
                 <SearchIcon />
@@ -226,168 +395,7 @@ const Header = () => {
             </Paper>
           </Box>
         )}
-
-        {isMobile ? (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {/* Botón de búsqueda para móviles */}
-            <IconButton
-              color="inherit"
-              onClick={handleSearchToggle}
-              sx={{ mr: 1, color: '#fff' }}
-              aria-label="buscar"
-            >
-              <SearchIcon />
-            </IconButton>
-
-            <IconButton
-              component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#fff' }}
-              aria-label={`cart with ${cartItemCount} items`}
-            >
-              <Badge badgeContent={cartItemCount} color="success">
-                <ShoppingCartIcon />
-              </Badge>
-            </IconButton>
-            <IconButton
-              color="inherit" aria-label="open drawer" edge="end"
-              onClick={handleMobileMenuToggle}
-            >
-              <MenuIcon sx={{ color: '#fff' }}/>
-            </IconButton>
-            <Drawer
-              anchor="right" 
-              open={mobileMenuOpen} 
-              onClose={handleMobileMenuClose} 
-             
-              ModalProps={{
-                BackdropProps: {
-                  sx: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semi-transparente suave
-                    backdropFilter: 'blur(2px)', // Blur muy sutil en el fondo
-                  }
-                }
-              }}
-              sx={{
-                zIndex: (theme) => theme.zIndex.drawer + 2,
-                // Estilos para el papel del drawer (el panel lateral)
-                '& .MuiDrawer-paper': {
-                  backgroundColor: 'rgba(38, 60, 92, 0.92)', // Más opaco para mejor legibilidad
-                  backdropFilter: 'blur(12px)', // Efecto de vidrio esmerilado
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                  width: 230,
-                  // Posicionamiento para que no cubra el header
-                  top: '70px', // Ajusta según la altura de tu header
-                  height: 'calc(100% - 100px)', // Altura que no cubre el header
-                  borderTopLeftRadius: '16px',
-                  borderBottomLeftRadius: '18px',
-                  border: '0.5px solid rgba(255, 255, 255, 0.1)',
-                  // Asegurar que el contenido sea visible
-                  color: 'white',
-                  '& .MuiListItemText-primary': {
-                    color: 'white',
-                    fontWeight: 400,
-                  },
-                  '& .MuiDivider-root': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  }
-                }
-              }}
-            >
-              {drawerContent}
-            </Drawer>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button color="inherit" component={RouterLink} to="/" sx={getNavButtonStyle('/')}>
-              Inicio
-            </Button>
-            <Button color="inherit" component={RouterLink} to="/products" sx={getNavButtonStyle('/products')}>
-             Productos
-            </Button>
-            {user ? (
-              <>
-                <Button color="#36454F" component={RouterLink} to="/profile" sx={getNavButtonStyle('/profile')}>
-                  Mi cuenta 
-                </Button>
-                <Button color="#36454F" onClick={handleLogout} sx={{ mx: 1, fontWeight: 500 }}>
-                  <ExitToAppIcon sx={{color: '#fff'}}/>
-                </Button>
-              </>
-            ) : (
-              <Button color="#fff" component={RouterLink} to="/login" sx={getNavButtonStyle('/login')}>
-                Iniciar Sesión
-              </Button>
-            )}
-            <IconButton
-              component={RouterLink} to="/cart" color="#fff"
-              sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
-            >
-              <Badge badgeContent={cartItemCount} color="success">
-                <ShoppingCartIcon sx={{color: '#fff'}}/>
-              </Badge>
-            </IconButton>
-          </Box>
-        )}
       </Toolbar>
-
-      {/* Search Bar expandible para móviles */}
-      {isMobile && searchOpen && (
-        <Box sx={{ p: 2, backgroundColor: '#263C5C' }}>
-          <Paper
-            component="form"
-            onSubmit={handleSearch}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              width: '100%',
-              backgroundColor: alpha(theme.palette.common.white, 0.15),
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.common.white, 0.25),
-              },
-              borderRadius: 2,
-              overflow: 'hidden',
-            }}
-          >
-            <InputBase
-              placeholder="Buscar productos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus
-              sx={{
-                ml: 2,
-                flex: 1,
-                color: 'white',
-                '&::placeholder': {
-                  color: alpha(theme.palette.common.white, 0.7),
-                },
-              }}
-              inputProps={{ 'aria-label': 'buscar productos' }}
-            />
-            {searchTerm && (
-              <IconButton
-                size="small"
-                onClick={handleClearSearch}
-                sx={{ color: 'white' }}
-              >
-                <ClearIcon fontSize="small" />
-              </IconButton>
-            )}
-            <IconButton
-              type="submit"
-              sx={{ p: 1, color: 'white' }}
-              aria-label="buscar"
-            >
-              <SearchIcon />
-            </IconButton>
-            <IconButton
-              onClick={handleSearchToggle}
-              sx={{ p: 1, color: 'white' }}
-              aria-label="cerrar búsqueda"
-            >
-              <ClearIcon />
-            </IconButton>
-          </Paper>
-        </Box>
-      )}
     </AppBar>
     </Fragment>
   );
