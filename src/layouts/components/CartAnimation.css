@@ -1,0 +1,55 @@
+/* CartAnimation.css - VERSIÓN CORREGIDA */
+.cart-pulse {
+  animation: pulse 0.5s ease-in-out 3 !important;
+}
+
+.badge-bounce {
+  animation: bounce 0.6s !important;
+}
+
+@keyframes pulse {
+  0% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.15); 
+  }
+  100% { 
+    transform: scale(1); 
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-8px) scale(1.2);
+  }
+  60% {
+    transform: translateY(-4px) scale(1.1);
+  }
+}
+
+/* Efecto hover suave */
+.MuiIconButton-root:hover .cart-icon-hover {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
+
+/* Efecto de brillo para el badge */
+.cart-glow {
+  animation: glow 1s ease-in-out !important;
+}
+
+@keyframes glow {
+  0% { 
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.4); 
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); 
+  }
+  100% { 
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.4); 
+  }
+}

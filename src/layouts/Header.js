@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { 
   AppBar, Toolbar, Typography, Button, IconButton, Badge, Box, 
   useMediaQuery, useTheme, Drawer, List, ListItem, ListItemText, 
@@ -17,6 +17,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import NavBranding from '../components/common/NavBranding';
 import { amber } from '@mui/material/colors';
 import PromotionalBanner from '../components/common/PromotionBanner';
+import './components/CartAnimation.css'; // new
 
 const Header = () => {
   const { setCurrentFilters, resetSearch, fetchTaxonomy } = useDepartmental();
@@ -34,6 +35,18 @@ const Header = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const [animate, setAnimate] = useState(false);
+  const [prevCount, setPrevCount] = useState(0);
+
+  useEffect(() => {
+    // Solo animar cuando el contador aumenta
+    if (cartItemCount > prevCount && cartItemCount > 0) {
+      setAnimate(true);
+      const timer = setTimeout(() => setAnimate(false), 1000);
+      return () => clearTimeout(timer);
+    }
+    setPrevCount(cartItemCount);
+  }, [cartItemCount, prevCount]);
 
   const handleLogout = () => {
     logout();
@@ -183,8 +196,17 @@ const Header = () => {
               <IconButton
                 component={RouterLink} to="/cart" color="inherit" sx={{ mr: 1, color: '#fff' }}
                 aria-label={`cart with ${cartItemCount} items`}
+                className={animate ? 'cart-pulse' : ''}
               >
-                <Badge badgeContent={cartItemCount} color="success">
+                <Badge 
+                  badgeContent={cartItemCount} 
+                  color="success"
+                  componentsProps={{
+                    badge: {
+                      className: animate ? 'badge-bounce' : ''
+                    }
+                  }}
+                  >
                   <ShoppingCartIcon />
                 </Badge>
               </IconButton>
@@ -256,10 +278,21 @@ const Header = () => {
                 </Button>
               )}
               <IconButton
-                component={RouterLink} to="/cart" color="#fff"
-                sx={{ ml: 2 }} aria-label={`cart with ${cartItemCount} items`}
+                component={RouterLink} to="/cart" 
+                color="#fff"
+                sx={{ ml: 2 }} 
+                aria-label={`cart with ${cartItemCount} items`} 
+                className={animate ? 'cart-pulse' : ''}
               >
-                <Badge badgeContent={cartItemCount} color="success">
+                <Badge 
+                  badgeContent={cartItemCount} 
+                  color="success"
+                  componentsProps={{
+                    badge: {
+                      className: animate ? 'badge-bounce' : ''
+                    }
+                  }}
+                  >
                   <ShoppingCartIcon sx={{color: '#fff'}}/>
                 </Badge>
               </IconButton>
@@ -295,7 +328,7 @@ const Header = () => {
               }}
             >
               <InputBase
-                placeholder="Buscar productos..."
+                placeholder="Buscar en Software Factory ERP"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 sx={{

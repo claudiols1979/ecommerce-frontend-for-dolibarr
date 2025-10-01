@@ -315,7 +315,7 @@ const handleClearFilter = useCallback(async (filterType) => {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <FilterListIcon sx={{ color: 'rgba(255, 255, 255, 0.8)', mr: 1 }} />
           <Typography variant="h6" sx={{ color: 'white', fontWeight: 500 }}>
-            Filtros
+            Departamentos
           </Typography>
           {hasActiveFilters && (
             <Chip 
