@@ -11,6 +11,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useOrders } from '../contexts/OrderContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useDepartmental } from '../contexts/DepartmentalContext';
 import { toast } from 'react-toastify';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import NavBranding from '../components/common/NavBranding';
@@ -18,6 +19,7 @@ import { amber } from '@mui/material/colors';
 import PromotionalBanner from '../components/common/PromotionBanner';
 
 const Header = () => {
+  const { setCurrentFilters, resetSearch, fetchTaxonomy } = useDepartmental();
   const { cartItems } = useOrders();
   const { user, logout } = useAuth();
   const theme = useTheme();
@@ -53,8 +55,10 @@ const Header = () => {
   const handleSearch = (e) => {
   e.preventDefault();
   if (searchTerm.trim()) {
+    setCurrentFilters({});
+    resetSearch();
     // Si ya estamos en /products, forzar recarga con replace
-    if (location.pathname === '/products') {
+    if (location.pathname === '/products') {      
       navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`, { 
         replace: true 
       });

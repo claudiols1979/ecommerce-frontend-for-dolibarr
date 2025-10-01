@@ -150,7 +150,8 @@ export const DepartmentalProvider = ({ children }) => {
     taxonomy,
     taxonomyLoading,
     fetchTaxonomy,
-    currentFilters    
+    currentFilters,
+    setCurrentFilters
   };
 
   return (
