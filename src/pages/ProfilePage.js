@@ -562,7 +562,7 @@ const ProfilePage = () => {
                   minHeight: { xs: '68px', sm: '76px' }, 
                   px: { xs: 2, sm: 3 }, 
                   py: { xs: 1.5, sm: 2 }, 
-                  transition: 'background-color 0.2s ease-in-out',
+                  transition: 'background-color 0.2s ease-in-out',                  
                 }}
               >
                 <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
@@ -571,7 +571,8 @@ const ProfilePage = () => {
                       <ShoppingBagIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> ID: 
                     </Typography>
                     <Typography variant="body1" fontWeight="medium" color="text.primary">
-                      {order._id.substring(order._id.length - 8).toUpperCase()} 
+                      {/* {order._id.substring(order._id.length - 8).toUpperCase()}  */}
+                       {order._id.toUpperCase()} 
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -584,42 +585,46 @@ const ProfilePage = () => {
                   </Grid>
                   <Grid item xs={12} sm={2}>
                     <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
-                      <AttachMoneyIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Total:
+                      <ShoppingBagIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Total:
                     </Typography>
                     <Typography variant="body1" fontWeight="medium" color="text.primary">
                       {formatPrice(totalWithTaxAndShipping)}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 } }}>
-                      <InfoIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Estado:
-                    </Typography>
-                    <Typography 
-                      variant="body1" 
-                      fontWeight="medium" 
-                      sx={{
-                        display: 'inline-block',
-                        px: 2, 
-                        py: 0.7, 
-                        borderRadius: 1.5, 
-                        color: 'white',
-                        bgcolor: 
-                          order.status === 'pending' ? theme.palette.warning.main :
-                          order.status === 'placed' ? theme.palette.info.main :
-                          order.status === 'processing' ? theme.palette.primary.main : 
-                          order.status === 'shipped' ? theme.palette.secondary.main : 
-                          order.status === 'delivered' ? theme.palette.success.main :
-                          order.status === 'cancelled' ? theme.palette.error.main :
-                          order.status === 'expired' ? theme.palette.error.dark :
-                          theme.palette.grey[500],
-                        whiteSpace: 'nowrap', 
-                        fontSize: { xs: '0.8rem', sm: '0.9rem' }, 
-                        boxShadow: theme.shadows[1], 
-                      }}
-                    >
-                      {getTranslatedStatus(order.status)} 
-                    </Typography>
-                  </Grid>
+                  
+
+                {/* <Grid item xs={12} sm={3} sx={{ textAlign: 'right' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ display: 'inline-flex', alignItems: 'center', mb: { xs: 0.5, sm: 0 }, justifyContent: 'flex-end', width: '100%' }}>
+                  <InfoIcon sx={{ fontSize: 18, mr: 1, color: theme.palette.primary.main }} /> Estado:
+                </Typography>
+                <Typography 
+                  variant="body1" 
+                  fontWeight="medium" 
+                  sx={{
+                    display: 'inline-block',
+                    px: 2, 
+                    py: 0.7, 
+                    borderRadius: 1.5, 
+                    color: 'white',
+                    bgcolor: 
+                      order.status === 'pending' ? theme.palette.warning.main :
+                      order.status === 'placed' ? theme.palette.info.main :
+                      order.status === 'processing' ? theme.palette.primary.main : 
+                      order.status === 'shipped' ? theme.palette.secondary.main : 
+                      order.status === 'delivered' ? theme.palette.success.main :
+                      order.status === 'cancelled' ? theme.palette.error.main :
+                      order.status === 'expired' ? theme.palette.error.dark :
+                      theme.palette.grey[500],
+                    whiteSpace: 'nowrap', 
+                    fontSize: { xs: '0.8rem', sm: '0.9rem' }, 
+                    boxShadow: theme.shadows[1], 
+                  }}
+                >
+                  {getTranslatedStatus(order.status)} 
+                </Typography>
+              </Grid> */}
+
+
                 </Grid>
               </AccordionSummary>
               <AccordionDetails sx={{ pt: 2.5, pb: 2.5, px: { xs: 2, sm: 3 }, borderTop: `1px solid ${theme.palette.grey[200]}` }}>
