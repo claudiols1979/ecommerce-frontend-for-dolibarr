@@ -169,6 +169,7 @@ const Header = () => {
         zIndex: (theme) => theme.zIndex.drawer + 1, 
         width: '98%',
         mx: 'auto',
+        //background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         backgroundColor: 'rgba(38, 60, 92, 0.9)', 
         backgroundImage: `linear-gradient(to bottom, transparent, ${amber[0]})`,
         boxShadow: 0,

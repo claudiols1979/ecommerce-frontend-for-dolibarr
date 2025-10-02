@@ -32,14 +32,15 @@ const PromotionalBanner = () => {
       }}
     >
       {/* <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} /> */}
-      Aprovecha todas nuestras ofertas
+      Aprovecha todas nuestras ofertas de apertura
       {/* <StarBorderIcon sx={{ mx: 3, fontSize: '1.2rem' }} /> */}
     </Typography>
   );
 
   return (
     <Box sx={{
-      background: 'linear-gradient(135deg, rgba(55, 42, 99, 0.9) 40%, rgba(208, 68, 26, 0.95) 80%, rgba(26, 212, 47, 0.95) 100%)',
+      //background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(155deg, rgba(38, 60, 92, 0.9) 40%, rgba(208, 68, 26, 0.95) 80%, rgba(209, 207, 81, 0.95) 100%)',
       width: '98%',      
       py: 1.5,
       mx: 'auto',
