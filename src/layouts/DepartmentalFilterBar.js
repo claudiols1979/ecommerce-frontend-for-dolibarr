@@ -58,6 +58,15 @@ const DepartmentalFilterBar = () => {
   console.log("🔍 Current Filters from Context: ", currentFilters);
   console.log("🎯 UI Filters: ", uiFilters);
 
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/products')) {
+      handleClearAllFilters();
+    }
+  }, [location.pathname]); // Se ejecuta cada vez que cambia la ruta
+
+  
+
    const containerRef = useClickOutside(() => {
     if (expanded) {
       setExpanded(false);
