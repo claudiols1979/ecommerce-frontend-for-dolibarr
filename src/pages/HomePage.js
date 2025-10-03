@@ -364,7 +364,20 @@ useEffect(() => {
           <Alert severity="info" sx={{ p: 3 }}>No hay productos destacados disponibles.</Alert>
         ) : (
           <Grid container spacing={2} justifyContent="center">
-            {groupedProducts.map((product) => (
+            {/* {groupedProducts.map((product) => (
+              <Grid item key={product._id} xs={12} sm={6} md={3} lg={3}> 
+                <ProductCard 
+                  product={{
+                    ...product,
+                    name: product.baseName || product.name,
+                    variantCount: product.variantCount
+                  }}
+                  onAddToCart={() => handleAddToCart(product)}
+                  isAdding={addingProductId === product._id}
+                />
+              </Grid>
+            ))} */}
+            {groupedProducts.slice(0, 20).map((product) => (
               <Grid item key={product._id} xs={12} sm={6} md={3} lg={3}> 
                 <ProductCard 
                   product={{
