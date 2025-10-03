@@ -976,7 +976,7 @@ const ProductDetailsPage = () => {
 
       <Container maxWidth="lg" sx={{ my: 4, flexGrow: 1 }}>
         <Box sx={{ mb: 3 }}>
-          <Button
+          {/* <Button
             variant="contained" startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/products')}
             sx={{
@@ -997,7 +997,7 @@ const ProductDetailsPage = () => {
             }}
           >
             Volver a Productos
-          </Button>
+          </Button> */}
         </Box>
 
         <Grid container spacing={5}>
