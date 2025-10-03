@@ -116,7 +116,7 @@ useEffect(() => {
   // Pedir más productos para compensar la agrupación
   // Si quieres 20 productos finales y tienes en promedio 2 variantes por producto,
   // pedir 40 productos (20 * 2)
-  const estimatedVariantsPerProduct = 2; // Ajusta este valor según tu caso
+  const estimatedVariantsPerProduct = 10; // Ajusta este valor según tu caso
   const productsToFetch = 20 * estimatedVariantsPerProduct;
   
   fetchProducts(1, productsToFetch, 'random'); 
