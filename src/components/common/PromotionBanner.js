@@ -40,7 +40,7 @@ const PromotionalBanner = () => {
   return (
     <Box sx={{
       //background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      background: 'linear-gradient(155deg, rgba(38, 60, 92, 0.9) 40%, rgba(208, 68, 26, 0.95) 80%, rgba(209, 207, 81, 0.95) 100%)',
+      background: 'linear-gradient(155deg, rgba(154, 37, 128, 0.9) 40%, rgba(75, 51, 150, 0.95) 80%, rgba(167, 178, 214, 0.95) 100%)',
       width: '98%',      
       py: 1.5,
       mx: 'auto',
