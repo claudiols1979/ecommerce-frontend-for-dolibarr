@@ -300,7 +300,7 @@ const handleClearFilter = useCallback(async (filterType) => {
         mx: 'auto',
         py: 1.5,
         borderRadius: 10,
-        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 25%, rgba(23, 23, 84, 0.59) 100%)',
+        background: 'linear-gradient(135deg, rgba(38,60,92,0.95) 25%, rgba(17, 24, 103, 0.59) 100%)',
         backdropFilter: 'blur(10px)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         mt: 2,
