@@ -198,7 +198,7 @@ useEffect(() => {
   // All original data and layout constants remain untouched
   const topWidgetData = [
     { title: 'Envíos a todo el país', description: 'Envío seguro con Correos de Costa Rica', icon: <LocalShippingIcon sx={{ fontSize: 40, color: 'primary.main' }} /> },
-    { title: 'Soporte 24/7', description: 'Soporte al cliente disponible a toda hora', icon: <SupportAgentIcon sx={{ fontSize: 40, color: 'primary.main' }} /> },
+    { title: 'Soporte 24/7', description: 'Soporte al cliente disponible', icon: <SupportAgentIcon sx={{ fontSize: 40, color: 'primary.main' }} /> },
     { title: 'Devolución de Dinero', description: 'Garantía de devolución total en tus compras', icon: <MonetizationOnIcon sx={{ fontSize: 40, color: 'primary.main' }} /> },
     { title: 'Descuento en Pedidos', description: 'Disfruta de ofertas exclusivas y descuentos', icon: <DiscountIcon sx={{ fontSize: 40, color: 'primary.main' }} /> },
   ];
