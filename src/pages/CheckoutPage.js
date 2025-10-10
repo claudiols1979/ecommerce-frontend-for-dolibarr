@@ -712,11 +712,17 @@ const CheckoutPage = () => {
                             ) : (
                                 'Proceder al pago seguro'
                             )}
-                            <PaymentIcon sx={{ 
+
+                            {paymentButtonLoading  ? (
+                               console.log("procesando pago")
+                            ) : (
+                               <PaymentIcon sx={{ 
                                 color: 'black', 
                                 ml: 2,
                                 fontSize: 28
                             }} />
+                            )}
+                            
                         </Button>
                     </Grid>
                 </Grid>
