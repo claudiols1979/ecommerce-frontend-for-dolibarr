@@ -155,6 +155,8 @@ const ProductDetailsPage = () => {
     return hasActiveFilters ? departmentalProducts : defaultProducts;
   };
 
+  console.log("attributeOptions: ", attributeOptions)
+
   const areAllAttributesSelected = () => {
     // Si los atributos no han terminado de cargar, retornar false
     if (!allAttributesLoaded) return false;

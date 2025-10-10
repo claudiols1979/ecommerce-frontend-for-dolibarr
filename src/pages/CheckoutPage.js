@@ -41,6 +41,7 @@ const CheckoutPage = () => {
     const [shippingCost, setShippingCost] = useState(0);
     const [shippingMessage, setShippingMessage] = useState('');
     const [provinceTouched, setProvinceTouched] = useState(false);
+    const [paymentButtonLoading, setPaymentButtonLoading] = useState(false);
 
     const [touchedFields, setTouchedFields] = useState({
         name: false,
@@ -170,6 +171,8 @@ const CheckoutPage = () => {
             toast.error("Por favor, completa toda la información de envío, incluyendo la provincia y la ciudad.");
             return;
         }
+
+        setPaymentButtonLoading(true);
         
         try {
             // ✅ NUEVO: Actualizar perfil del usuario antes de proceder al pago
@@ -704,7 +707,7 @@ const CheckoutPage = () => {
                                 }
                             }}
                         >
-                            {loading ? (
+                            {paymentButtonLoading  ? (
                                 <CircularProgress size={24} sx={{ color: 'black' }} />
                             ) : (
                                 'Proceder al pago seguro'
