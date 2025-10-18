@@ -61,20 +61,31 @@ export const UpdateInfoProvider = ({ children }) => {
         config
       );
 
+      console.log('✅ Backend response data:', response.data);
+      console.log('✅ Campos nuevos en response:', {
+          tipoIdentificacion: response.data.tipoIdentificacion,
+          cedula: response.data.cedula, 
+          codigoActividadReceptor: response.data.codigoActividadReceptor
+      });
+
       if (response.status === 200) {
         setSuccess(true);
         
         if (updateUser) {
           updateUser({
-              firstName: response.data.firstName,
-              lastName: response.data.lastName,
-              email: response.data.email,
-              phoneNumber: response.data.phoneNumber,
-              address: response.data.address,
-              city: response.data.city, // ✅ NUEVO CAMPO
-              province: response.data.province, // ✅ NUEVO CAMPO
-              resellerCategory: response.data.resellerCategory
-          });
+            firstName: response.data.firstName,
+            lastName: response.data.lastName,
+            email: response.data.email,
+            phoneNumber: response.data.phoneNumber,
+            address: response.data.address,
+            city: response.data.city,
+            province: response.data.province,
+            resellerCategory: response.data.resellerCategory,
+            // ✅ AGREGAR ESTOS 3 CAMPOS NUEVOS
+            tipoIdentificacion: response.data.tipoIdentificacion,
+            cedula: response.data.cedula,
+            codigoActividadReceptor: response.data.codigoActividadReceptor
+        });
       }
         
         return response.data;

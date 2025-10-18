@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useOrders } from '../contexts/OrderContext';
 import { useUpdateInfo } from '../contexts/UpdateInfoContext'; // Import the new context
+import { toast } from 'react-toastify';
 
 // Importaciones de iconos de Material-UI
 import EmailIcon from '@mui/icons-material/Email';
@@ -24,6 +25,8 @@ import InfoIcon from '@mui/icons-material/Info';
 import PersonIcon from '@mui/icons-material/Person'; 
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import EditIcon from '@mui/icons-material/Edit';
+import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -42,8 +45,22 @@ const ProfilePage = () => {
     address: '',
     city: '', // ✅ NUEVO CAMPO
     province: '', // ✅ NUEVO CAMPO
-    resellerCategory: ''
+    resellerCategory: '',
+    tipoIdentificacion: '',
+    cedula: '',
+    codigoActividadReceptor: ''
 });
+
+ useEffect(() => {
+    console.log('🔄 User data en ProfilePage:', user);
+    if (user) {
+      console.log('✅ Campos nuevos en user:', {
+        tipoIdentificacion: user.tipoIdentificacion,
+        cedula: user.cedula,
+        codigoActividadReceptor: user.codigoActividadReceptor
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     // 1. Fetch the user's orders as soon as the page loads.
@@ -62,6 +79,16 @@ const ProfilePage = () => {
     // 3. Clean up by stopping the interval when the user navigates away.
     return () => clearInterval(intervalId);
   }, [fetchMyOrders]);
+
+  useEffect(() => {
+    if (editFormData.tipoIdentificacion !== 'Juridica' && editFormData.codigoActividadReceptor) {
+        setEditFormData(prev => ({
+            ...prev,
+            codigoActividadReceptor: ''
+        }));
+    }
+}, [editFormData.tipoIdentificacion]);
+
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -132,7 +159,10 @@ const ProfilePage = () => {
         address: user.address || '',
         city: user.city || '', // ✅ NUEVO CAMPO
         province: user.province || '', // ✅ NUEVO CAMPO
-        resellerCategory: user.resellerCategory || ''
+        resellerCategory: user.resellerCategory || '',
+        tipoIdentificacion: user.tipoIdentificacion || '',
+        cedula: user.cedula || '',
+        codigoActividadReceptor: user.codigoActividadReceptor || ''
     });
     setEditDialogOpen(true);
     clearMessages();
@@ -140,20 +170,56 @@ const ProfilePage = () => {
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    if (name === 'cedula') {
+        processedValue  = value.replace(/[-]/g, '');
+    }
+
     setEditFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
   };
 
-  const handleEditSubmit = async (e) => {
+const handleEditSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await updateResellerProfile(user._id, editFormData);
-    } catch (error) {
-      // Error is handled in the context
+
+    // ✅ VALIDACIONES EN FRONTEND
+    const errors = {};
+    
+    if (!editFormData.tipoIdentificacion) {
+        errors.tipoIdentificacion = 'El tipo de identificación es requerido.';
     }
-  };
+    
+    if (!editFormData.cedula) {
+        errors.cedula = 'La cédula es requerida.';
+    }
+    
+    if (editFormData.tipoIdentificacion === 'Juridica' && !editFormData.codigoActividadReceptor) {
+        errors.codigoActividadReceptor = 'El código de actividad receptor es requerido para persona jurídica.';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+        // Mostrar el primer error
+        const firstError = Object.values(errors)[0];
+        toast.error(firstError);
+        return;
+    }
+
+    // ✅ PROCESAR DATOS ANTES DE ENVIAR - Remover guiones de cédula
+    const processedData = {
+        ...editFormData,
+        cedula: editFormData.cedula ? editFormData.cedula.replace(/[-]/g, '') : ''
+    };
+
+    try {
+        await updateResellerProfile(user._id, processedData);
+    } catch (error) {
+        // Error is handled in the context
+    }
+};
 
   const handleCloseDialog = () => {
     setEditDialogOpen(false);
@@ -261,6 +327,45 @@ const ProfilePage = () => {
                 value={editFormData.lastName}
                 onChange={handleEditFormChange}
                 required
+            />
+        </Grid>
+        <Grid item xs={12}>
+        <TextField
+            fullWidth
+            label="Tipo de Identificación"
+            name="tipoIdentificacion"
+            value={editFormData.tipoIdentificacion}
+            onChange={handleEditFormChange}
+            select
+            SelectProps={{ native: true }}
+        >
+            <option value=""></option>
+            <option value="Fisica">Persona Física</option>
+            <option value="Juridica">Persona Jurídica</option>
+            <option value="Dimex">DIMEX</option>
+            <option value="Nite">NITE</option>
+        </TextField>
+        </Grid>
+        <Grid item xs={12}>
+            <TextField
+                fullWidth
+                label="Cédula"
+                name="cedula"
+                value={editFormData.cedula}
+                onChange={handleEditFormChange}
+                placeholder="Ingrese su cédula"
+            />
+        </Grid>
+        <Grid item xs={12}>
+            <TextField
+                fullWidth
+                label="Código Actividad Receptor"
+                name="codigoActividadReceptor"
+                value={editFormData.codigoActividadReceptor}
+                onChange={handleEditFormChange}
+                placeholder="Ej: 620100, 461000, etc."
+                helperText="Requerido solo para persona jurídica"
+                disabled={editFormData.tipoIdentificacion !== 'Juridica'}
             />
         </Grid>
         <Grid item xs={12}>
@@ -422,6 +527,39 @@ const ProfilePage = () => {
                   } 
                 />
               </ListItem>
+            )}            
+            {user.tipoIdentificacion && (
+                <ListItem disableGutters sx={{ py: 1 }}>
+                    <ListItemText 
+                        primary={
+                            <Typography variant="body1" color="text.secondary">
+                                <BadgeOutlinedIcon sx={iconStyle} /> Tipo Identificación: <Typography component="span" fontWeight="medium" color="text.primary">{user.tipoIdentificacion}</Typography>
+                            </Typography>
+                        } 
+                    />
+                </ListItem>
+            )}
+            {user.cedula && (
+                <ListItem disableGutters sx={{ py: 1 }}>
+                    <ListItemText 
+                        primary={
+                            <Typography variant="body1" color="text.secondary">
+                                <BadgeOutlinedIcon sx={iconStyle} /> Cédula: <Typography component="span" fontWeight="medium" color="text.primary">{user.cedula}</Typography>
+                            </Typography>
+                        } 
+                    />
+                </ListItem>
+            )}
+            {user.codigoActividadReceptor && (
+                <ListItem disableGutters sx={{ py: 1 }}>
+                    <ListItemText 
+                        primary={
+                            <Typography variant="body1" color="text.secondary">
+                                <BusinessCenterIcon sx={iconStyle} /> Código Actividad: <Typography component="span" fontWeight="medium" color="text.primary">{user.codigoActividadReceptor}</Typography>
+                            </Typography>
+                        } 
+                    />
+                </ListItem>
             )}
             {(user.address || user.city || user.province) && (           
               <ListItemText 

@@ -16,6 +16,8 @@ import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import LocationCityIcon from '@mui/icons-material/LocationCity';
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
+import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -26,10 +28,16 @@ const RegisterPage = () => {
     confirmPassword: '',
     phoneNumber: '',
     address: '',
-    city: '',        // ✅ NUEVO CAMPO
-    province: '',    // ✅ NUEVO CAMPO
+    city: '',
+    province: '',
+    // ✅ NUEVOS CAMPOS PARA DOLIBARR
+    tipoIdentificacion: '',
+    cedula: '',
+    codigoActividadReceptor: ''
   });
+  
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   
   const { register, user } = useAuth();
   const navigate = useNavigate();
@@ -38,40 +46,116 @@ const RegisterPage = () => {
   // Lista de provincias de Costa Rica
   const provinces = ["Alajuela", "Cartago", "Guanacaste", "Heredia", "Limón", "Puntarenas", "San José"];
 
+  // ✅ OPCIONES PARA TIPO DE IDENTIFICACIÓN
+  const tiposIdentificacion = [
+    { value: 'Fisica', label: 'Persona Física' },
+    { value: 'Juridica', label: 'Persona Jurídica' },
+    { value: 'Dimex', label: 'DIMEX' },
+    { value: 'Nite', label: 'NITE' }
+  ];
+
   useEffect(() => {
     if (user) {
       navigate('/');      
     }
   }, [user, navigate]);
 
-  const { firstName, lastName, email, password, confirmPassword, phoneNumber, address, city, province } = formData;
+  const { 
+    firstName, lastName, email, password, confirmPassword, 
+    phoneNumber, address, city, province, tipoIdentificacion, 
+    cedula, codigoActividadReceptor 
+  } = formData;
 
-  const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    let value = e.target.value;
+
+    let processedValue = value;
+
+    if (e.target.name === 'cedula') {
+        processedValue = value.replace(/[-]/g, '');
+    }
+
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
+    }
+  };
+
+  // ✅ VALIDACIONES CONDICIONALES
+  const validateForm = () => {
+    const errors = {};
+
+    // Validaciones básicas
+    if (password !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden.');
+      return false;
+    }
+    if (password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres.');
+      return false;
+    }
+    if (!province) {
+      errors.province = 'Por favor seleccione su provincia.';
+    }
+    if (!city) {
+      errors.city = 'Por favor ingrese su ciudad.';
+    }
+
+    // ✅ VALIDACIONES PARA CAMPOS NUEVOS
+    if (!tipoIdentificacion) {
+      errors.tipoIdentificacion = 'Por favor seleccione el tipo de identificación.';
+    } else {
+      // Validaciones condicionales según tipo de identificación
+      if (['Fisica', 'Dimex', 'Nite'].includes(tipoIdentificacion) && !cedula) {
+        errors.cedula = `La cédula es requerida para tipo de identificación ${tipoIdentificacion}.`;
+      }
+      
+      if (tipoIdentificacion === 'Juridica') {
+        if (!cedula) {
+          errors.cedula = 'La cédula jurídica es requerida.';
+        }
+        if (!codigoActividadReceptor) {
+          errors.codigoActividadReceptor = 'El código de actividad receptor es requerido para persona jurídica.';
+        }
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      // Mostrar el primer error en toast
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError);
+      return false;
+    }
+
+    setFieldErrors({});
+    return true;
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     
-    // Validaciones
-    if (password !== confirmPassword) {
-      toast.error('Las contraseñas no coinciden.');
-      return;
-    }
-    if (password.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-    if (!province) {
-      toast.error('Por favor seleccione su provincia.');
-      return;
-    }
-    if (!city) {
-      toast.error('Por favor ingrese su ciudad.');
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    // ✅ INCLUIR city y province en los datos del usuario
-    const userData = { firstName, lastName, email, password, phoneNumber, address, city, province };
+    // ✅ INCLUIR TODOS LOS CAMPOS en los datos del usuario
+    const userData = { 
+      firstName, 
+      lastName, 
+      email, 
+      password, 
+      phoneNumber, 
+      address, 
+      city, 
+      province,
+      tipoIdentificacion,
+      cedula: cedula ? cedula.replace(/[-]/g, '') : '',
+      codigoActividadReceptor
+    };
+    
     await register(userData);
     setLoading(false);
   };
@@ -165,6 +249,8 @@ const RegisterPage = () => {
             </Typography>
             <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
               <Grid container spacing={2} justifyContent="center">
+                
+                {/* Campos Personales */}
                 <Grid item xs={12} sm={6}>
                   <TextField 
                     required 
@@ -199,6 +285,81 @@ const RegisterPage = () => {
                     }} 
                   />
                 </Grid>
+
+                {/* ✅ TIPO DE IDENTIFICACIÓN */}   
+                <Box sx={{ width: { xs: '75%', sm: '56%', md: '56%', lg: '56%' } }}>            
+                <Grid item xs={12}>
+                  <FormControl fullWidth required sx={selectStyle} error={!!fieldErrors.tipoIdentificacion}>
+                    <InputLabel>Tipo de Identificación</InputLabel>
+                    <Select
+                      name="tipoIdentificacion"
+                      value={tipoIdentificacion}
+                      label="Tipo de Identificación"
+                      onChange={onChange}
+                      startAdornment={<BadgeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} />}
+                    >
+                      <MenuItem value=""><em>Seleccionar tipo</em></MenuItem>
+                      {tiposIdentificacion.map((tipo) => (
+                        <MenuItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                </Box> 
+                {/* ✅ CÉDULA - Requerido para todos excepto si no hay tipo seleccionado */}
+                <Grid item xs={12}>
+                  <TextField 
+                    required={['Fisica', 'Juridica', 'Dimex', 'Nite'].includes(tipoIdentificacion)}
+                    fullWidth 
+                    name="cedula" 
+                    label={
+                      tipoIdentificacion === 'Juridica' ? 'Cédula Jurídica' : 
+                      tipoIdentificacion === 'Dimex' ? 'Número DIMEX' :
+                      tipoIdentificacion === 'Nite' ? 'Número NITE' : 'Cédula'
+                    }
+                    id="cedula" 
+                    value={cedula} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle}
+                    error={!!fieldErrors.cedula}
+                    helperText={fieldErrors.cedula}
+                    InputProps={{ 
+                      startAdornment: <BadgeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                    placeholder={
+                      tipoIdentificacion === 'Juridica' ? 'Ingrese cédula jurídica' :
+                      tipoIdentificacion === 'Dimex' ? 'Ingrese número DIMEX' :
+                      tipoIdentificacion === 'Nite' ? 'Ingrese número NITE' : 'Ingrese su cédula'
+                    }
+                  />
+                </Grid>
+
+                {/* ✅ CÓDIGO ACTIVIDAD RECEPTOR - Solo requerido para Jurídica */}
+                <Grid item xs={12}>
+                  <TextField 
+                    required={tipoIdentificacion === 'Juridica'}
+                    fullWidth 
+                    name="codigoActividadReceptor" 
+                    label="Código Actividad Receptor" 
+                    id="codigoActividadReceptor" 
+                    value={codigoActividadReceptor} 
+                    onChange={onChange} 
+                    variant="outlined" 
+                    sx={textFieldStyle}
+                    error={!!fieldErrors.codigoActividadReceptor}
+                    helperText={fieldErrors.codigoActividadReceptor || "Requerido solo para persona jurídica"}
+                    InputProps={{ 
+                      startAdornment: <BusinessCenterIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
+                    }} 
+                    placeholder="Ej: 620100, 461000, etc."
+                    disabled={tipoIdentificacion !== 'Juridica'}
+                  />
+                </Grid>
+
+                {/* Campos de Contacto */}
                 <Grid item xs={12}>
                   <TextField 
                     required 
@@ -269,35 +430,28 @@ const RegisterPage = () => {
                     }} 
                   />
                 </Grid>    
-                <Box sx={{ 
-                      width: { 
-                        xs: '75%',    // 100% en móvil
-                        sm: '56%',     // 80% en tablet pequeña
-                        md: '56%',     // 65% en tablet grande
-                        lg: '56%'      // 56% en desktop
-                      } 
-                    }}>
-                   <Grid item xs={12}>                 
-                  <FormControl fullWidth required sx={selectStyle}>
-                    <InputLabel>Provincia</InputLabel>
-                    <Select
-                      name="province"
-                      value={province}
-                      label="Provincia"
-                      onChange={onChange}
-                      startAdornment={<MapOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} />}
-                    >
-                      <MenuItem value=""><em>Seleccionar provincia</em></MenuItem>
-                      {provinces.map((prov) => (
-                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>                  
-                </Grid>
+
+                {/* Ubicación */}
+                <Box sx={{ width: { xs: '75%', sm: '56%', md: '56%', lg: '56%' } }}>
+                  <Grid item xs={12}>                 
+                    <FormControl fullWidth required sx={selectStyle} error={!!fieldErrors.province}>
+                      <InputLabel>Provincia</InputLabel>
+                      <Select
+                        name="province"
+                        value={province}
+                        label="Provincia"
+                        onChange={onChange}
+                        startAdornment={<MapOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} />}
+                      >
+                        <MenuItem value=""><em>Seleccionar provincia</em></MenuItem>
+                        {provinces.map((prov) => (
+                          <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>                  
+                  </Grid>
                 </Box>         
-               
                 
-                {/* ✅ NUEVO: Campo Ciudad */}
                 <Grid item xs={12}>
                   <TextField 
                     required 
@@ -309,7 +463,9 @@ const RegisterPage = () => {
                     value={city} 
                     onChange={onChange} 
                     variant="outlined" 
-                    sx={textFieldStyle} 
+                    sx={textFieldStyle}
+                    error={!!fieldErrors.city}
+                    helperText={fieldErrors.city}
                     InputProps={{ 
                       startAdornment: <LocationCityIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
                     }} 
@@ -331,14 +487,9 @@ const RegisterPage = () => {
                     rows={2}
                     sx={{
                       ...textFieldStyle,
-                      width: { 
-                        xs: '115%',    // 100% en móvil
-                        sm: '115%',     // 80% en tablet pequeña
-                        md: '115%',     // 65% en tablet grande
-                        lg: '115%' 
-                      },
-                      ml: -2,     // ✅ Esto lo centra horizontalmente
-                      display: 'block' // ✅ Necesario para que mx: 'auto' funcione
+                      width: '115%',
+                      ml: -2,
+                      display: 'block'
                     }}
                     InputProps={{ 
                       startAdornment: <HomeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)', alignSelf: 'flex-start' }} /> 
@@ -346,7 +497,8 @@ const RegisterPage = () => {
                     placeholder="Calle, número, urbanización, punto de referencia, etc."
                   />                 
                 </Grid>
-            </Grid>
+              </Grid>
+
               <Button 
                 type="submit" 
                 fullWidth 
