@@ -49,9 +49,7 @@ const RegisterPage = () => {
   // ✅ OPCIONES PARA TIPO DE IDENTIFICACIÓN
   const tiposIdentificacion = [
     { value: 'Fisica', label: 'Persona Física' },
-    { value: 'Juridica', label: 'Persona Jurídica' },
-    { value: 'Dimex', label: 'DIMEX' },
-    { value: 'Nite', label: 'NITE' }
+    { value: 'Juridica', label: 'Persona Jurídica' },    
   ];
 
   useEffect(() => {
@@ -103,22 +101,12 @@ const RegisterPage = () => {
     }
 
     // ✅ VALIDACIONES PARA CAMPOS NUEVOS
-    if (!tipoIdentificacion) {
-      errors.tipoIdentificacion = 'Por favor seleccione el tipo de identificación.';
-    } else {
-      // Validaciones condicionales según tipo de identificación
-      if (['Fisica', 'Dimex', 'Nite'].includes(tipoIdentificacion) && !cedula) {
-        errors.cedula = `La cédula es requerida para tipo de identificación ${tipoIdentificacion}.`;
-      }
-      
-      if (tipoIdentificacion === 'Juridica') {
-        if (!cedula) {
-          errors.cedula = 'La cédula jurídica es requerida.';
-        }
-        if (!codigoActividadReceptor) {
-          errors.codigoActividadReceptor = 'El código de actividad receptor es requerido para persona jurídica.';
-        }
-      }
+     if (!tipoIdentificacion) {
+        errors.tipoIdentificacion = 'Por favor seleccione el tipo de identificación.';
+    }
+    
+    if (!cedula) {
+        errors.cedula = 'La cédula es requerida.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -311,13 +299,11 @@ const RegisterPage = () => {
                 {/* ✅ CÉDULA - Requerido para todos excepto si no hay tipo seleccionado */}
                 <Grid item xs={12}>
                   <TextField 
-                    required={['Fisica', 'Juridica', 'Dimex', 'Nite'].includes(tipoIdentificacion)}
+                    required={['Fisica', 'Juridica'].includes(tipoIdentificacion)}
                     fullWidth 
                     name="cedula" 
                     label={
-                      tipoIdentificacion === 'Juridica' ? 'Cédula Jurídica' : 
-                      tipoIdentificacion === 'Dimex' ? 'Número DIMEX' :
-                      tipoIdentificacion === 'Nite' ? 'Número NITE' : 'Cédula'
+                      tipoIdentificacion === 'Juridica' ? 'Cédula Jurídica' : 'Cédula Física'                      
                     }
                     id="cedula" 
                     value={cedula} 
@@ -330,9 +316,7 @@ const RegisterPage = () => {
                       startAdornment: <BadgeOutlinedIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
                     }} 
                     placeholder={
-                      tipoIdentificacion === 'Juridica' ? 'Ingrese cédula jurídica' :
-                      tipoIdentificacion === 'Dimex' ? 'Ingrese número DIMEX' :
-                      tipoIdentificacion === 'Nite' ? 'Ingrese número NITE' : 'Ingrese su cédula'
+                      tipoIdentificacion === 'Juridica' ? 'Ingrese cédula jurídica' : 'Cédula, Dimex o NITE'
                     }
                   />
                 </Grid>
@@ -343,7 +327,7 @@ const RegisterPage = () => {
                     required={tipoIdentificacion === 'Juridica'}
                     fullWidth 
                     name="codigoActividadReceptor" 
-                    label="Código Actividad Receptor" 
+                    label="Código Actividad Receptor (Opcional)" 
                     id="codigoActividadReceptor" 
                     value={codigoActividadReceptor} 
                     onChange={onChange} 
@@ -354,8 +338,7 @@ const RegisterPage = () => {
                     InputProps={{ 
                       startAdornment: <BusinessCenterIcon sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.7)' }} /> 
                     }} 
-                    placeholder="Ej: 620100, 461000, etc."
-                    disabled={tipoIdentificacion !== 'Juridica'}
+                    placeholder="Ej: 620100, 461000, etc."                    
                   />
                 </Grid>
 

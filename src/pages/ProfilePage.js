@@ -195,11 +195,7 @@ const handleEditSubmit = async (e) => {
     
     if (!editFormData.cedula) {
         errors.cedula = 'La cédula es requerida.';
-    }
-    
-    if (editFormData.tipoIdentificacion === 'Juridica' && !editFormData.codigoActividadReceptor) {
-        errors.codigoActividadReceptor = 'El código de actividad receptor es requerido para persona jurídica.';
-    }
+    }    
     
     if (Object.keys(errors).length > 0) {
         // Mostrar el primer error
@@ -341,9 +337,7 @@ const handleEditSubmit = async (e) => {
         >
             <option value=""></option>
             <option value="Fisica">Persona Física</option>
-            <option value="Juridica">Persona Jurídica</option>
-            <option value="Dimex">DIMEX</option>
-            <option value="Nite">NITE</option>
+            <option value="Juridica">Persona Jurídica</option>            
         </TextField>
         </Grid>
         <Grid item xs={12}>
@@ -353,19 +347,18 @@ const handleEditSubmit = async (e) => {
                 name="cedula"
                 value={editFormData.cedula}
                 onChange={handleEditFormChange}
-                placeholder="Ingrese su cédula"
+                placeholder="Cédula, Dimex o NITE"
             />
         </Grid>
         <Grid item xs={12}>
             <TextField
                 fullWidth
-                label="Código Actividad Receptor"
+                label="Código Actividad Receptor (Opcional)"
                 name="codigoActividadReceptor"
                 value={editFormData.codigoActividadReceptor}
                 onChange={handleEditFormChange}
                 placeholder="Ej: 620100, 461000, etc."
-                helperText="Requerido solo para persona jurídica"
-                disabled={editFormData.tipoIdentificacion !== 'Juridica'}
+                helperText="Opcional - para fines tributariosa"                
             />
         </Grid>
         <Grid item xs={12}>
