@@ -23,9 +23,7 @@ const CheckoutPage = () => {
     const { user } = useAuth();
     const { updateResellerProfile } = useUpdateInfo();
     const navigate = useNavigate();
-    const theme = useTheme();
-
-    console.log("USER EN CHECKOUT: ", user)
+    const theme = useTheme();   
 
     const [shippingDetails, setShippingDetails] = useState({
         name: '',
